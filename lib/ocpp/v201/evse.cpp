@@ -62,6 +62,15 @@ EVSE Evse::get_evse_info() {
     return evse;
 }
 
+bool Evse::is_station_wide() const {
+    return is_station_wide_id(evse_id);
+}
+
+bool Evse::is_station_wide_id(int32_t id) {
+    const int32_t STATION_WIDE_ID = 0;
+    return id == STATION_WIDE_ID;
+}
+
 uint32_t Evse::get_number_of_connectors() {
     return static_cast<uint32_t>(this->id_connector_map.size());
 }

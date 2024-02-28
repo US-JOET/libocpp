@@ -71,6 +71,14 @@ public:
     /// \return
     uint32_t get_number_of_connectors();
 
+    /// \brief Returns true if evse_id is 0.
+    /// \return
+    bool is_station_wide() const;
+
+    /// \brief Returns true if evse_id is 0.
+    /// \return
+    static bool is_station_wide_id(int32_t id);
+
     /// \brief Opens a new transaction
     /// \param transaction_id id of the transaction
     /// \param connector_id id of the connector

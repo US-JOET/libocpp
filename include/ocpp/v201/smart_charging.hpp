@@ -20,7 +20,13 @@ enum class ProfileValidationResultEnum {
     TxProfileEvseIdNotGreaterThanZero,
     TxProfileTransactionNotOnEvse,
     TxProfileEvseHasNoActiveTransaction,
-    TxProfileConflictingStackLevel
+    TxProfileConflictingStackLevel,
+    DuplicateTxDefaultProfileFound
+};
+
+struct EvseProfile {
+    int32_t evse_id;
+    ChargingProfile profile;
 };
 
 /// \brief This class handles and maintains incoming ChargingProfiles and contains the logic
@@ -29,7 +35,7 @@ class SmartChargingHandler {
 private:
     std::shared_ptr<ocpp::v201::DatabaseHandler> database_handler;
     // cppcheck-suppress unusedStructMember
-    std::vector<ChargingProfile> charging_profiles;
+    std::vector<EvseProfile> charging_profiles;
 
 public:
     explicit SmartChargingHandler();
@@ -37,10 +43,21 @@ public:
     ///
     /// \brief validates the given \p profile according to the specification
     ///
+    ProfileValidationResultEnum validate_tx_default_profile(const ChargingProfile& profile, Evse& evse) const;
+
+    ///
+    /// \brief validates the given \p profile according to the specification
+    ///
     ProfileValidationResultEnum validate_tx_profile(const ChargingProfile& profile, Evse& evse) const;
 
+    ///
     /// \brief Adds a given \p profile to our stored list of profiles
-    void add_profile(const ChargingProfile& profile);
+    ///
+    void add_profile(int32_t evse_id, ChargingProfile& profile);
+
+private:
+    std::vector<EvseProfile> get_evse_specific_tx_default_profiles() const;
+    std::vector<EvseProfile> get_station_wide_tx_default_profiles() const;
 };
 
 } // namespace ocpp::v201
