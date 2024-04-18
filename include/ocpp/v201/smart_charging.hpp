@@ -42,7 +42,8 @@ enum class ProfileValidationResultEnum {
     ChargingSchedulePeriodInvalidPhaseToUse,
     ChargingSchedulePeriodUnsupportedNumberPhases,
     ChargingSchedulePeriodExtraneousPhaseValues,
-    DuplicateTxDefaultProfileFound
+    DuplicateTxDefaultProfileFound,
+    DuplicateProfileValidityPeriod
 };
 
 namespace conversions {
@@ -87,7 +88,7 @@ public:
     ///
     /// \brief validates the given \p profile and associated \p evse_id according to the specification
     ///
-    ProfileValidationResultEnum validate_tx_default_profile(const ChargingProfile& profile, int32_t evse_id) const;
+    ProfileValidationResultEnum validate_tx_default_profile(ChargingProfile& profile, int32_t evse_id) const;
 
     ///
     /// \brief validates the given \p profile according to the specification
@@ -150,9 +151,16 @@ public:
     ///
     // ChargingSchedulePeriod lowest_limit(std::vector<ChargingSchedulePeriod> periods);
 
+    ///
+    /// \brief Checks a given \p profile and associated \p evse_id validFrom and validTo range
+    /// This method assumes that the existing profile will have dates set for validFrom and validTo
+    ///
+    bool is_overlapping_validity_period(int evse_id, ChargingProfile& profile) const;
+
 private:
     std::vector<ChargingProfile> get_evse_specific_tx_default_profiles() const;
     std::vector<ChargingProfile> get_station_wide_tx_default_profiles() const;
+
     CompositeSchedule initialize_enhanced_composite_schedule(const ocpp::DateTime& start_time,
                                                              const ocpp::DateTime& end_time, const int32_t evse_id,
                                                              ChargingRateUnitEnum charging_rate_unit);
@@ -164,6 +172,8 @@ private:
                                      const std::optional<RecurrencyKindEnum> recurrencyKind);
     std::optional<ocpp::DateTime> get_relative_profile_start_time(const int32_t evse_id);
     int get_power_limit(const int limit, const int nr_phases, const ChargingRateUnitEnum& unit_of_limit);
+
+    void conform_validity_periods(ChargingProfile& profile) const;
 };
 
 } // namespace ocpp::v201
