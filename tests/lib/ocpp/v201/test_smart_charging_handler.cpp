@@ -24,6 +24,12 @@
 
 namespace ocpp::v201 {
 
+bool operator==(const ChargingProfile& lhs, const ChargingProfile& rhs) {
+    return lhs.chargingProfileKind == rhs.chargingProfileKind &&
+           lhs.chargingProfilePurpose == rhs.chargingProfilePurpose && lhs.id == rhs.id &&
+           lhs.stackLevel == rhs.stackLevel;
+}
+
 static const int STATION_WIDE_ID = 0;
 static const int DEFAULT_EVSE_ID = 1;
 static const int DEFAULT_PROFILE_ID = 1;
@@ -543,6 +549,32 @@ TEST_F(ChargepointTestFixtureV201, K01FR49_IfNumberPhasesMissingForACEVSE_ThenSe
 
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::Valid));
     EXPECT_THAT(numberPhases, testing::Eq(3));
+}
+
+TEST_F(ChargepointTestFixtureV201,
+       K01FR14_IfTxDefaultProfileWithSameStackLevelDoesNotExist_ThenApplyStationWideTxDefaultProfileToAllEvses) {
+    create_evse_with_id(DEFAULT_EVSE_ID);
+    auto profile = create_charging_profile(DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxDefaultProfile,
+                                           create_charge_schedule(ChargingRateUnitEnum::A), uuid(),
+                                           ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL);
+
+    auto sut = handler.add_profile(STATION_WIDE_ID, profile);
+
+    EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::Valid));
+    EXPECT_THAT(handler.get_profiles(), testing::Contains(profile));
+}
+
+TEST_F(ChargepointTestFixtureV201,
+       K01FR15_IfTxDefaultProfileWithSameStackLevelDoesNotExist_ThenApplyTxDefaultProfileToEvse) {
+    create_evse_with_id(DEFAULT_EVSE_ID);
+    auto profile = create_charging_profile(DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxDefaultProfile,
+                                           create_charge_schedule(ChargingRateUnitEnum::A), uuid(),
+                                           ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL);
+
+    auto sut = handler.add_profile(DEFAULT_EVSE_ID, profile);
+
+    EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::Valid));
+    EXPECT_THAT(handler.get_profiles(), testing::Contains(profile));
 }
 
 } // namespace ocpp::v201
