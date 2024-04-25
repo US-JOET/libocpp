@@ -81,6 +81,8 @@ SmartChargingHandler::SmartChargingHandler(std::map<int32_t, std::unique_ptr<Evs
 }
 
 ProfileValidationResultEnum SmartChargingHandler::validate_profile(ChargingProfile& profile, int32_t evse_id) {
+    conform_validity_periods(profile);
+
     auto result = ProfileValidationResultEnum::Valid;
     if (evse_id != STATION_WIDE_ID) {
         result = this->validate_evse_exists(evse_id);
@@ -129,6 +131,10 @@ ProfileValidationResultEnum SmartChargingHandler::validate_charging_station_max_
                                                                                         int32_t evse_id) const {
     if (profile.chargingProfilePurpose != ChargingProfilePurposeEnum::ChargingStationMaxProfile) {
         return ProfileValidationResultEnum::InvalidProfileType;
+    }
+
+    if (is_overlapping_validity_period(evse_id, profile)) {
+        return ProfileValidationResultEnum::DuplicateProfileValidityPeriod;
     }
 
     if (evse_id > 0) {
@@ -795,9 +801,7 @@ int SmartChargingHandler::get_power_limit(const int limit, const int nr_phases,
 }
 
 bool SmartChargingHandler::is_overlapping_validity_period(int candidate_evse_id,
-                                                          ChargingProfile& candidate_profile) const {
-
-    conform_validity_periods(candidate_profile);
+                                                          const ChargingProfile& candidate_profile) const {
 
     if (candidate_profile.chargingProfilePurpose == ChargingProfilePurposeEnum::TxProfile) {
         // This only applies to non TxProfile types.
