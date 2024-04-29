@@ -1143,7 +1143,7 @@ This document contains the status of which OCPP 2.0.1 numbered requirements have
 | K01.FR.02 |  |  |
 | K01.FR.03 |  |  |
 | K01.FR.04 | :white_check_mark: |  |
-| K01.FR.05 |  |  |
+| K01.FR.05 | :white_check_mark: |  |
 | K01.FR.06 | :white_check_mark: |  |
 | K01.FR.07 |  |  |
 | K01.FR.08 |  |  |
