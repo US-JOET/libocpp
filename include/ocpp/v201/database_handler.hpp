@@ -135,6 +135,9 @@ public:
 
     /// \brief Remove all metervalue entries linked to transaction with id \p transaction_id
     void transaction_metervalues_clear(const std::string& transaction_id);
+
+    /// \brief Inserts or updates the given \p profile to CHARGING_PROFILES table
+    virtual void insert_or_update_charging_profile(const int connector_id, const v201::ChargingProfile& profile);
 };
 
 } // namespace v201

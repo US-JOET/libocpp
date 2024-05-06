@@ -7,4 +7,5 @@ target_sources(libocpp_unit_tests PRIVATE
         test_ocsp_updater.cpp
         test_component_state_manager.cpp
         test_device_model.cpp
-        test_smart_charging_handler.cpp)
+        test_smart_charging_handler.cpp
+        test_database_handler.cpp)
