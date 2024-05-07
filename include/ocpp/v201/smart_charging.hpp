@@ -4,6 +4,7 @@
 #ifndef OCPP_V201_SMART_CHARGING_HPP
 #define OCPP_V201_SMART_CHARGING_HPP
 
+#include "ocpp/v201/device_model.hpp"
 #include "ocpp/v201/enums.hpp"
 #include "ocpp/v201/messages/SetChargingProfile.hpp"
 #include <limits>
@@ -74,6 +75,7 @@ struct PeriodDateTimePair {
 class SmartChargingHandler {
 private:
     std::map<int32_t, std::unique_ptr<EvseInterface>>& evses;
+    std::unique_ptr<DeviceModel>& device_model;
 
     std::shared_ptr<ocpp::v201::DatabaseHandler> database_handler;
     // cppcheck-suppress unusedStructMember
@@ -81,7 +83,8 @@ private:
     std::vector<ChargingProfile> station_wide_charging_profiles;
 
 public:
-    explicit SmartChargingHandler(std::map<int32_t, std::unique_ptr<EvseInterface>>& evses);
+    explicit SmartChargingHandler(std::map<int32_t, std::unique_ptr<EvseInterface>>& evses,
+                                  std::unique_ptr<DeviceModel>& device_model);
 
     ///
     /// \brief validates the given \p profile according to the specification.
@@ -191,6 +194,7 @@ private:
     int get_power_limit(const int limit, const int nr_phases, const ChargingRateUnitEnum& unit_of_limit);
 
     void conform_validity_periods(ChargingProfile& profile) const;
+    CurrentPhaseType get_current_phase_type(const std::optional<EvseInterface*> evse_opt) const;
 };
 
 } // namespace ocpp::v201
