@@ -616,16 +616,16 @@ OperationalStatusEnum DatabaseHandler::get_connector_availability(int32_t evse_i
     return this->get_availability(evse_id, connector_id);
 }
 
-void DatabaseHandler::insert_or_update_charging_profile(const int connector_id, const v201::ChargingProfile& profile) {
+void DatabaseHandler::insert_or_update_charging_profile(const int evse_id, const v201::ChargingProfile& profile) {
     // add or replace
-    std::string sql = "INSERT OR REPLACE INTO CHARGING_PROFILES (ID, CONNECTOR_ID, PROFILE) VALUES "
-                      "(@id, @connector_id, @profile)";
+    std::string sql = "INSERT OR REPLACE INTO CHARGING_PROFILES (ID, EVSE_ID, PROFILE) VALUES "
+                      "(@id, @evse_id, @profile)";
     auto stmt = this->database->new_statement(sql);
 
     json json_profile(profile);
 
     stmt->bind_int("@id", profile.id);
-    stmt->bind_int("@connector_id", connector_id);
+    stmt->bind_int("@evse_id", evse_id);
     stmt->bind_text("@profile", json_profile.dump(), SQLiteString::Transient);
 
     if (stmt->step() != SQLITE_DONE) {
