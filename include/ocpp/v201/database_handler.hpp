@@ -120,7 +120,7 @@ public:
     void transaction_metervalues_clear(const std::string& transaction_id);
 
     /// \brief Inserts or updates the given \p profile to CHARGING_PROFILES table
-    virtual void insert_or_update_charging_profile(const int connector_id, const v201::ChargingProfile& profile);
+    virtual void insert_or_update_charging_profile(const int evse_id, const v201::ChargingProfile& profile);
 };
 
 } // namespace v201
