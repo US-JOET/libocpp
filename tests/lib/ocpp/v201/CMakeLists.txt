@@ -7,5 +7,10 @@ target_sources(libocpp_unit_tests PRIVATE
         test_notify_report_requests_splitter.cpp
         test_ocsp_updater.cpp
         test_component_state_manager.cpp
+        test_composite_schedule.cpp
         test_device_model.cpp
-        test_smart_charging_handler.cpp)
+        test_smart_charging_handler.cpp
+        smart_charging_test_utils.hpp
+        )
+
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/json DESTINATION /tmp/EVerest/libocpp/v201)
