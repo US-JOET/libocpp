@@ -15,4 +15,8 @@ target_sources(libocpp_unit_tests PRIVATE
         test_smart_charging_handler.cpp
         utils_tests.cpp
         comparators.cpp
-        test_message_queue.cpp)
+        test_message_queue.cpp
+        test_composite_schedule.cpp
+        smart_charging_test_utils.hpp)
+
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/json DESTINATION /tmp/EVerest/libocpp/v201)
