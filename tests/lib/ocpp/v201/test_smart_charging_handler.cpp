@@ -875,6 +875,7 @@ TEST_F(ChargepointTestFixtureV201,
     EXPECT_THAT(sut2.status, testing::Eq(ChargingProfileStatusEnum::Accepted));
     EXPECT_THAT(profiles, testing::Contains(profile1));
     EXPECT_THAT(profiles, testing::Contains(profile2));
+}
 
 TEST_F(ChargepointTestFixtureV201, K01_ValidateProfile_IfEvseDoesNotExist_ThenProfileIsInvalid) {
     auto profile = create_charging_profile(DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
