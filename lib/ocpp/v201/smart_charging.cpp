@@ -224,6 +224,27 @@ std::vector<ChargingProfile> SmartChargingHandler::get_station_wide_tx_default_p
     return station_wide_tx_default_profiles;
 }
 
+std::string to_string(ChargingProfile cp) {
+    json cp_json;
+    to_json(cp_json, cp);
+
+    return cp_json.dump(4);
+}
+
+std::string to_string(ChargingSchedule cs) {
+    json cs_json;
+    to_json(cs_json, cs);
+
+    return cs_json.dump(4);
+}
+
+std::string to_string(ChargingSchedulePeriod csp) {
+    json csp_json;
+    to_json(csp_json, csp);
+
+    return csp_json.dump(4);
+}
+
 CompositeSchedule
 SmartChargingHandler::initialize_enhanced_composite_schedule(const ocpp::DateTime& start_time,
                                                              const ocpp::DateTime& end_time, const int32_t evse_id,
@@ -278,10 +299,6 @@ CompositeSchedule SmartChargingHandler::calculate_composite_schedule(std::vector
 
     // calculate every ChargingSchedulePeriod of result within this while loop
     while (SmartChargingHandler::within_time_window(start_time, end_time)) {
-        // EVLOG_verbose << "verbose boop!";
-        // EVLOG_debug << "debug boop!";
-        // EVLOG_info << "info boop!";
-        // EVLOG_warning << "warning boop!";
         auto current_purpose_and_stack_limits =
             get_initial_purpose_and_stack_limits(); // this data structure holds the current lowest limit and stack
                                                     // level for every purpose
@@ -294,6 +311,7 @@ CompositeSchedule SmartChargingHandler::calculate_composite_schedule(std::vector
 
             if (profile.stackLevel > current_purpose_and_stack_limits.at(profile.chargingProfilePurpose).stack_level) {
                 EVLOG_info << "boop";
+                const PeriodDateTimePair period = this->find_period_at(temp_time, profile, evse_id);
             }
         };
 
@@ -303,31 +321,38 @@ CompositeSchedule SmartChargingHandler::calculate_composite_schedule(std::vector
     return composite_schedule;
 }
 
-std::string to_string(ChargingProfile cp) {
-    json cp_json;
-    to_json(cp_json, cp);
-
-    return cp_json.dump(4);
-}
-
-std::string to_string(ChargingSchedule cs) {
-    json cs_json;
-    to_json(cs_json, cs);
-
-    return cs_json.dump(4);
-}
-
-std::string to_string(ChargingSchedulePeriod csp) {
-    json csp_json;
-    to_json(csp_json, csp);
-
-    return csp_json.dump(4);
-}
-
-ocpp::DateTime get_period_end_time(const ocpp::DateTime& period_start_time,
-                                   std::optional<int32_t> charging_schedule_duration,
-                                   const ChargingSchedulePeriod& period) {
+ocpp::DateTime get_current_period_end_time(const ocpp::DateTime& period_start_time,
+                                           std::optional<int32_t> charging_schedule_duration,
+                                           const ChargingSchedulePeriod& period) {
     return period_start_time;
+}
+
+ocpp::DateTime get_period_end_time(const int period_index, const ocpp::DateTime& period_start_time,
+                                   const ChargingSchedule& schedule,
+                                   const std::vector<ChargingSchedulePeriod>& periods) {
+    std::optional<ocpp::DateTime> period_end_time;
+    int period_diff_in_seconds;
+    if ((size_t)period_index + 1 < periods.size()) {
+        int duration;
+        if (schedule.duration) {
+            duration = schedule.duration.value();
+        } else {
+            duration = std::numeric_limits<int>::max();
+        }
+
+        if (periods.at(period_index + 1).startPeriod < duration) {
+            period_diff_in_seconds = periods.at(period_index + 1).startPeriod - periods.at(period_index).startPeriod;
+        } else {
+            period_diff_in_seconds = duration - periods.at(period_index).startPeriod;
+        }
+        const auto dt = ocpp::DateTime(period_start_time.to_time_point() + seconds(period_diff_in_seconds));
+        return dt;
+    } else if (schedule.duration) {
+        period_diff_in_seconds = schedule.duration.value() - periods.at(period_index).startPeriod;
+        return ocpp::DateTime(period_start_time.to_time_point() + seconds(period_diff_in_seconds));
+    } else {
+        return ocpp::DateTime(date::utc_clock::now() + hours(std::numeric_limits<int>::max()));
+    }
 }
 
 bool continue_time_arrow(const ocpp::DateTime& temp_time, const ocpp::DateTime& period_start_time,
@@ -375,7 +400,7 @@ ocpp::DateTime SmartChargingHandler::get_next_temp_time(const ocpp::DateTime tem
 
                 // Step 6 - Get Period end time
                 const ocpp::DateTime period_end_time =
-                    get_period_end_time(period_start_time, schedule.duration, period);
+                    get_current_period_end_time(period_start_time, schedule.duration, period);
 
                 // bool within_window = temp_time < period_end_time && period_end_time < lowest_next_time;
                 bool within_window = temp_time < period_end_time && period_end_time < lowest_next_time;
@@ -396,18 +421,6 @@ ocpp::DateTime SmartChargingHandler::get_next_temp_time(const ocpp::DateTime tem
                 period_start_time = period_end_time;
             }
         }
-
-        // if (period_start_time_opt) {
-        //     auto period_start_time = period_start_time_opt.value();
-        //     for (size_t i = 0; i < periods.size(); i++) {
-        //         auto period_end_time = get_period_end_time(i, period_start_time, schedule, periods);
-        //         if (temp_time >= period_start_time && temp_time < period_end_time &&
-        //             period_end_time < lowest_next_time) {
-        //             lowest_next_time = period_end_time;
-        //         }
-        //         period_start_time = period_end_time;
-        //     }
-        // }
     }
     return lowest_next_time;
 }

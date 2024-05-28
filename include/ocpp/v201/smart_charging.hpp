@@ -103,15 +103,14 @@ public:
     /// \brief Iterates over the periods of the given \p profile and returns a struct that contains the period and the
     /// absolute end time of the period that refers to the given absoulte \p time as a pair.
     ///
-    PeriodDateTimePair find_period_at(const ocpp::DateTime& time, const ChargingProfile& profile,
-                                      const int connector_id);
+    PeriodDateTimePair find_period_at(const ocpp::DateTime& time, const ChargingProfile& profile, const int evse);
 
     ///
     /// \brief Gets the absolute start time of the given \p profile for the given \p connector_id for different profile
     /// purposes
     ///
     std::optional<ocpp::DateTime> get_profile_start_time(const ChargingProfile& profile, const ocpp::DateTime& time,
-                                                         const int connector_id);
+                                                         const int evse);
 
     ///
     /// \brief Calculates the composite schedule for the given \p valid_profiles and the given \p connector_id
@@ -150,6 +149,9 @@ private:
     get_recurring_profile_start_time(const ocpp::DateTime& time, const std::optional<ocpp::DateTime> startSchedule,
                                      const std::optional<RecurrencyKindEnum> recurrencyKind);
     std::optional<ocpp::DateTime> get_relative_profile_start_time(const int32_t evse_id);
+    ocpp::DateTime get_period_end_time(const int period_index, const ocpp::DateTime& period_start_time,
+                                       const ChargingSchedule& schedule,
+                                       const std::vector<ChargingSchedulePeriod>& periods);
 };
 
 } // namespace ocpp::v201
