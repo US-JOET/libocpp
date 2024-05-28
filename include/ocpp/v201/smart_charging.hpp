@@ -14,6 +14,7 @@
 
 namespace ocpp::v201 {
 
+const int LOW_VOLTAGE = 230;
 const int DEFAULT_AND_MAX_NUMBER_PHASES = 3;
 const int HOURS_PER_DAY = 24;
 const int SECONDS_PER_HOUR = 3600;
@@ -152,6 +153,7 @@ private:
     ocpp::DateTime get_period_end_time(const int period_index, const ocpp::DateTime& period_start_time,
                                        const ChargingSchedule& schedule,
                                        const std::vector<ChargingSchedulePeriod>& periods);
+    int get_power_limit(const int limit, const int nr_phases, const ChargingRateUnitEnum& unit_of_limit);
 };
 
 } // namespace ocpp::v201

@@ -395,7 +395,11 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_InitializeEnha
     create_evse_with_id(DEFAULT_EVSE_ID);
     const DateTime start_time = ocpp::DateTime("2024-01-17T17:59:59");
     const DateTime end_time = ocpp::DateTime("2024-01-18T00:00:00");
-    std::vector<ChargingProfile> profiles = getBaselineProfileVector();
+
+    auto profile_01 = getChargingProfileFromFile("TxProfile_01.json");
+    auto profile_100 = getChargingProfileFromFile("TxProfile_100.json");
+    // std::vector<ChargingProfile> profiles = getBaselineProfileVector();
+    std::vector<ChargingProfile> profiles = {profile_100};
 
     CompositeSchedule composite_schedule =
         handler.calculate_composite_schedule(profiles, start_time, end_time, DEFAULT_EVSE_ID, ChargingRateUnitEnum::A);
