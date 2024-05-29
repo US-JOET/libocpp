@@ -27,7 +27,7 @@
             ],
             "duration": 86400,
             "minChargingRate": 0.0,
-            "startSchedule": "2024-01-17T18:10:00.000Z"
+            "startSchedule": "2023-01-17T17:00:00.000Z"
         }
     ],
     "transactionId": "f1522902-1170-416f-8e43-9e3bce28fab8"

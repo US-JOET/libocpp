@@ -13,7 +13,7 @@
                     "startPeriod": 0
                 }
             ],
-            "duraction": 1080,
+            "duration": 1080,
             "minChargingRate": 0.0,
             "startSchedule": "2024-01-17T18:00:00.000Z"
         }

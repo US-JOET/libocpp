@@ -131,6 +131,10 @@ public:
     ocpp::DateTime get_next_temp_time(const ocpp::DateTime temp_time,
                                       const std::vector<ChargingProfile>& valid_profiles, const int32_t evse_id);
 
+    ocpp::DateTime get_period_end_time(const int period_index, const ocpp::DateTime& period_start_time,
+                                       const ChargingSchedule& schedule,
+                                       const std::vector<ChargingSchedulePeriod>& periods);
+
     ///
     /// \brief Returns the ChargingSchedulePeriod with the lowest limit. Working under the idea that when there are
     /// ChargingSchedulePeriods that apply within a Profile thenone with the lowest limit takes precedence
@@ -150,9 +154,6 @@ private:
     get_recurring_profile_start_time(const ocpp::DateTime& time, const std::optional<ocpp::DateTime> startSchedule,
                                      const std::optional<RecurrencyKindEnum> recurrencyKind);
     std::optional<ocpp::DateTime> get_relative_profile_start_time(const int32_t evse_id);
-    ocpp::DateTime get_period_end_time(const int period_index, const ocpp::DateTime& period_start_time,
-                                       const ChargingSchedule& schedule,
-                                       const std::vector<ChargingSchedulePeriod>& periods);
     int get_power_limit(const int limit, const int nr_phases, const ChargingRateUnitEnum& unit_of_limit);
 };
 
