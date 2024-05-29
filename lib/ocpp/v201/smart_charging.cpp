@@ -292,15 +292,20 @@ PeriodDateTimePair SmartChargingHandler::find_period_at(const ocpp::DateTime& ti
 ///
 /// \brief Calculates the composite schedule for the given \p valid_profiles and the given \p connector_id
 ///
+/// Step 01-000 - Pass in profiles, start and end time, evse od add charging_rate_unit
+/// Step 01-001 - initialize_enhanced_composite_schedule(start_time, end_time, evse_id, charging_rate_unit)
+/// Step 01-002 - Instantiate vector of ChargingSchedulePeriod periods
 CompositeSchedule SmartChargingHandler::calculate_composite_schedule(std::vector<ChargingProfile> valid_profiles,
                                                                      const ocpp::DateTime& start_time,
                                                                      const ocpp::DateTime& end_time,
                                                                      const int32_t evse_id,
                                                                      ChargingRateUnitEnum charging_rate_unit) {
 
+    EVLOG_info << "01-001 - initialize_enhanced_composite_schedule(start_time, end_time, evse_id, charging_rate_unit)";
     CompositeSchedule composite_schedule =
         this->initialize_enhanced_composite_schedule(start_time, end_time, evse_id, charging_rate_unit);
 
+    /// Step 01-002 - Instantiate vector of ChargingSchedulePeriod periods
     std::vector<ChargingSchedulePeriod> periods;
 
     ocpp::DateTime temp_time(start_time);
@@ -309,7 +314,7 @@ CompositeSchedule SmartChargingHandler::calculate_composite_schedule(std::vector
     LimitStackLevelPair significant_limit_stack_level_pair = {std::numeric_limits<int>::max(), -1};
 
     // calculate every ChargingSchedulePeriod of result within this while loop
-    while (SmartChargingHandler::within_time_window(start_time, end_time)) {
+    while (SmartChargingHandler::within_time_window(end_time, temp_time)) {
         std::map<ChargingProfilePurposeEnum, LimitStackLevelPair> current_purpose_and_stack_limits =
             get_initial_purpose_and_stack_limits(); // this data structure holds the current lowest limit and stack
                                                     // level for every purpose
@@ -321,6 +326,7 @@ CompositeSchedule SmartChargingHandler::calculate_composite_schedule(std::vector
             EVLOG_info << "ProfileId #" << profile.id << " Kind: " << profile.chargingProfileKind;
 
             if (profile.stackLevel > current_purpose_and_stack_limits.at(profile.chargingProfilePurpose).stack_level) {
+                // EVLOG_info << "calculate_composite_schedule> profile.stackLevel > current_purpose_and_stack_limits";
                 EVLOG_info << "boop";
 
                 // this data structure holds the respective period and period end time for temp_time point in time
@@ -568,7 +574,6 @@ std::optional<ocpp::DateTime> SmartChargingHandler::get_profile_start_time(const
                                                                            const ocpp::DateTime& time,
                                                                            const int32_t evse_id) {
 
-    EVLOG_verbose << "get_profile_start_time> " << to_string(profile) << " " << time.to_rfc3339() << " " << evse_id;
     std::optional<ocpp::DateTime> period_start_time;
 
     // TODO add test logic for returning only one value for multiple Charging Schedules. Currently not supported.
@@ -588,6 +593,8 @@ std::optional<ocpp::DateTime> SmartChargingHandler::get_profile_start_time(const
 
         // EVLOG_info << "ChargingProfile: " << to_string(profile);
     }
+    EVLOG_verbose << "get_profile_start_time> " << to_string(profile) << " temp_time: " << time.to_rfc3339()
+                  << " period_start_time: " << period_start_time.value().to_rfc3339() << " EVSE_ID #" << evse_id;
     return period_start_time;
 }
 
