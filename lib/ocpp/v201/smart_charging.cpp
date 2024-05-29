@@ -419,8 +419,10 @@ ocpp::DateTime get_current_period_end_time(const ocpp::DateTime& period_start_ti
 
 ocpp::DateTime SmartChargingHandler::get_period_end_time(const int period_index,
                                                          const ocpp::DateTime& period_start_time,
-                                                         const ChargingSchedule& schedule,
-                                                         const std::vector<ChargingSchedulePeriod>& periods) {
+                                                         const ChargingSchedule& schedule) {
+
+    const std::vector<ChargingSchedulePeriod> periods = schedule.chargingSchedulePeriod;
+
     std::optional<ocpp::DateTime> period_end_time;
 
     int period_diff_in_seconds;
@@ -493,7 +495,7 @@ ocpp::DateTime SmartChargingHandler::get_next_temp_time(const ocpp::DateTime tem
                 EVLOG_debug << "ChargingSchedulePeriod> " << to_string(periods.at(i));
 
                 // Step 6 - Get Period end time
-                const ocpp::DateTime period_end_time = get_period_end_time(i, period_start_time, schedule, periods);
+                const ocpp::DateTime period_end_time = get_period_end_time(i, period_start_time, schedule);
 
                 bool within_window =
                     continue_time_arrow(temp_time, period_start_time, period_end_time, lowest_next_time);

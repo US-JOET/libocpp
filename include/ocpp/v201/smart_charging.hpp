@@ -132,8 +132,7 @@ public:
                                       const std::vector<ChargingProfile>& valid_profiles, const int32_t evse_id);
 
     ocpp::DateTime get_period_end_time(const int period_index, const ocpp::DateTime& period_start_time,
-                                       const ChargingSchedule& schedule,
-                                       const std::vector<ChargingSchedulePeriod>& periods);
+                                       const ChargingSchedule& schedule);
 
     ///
     /// \brief Returns the ChargingSchedulePeriod with the lowest limit. Working under the idea that when there are
