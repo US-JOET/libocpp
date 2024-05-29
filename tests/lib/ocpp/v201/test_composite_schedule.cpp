@@ -381,25 +381,44 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_GetPeriodEndTi
     const DateTime period_start_time_01 = ocpp::DateTime("2024-01-17T18:00:00");
     const DateTime expected_period_end_time_01 = ocpp::DateTime("2024-01-17T18:18:00");
     const ChargingSchedule schedule_01 = profile_01.chargingSchedule.front();
-    const std::vector<ChargingSchedulePeriod> periods_01 = profile_01.chargingSchedule.front().chargingSchedulePeriod;
 
     EVLOG_debug << "DURATION = " << get_log_duration_string(schedule_01.duration.value());
     DateTime actual_period_end_time_01 = handler.get_period_end_time(0, period_start_time_01, schedule_01);
 
     ASSERT_EQ(expected_period_end_time_01, actual_period_end_time_01);
 
-    // Test 2: Profile TxProfile_100.json
+    // Test 2: Profile TxProfile_100.json Period #1
     const auto profile_100 = getChargingProfileFromFile("TxProfile_100.json");
 
     const DateTime period_start_time_02 = ocpp::DateTime("2024-01-17T17:00:00");
     const DateTime expected_period_end_time_02 = ocpp::DateTime("2024-01-18T01:00:00");
     const ChargingSchedule schedule_02 = profile_100.chargingSchedule.front();
-    const std::vector<ChargingSchedulePeriod> periods_02 = profile_100.chargingSchedule.front().chargingSchedulePeriod;
 
     EVLOG_debug << "DURATION = " << get_log_duration_string(28800);
     DateTime actual_period_end_time_02 = handler.get_period_end_time(0, period_start_time_02, schedule_02);
 
     ASSERT_EQ(expected_period_end_time_02, actual_period_end_time_02);
+
+    // Test 2a: Profile TxProfile_100.json Period #1 - Start time 1 hour later than startSchedule. Not enforcing
+    // startSchedule as fixed time point for chargingSchedulePeriod calculations. TODO: overly complex, begging for
+    // defects logic matches 1.6. Refactoring opportunity? Probability of defect: LOW
+    // const DateTime period_start_time_02a = ocpp::DateTime("2024-01-17T18:00:00");
+    // DateTime actual_period_end_time_02a = handler.get_period_end_time(0, period_start_time_02a, schedule_02);
+    // ASSERT_EQ(expected_period_end_time_02, actual_period_end_time_02a);
+
+    // Test 3: Profile TxProfile_100.json Period #2
+    const DateTime period_start_time_03 = ocpp::DateTime("2024-01-17T17:00:00");
+    const DateTime expected_period_end_time_03 = ocpp::DateTime("2024-01-18T13:00:00");
+
+    EVLOG_debug << "DURATION = " << get_log_duration_string(72000);
+    DateTime actual_period_end_time_03 = handler.get_period_end_time(1, period_start_time_03, schedule_02);
+
+    ASSERT_EQ(expected_period_end_time_03, actual_period_end_time_03);
+}
+
+// Based upon K01.FR11 K01.FR38
+TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_GetPeriodEndTime_PAIN) {
+    GTEST_SKIP();
 }
 
 TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_GetNextTempTime) {

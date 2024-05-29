@@ -457,7 +457,7 @@ bool continue_time_arrow(const ocpp::DateTime& temp_time, const ocpp::DateTime& 
     return (temp_time < period_end_time && period_end_time < lowest_next_time);
 }
 
-// Step 1 - lowest_next_time is set to maximum tine in the future
+// Step 1 - lowest_next_time is set to maximum time in the future
 // Step 2 - Iterate through the profiles
 // Step 3 - Get first starting schedule (only one currently supported)
 // Step 4 - Get period_start_time and continue if available
