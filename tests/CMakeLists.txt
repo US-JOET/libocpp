@@ -53,9 +53,9 @@ target_link_libraries(libocpp_unit_tests PRIVATE
 target_sources(libocpp_unit_tests PRIVATE
         comparators.cpp)
 
-# add_subdirectory(lib/ocpp/v16)
+add_subdirectory(lib/ocpp/v16)
 add_subdirectory(lib/ocpp/v201)
-# add_subdirectory(lib/ocpp/common)
+add_subdirectory(lib/ocpp/common)
 
 
 add_executable(utils_tests utils_tests.cpp)
