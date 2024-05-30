@@ -356,7 +356,6 @@ CompositeSchedule SmartChargingHandler::calculate_composite_schedule(std::vector
         int32_t temp_number_phases;
 
         for (const ChargingProfile& profile : valid_profiles) {
-            // EVLOG_info << "boop";
             EVLOG_info << "ProfileId #" << profile.id << " Kind: " << profile.chargingProfileKind;
 
             if (profile.stackLevel > current_purpose_and_stack_limits.at(profile.chargingProfilePurpose).stack_level) {
@@ -426,6 +425,9 @@ CompositeSchedule SmartChargingHandler::calculate_composite_schedule(std::vector
                     temp_number_phases, charging_rate_unit)),
                 .numberPhases = temp_number_phases,
             };
+
+            EVLOG_debug << "calculate_composite_schedule> pushing period " << to_string(new_period);
+
             periods.push_back(new_period);
 
             last_period_end_time = temp_period_end_time;

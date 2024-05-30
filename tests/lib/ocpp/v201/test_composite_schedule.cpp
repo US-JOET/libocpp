@@ -5,6 +5,7 @@
 #include "ocpp/v201/ocpp_types.hpp"
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <cstdint>
 #include <filesystem>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -444,13 +445,15 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_GetNextTempTim
  * Calculate Composite Schedule
  */
 TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_InitializeEnhancedCompositeSchedule) {
-    GTEST_SKIP();
+    // GTEST_SKIP();
     create_evse_with_id(DEFAULT_EVSE_ID);
     // const DateTime start_time = ocpp::DateTime("2024-01-17T17:59:59");
     // const DateTime end_time = ocpp::DateTime("2024-01-18T00:00:00");
 
+    const DateTime time_17_17_59_59 = ocpp::DateTime("2024-01-17T17:59:59");
     const DateTime start_time = ocpp::DateTime("2024-01-17T18:01:00");
     const DateTime end_time = ocpp::DateTime("2024-01-18T00:00:00");
+    const int32_t expected_duration = 21540;
 
     // auto profile_01 = getChargingProfileFromFile("TxProfile_01.json");
     // auto profile_100 = getChargingProfileFromFile("TxProfile_100.json");
@@ -461,10 +464,14 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_InitializeEnha
         handler.calculate_composite_schedule(profiles, start_time, end_time, DEFAULT_EVSE_ID, ChargingRateUnitEnum::A);
 
     log_me(composite_schedule);
+    EVLOG_debug << "expected duration = " << get_log_duration_string(expected_duration);
+
+    log_me(composite_schedule);
+    EVLOG_debug << "actual duration = " << get_log_duration_string(composite_schedule.duration);
 
     ASSERT_EQ(ChargingRateUnitEnum::A, composite_schedule.chargingRateUnit);
     ASSERT_EQ(DEFAULT_EVSE_ID, composite_schedule.evseId);
-    ASSERT_EQ(21601, composite_schedule.duration);
+    ASSERT_EQ(expected_duration, composite_schedule.duration);
     ASSERT_EQ(start_time, composite_schedule.scheduleStart);
     ASSERT_EQ(composite_schedule.chargingSchedulePeriod.size(), 0);
 }
