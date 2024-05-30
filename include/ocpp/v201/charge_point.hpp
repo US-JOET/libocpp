@@ -17,6 +17,7 @@
 #include <ocpp/v201/evse.hpp>
 #include <ocpp/v201/ocpp_types.hpp>
 #include <ocpp/v201/ocsp_updater.hpp>
+#include <ocpp/v201/smart_charging.hpp>
 #include <ocpp/v201/types.hpp>
 #include <ocpp/v201/utils.hpp>
 
@@ -166,6 +167,9 @@ struct Callbacks {
 
     /// \brief Callback function that can be called when all connectors are unavailable
     std::optional<std::function<void()>> all_connectors_unavailable_callback;
+
+    /// \brief Callback function that is called when a new Charging Profile is accepted and stored by the Charging Station
+    std::optional<std::function<void()>> signal_set_charging_profiles_callback;
 
     /// \brief Callback function that can be used to handle arbitrary data transfers for all vendorId and
     /// messageId
@@ -371,6 +375,10 @@ public:
     /// \param delay The delay period (seconds)
     virtual void set_message_queue_resume_delay(std::chrono::seconds delay) = 0;
 
+    /// \brief Calculate a composite schedule for each EVSE at this Charge Point
+    /// \param duration_s The duration of the desired composite schedules in seconds.
+    virtual std::map<int32_t, EnhancedChargingSchedule> get_all_enhanced_composite_charging_schedules(const int32_t duration_s) = 0;
+
     /// \brief Gets variables specified within \p get_variable_data_vector from the device model and returns the result.
     /// This function is used internally in order to handle GetVariables.req messages and it can be used to get
     /// variables externally.
@@ -398,6 +406,7 @@ private:
     std::unique_ptr<MessageQueue<v201::MessageType>> message_queue;
     std::unique_ptr<DeviceModel> device_model;
     std::shared_ptr<DatabaseHandler> database_handler;
+    std::shared_ptr<SmartChargingHandler> smart_charging_handler;
 
     std::map<int32_t, AvailabilityChange> scheduled_change_availability_requests;
 
@@ -684,6 +693,9 @@ private:
     void handle_change_availability_req(Call<ChangeAvailabilityRequest> call);
     void handle_heartbeat_response(CallResult<HeartbeatResponse> call);
 
+    // Functional Block K: Smart Charging
+    void handle_set_charging_profile_req(Call<SetChargingProfileRequest> call);
+
     // Functional Block L: Firmware management
     void handle_firmware_update_req(Call<UpdateFirmwareRequest> call);
 
@@ -855,6 +867,8 @@ public:
     void set_message_queue_resume_delay(std::chrono::seconds delay) override {
         this->message_queue_resume_delay = delay;
     }
+
+    std::map<int32_t, EnhancedChargingSchedule> get_all_enhanced_composite_charging_schedules(const int32_t duration_s) override;
 
     std::vector<GetVariableResult> get_variables(const std::vector<GetVariableData>& get_variable_data_vector) override;
 
