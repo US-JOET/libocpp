@@ -5,7 +5,7 @@
     "chargingSchedule": [
         {
             "id": 0,
-            "chargingRateUnit": "A",
+            "chargingRateUnit": "W",
             "chargingSchedulePeriod": [
                 {
                     "limit": 2000.0,

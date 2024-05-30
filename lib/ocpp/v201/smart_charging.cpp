@@ -279,6 +279,19 @@ std::string get_log_duration_string(int32_t duration) {
     return log_str;
 }
 
+void log_period_date_time_pair(PeriodDateTimePair period_date_time_pair) {
+    std::string log_str = "PeriodDateTimePair> ";
+
+    if (period_date_time_pair.period.has_value()) {
+        log_str += " period: " + to_string(period_date_time_pair.period.value());
+        // log_str += " period: " + std::to_string(period_date_time_pair.period.value().startPeriod);
+        // EVLOG_info << "   Period: " << period_date_time_pair.period.value().startPeriod
+        //            << " End Time: " << period_date_time_pair.end_time.to_rfc3339();
+    }
+    log_str += " end_time: " + period_date_time_pair.end_time.to_rfc3339();
+    EVLOG_info << log_str;
+}
+
 // TODO: The structs type is float but it's being passed in as an int. Significant?
 int get_requested_limit(const int limit, const int nr_phases, const ChargingRateUnitEnum& requested_unit) {
     if (requested_unit == ChargingRateUnitEnum::A) {
@@ -306,21 +319,56 @@ int32_t SmartChargingHandler::determine_duration(const ocpp::DateTime& start_tim
     return duration_cast<seconds>(end_time.to_time_point() - start_time.to_time_point()).count();
 }
 
-bool SmartChargingHandler::within_time_window(const ocpp::DateTime& start_time, const ocpp::DateTime& end_time) {
-    return SmartChargingHandler::determine_duration(start_time, end_time) > 0;
+bool SmartChargingHandler::within_time_window(const ocpp::DateTime& end_time, const ocpp::DateTime& temp_time) {
+    return SmartChargingHandler::determine_duration(temp_time, end_time) > 0;
+    // auto end_time_point = end_time.to_time_point();
+    // auto temp_time_point = temp_time.to_time_point();
+    // auto count = duration_cast<seconds>(end_time_point - temp_time_point).count();
+
+    // EVLOG_info << "";
+    // EVLOG_info << "time_window> " << temp_time.to_rfc3339() << " - " << end_time.to_rfc3339() << " = " << count << "
+    // ("
+    //            << get_log_duration_string(count) << ")";
+    // if (count > 0) {
+    //     return true;
+    // } else {
+    //     EVLOG_info << "time_window> count = " << count << " RETURN FALSE ";
+    //     return false;
+    // }
 }
 
 PeriodDateTimePair SmartChargingHandler::find_period_at(const ocpp::DateTime& time, const ChargingProfile& profile,
                                                         const int evse_id) {
-    PeriodDateTimePair ptp;
-
     auto period_start_time = this->get_profile_start_time(profile, time, evse_id);
+
     EVLOG_info << "#" << profile.id << " find_period_at> " << period_start_time.value().to_rfc3339();
 
+    // TODO: Only processing first charging schedule
+    const auto schedule = profile.chargingSchedule.front();
+
     if (period_start_time) {
+        const auto periods = schedule.chargingSchedulePeriod;
+        time_point<date::utc_clock> period_end_time;
+        for (size_t i = 0; i < periods.size(); i++) {
+            const auto period_end_time = get_period_end_time(i, period_start_time.value(), schedule);
+
+            EVLOG_info << "   find_period_at>        start_time> " << time.to_rfc3339();
+            EVLOG_info << "   find_period_at> period_start_time> " << period_start_time.value().to_rfc3339();
+            EVLOG_info << "   find_period_at>   period_end_time> " << period_end_time.to_rfc3339();
+
+            if (time >= period_start_time.value() && time < period_end_time) {
+                PeriodDateTimePair date_time_pair = {periods.at(i), ocpp::DateTime(period_end_time)};
+                log_period_date_time_pair(date_time_pair);
+                return date_time_pair;
+            }
+            period_start_time.emplace(ocpp::DateTime(period_end_time));
+        }
     }
 
-    return ptp;
+    PeriodDateTimePair date_time_pair = {
+        std::nullopt, ocpp::DateTime(date::utc_clock::now() + hours(std::numeric_limits<int>::max()))};
+    log_period_date_time_pair(date_time_pair);
+    return date_time_pair;
 }
 
 ///
@@ -349,6 +397,8 @@ CompositeSchedule SmartChargingHandler::calculate_composite_schedule(std::vector
 
     // calculate every ChargingSchedulePeriod of result within this while loop
     while (SmartChargingHandler::within_time_window(end_time, temp_time)) {
+        // while (duration_cast<seconds>(end_time.to_time_point() - temp_time.to_time_point()).count() > 0) {
+
         std::map<ChargingProfilePurposeEnum, LimitStackLevelPair> current_purpose_and_stack_limits =
             get_initial_purpose_and_stack_limits(); // this data structure holds the current lowest limit and stack
                                                     // level for every purpose
@@ -365,7 +415,7 @@ CompositeSchedule SmartChargingHandler::calculate_composite_schedule(std::vector
                 // this data structure holds the respective period and period end time for temp_time point in time
                 const PeriodDateTimePair period_date_time_pair = this->find_period_at(temp_time, profile, evse_id);
 
-                if (period_date_time_pair.period) {
+                if (period_date_time_pair.period.has_value()) {
                     const ChargingSchedulePeriod period = period_date_time_pair.period.value();
 
                     temp_period_end_time = period_date_time_pair.end_time;
@@ -378,11 +428,16 @@ CompositeSchedule SmartChargingHandler::calculate_composite_schedule(std::vector
 
                     ChargingSchedule first_charging_schedule = profile.chargingSchedule.front();
 
-                    // update data structure with limit and stack level for this profile
-                    current_purpose_and_stack_limits.at(profile.chargingProfilePurpose).limit =
+                    float limit =
                         get_power_limit(period.limit, temp_number_phases, first_charging_schedule.chargingRateUnit);
-                    current_purpose_and_stack_limits.at(profile.chargingProfilePurpose).stack_level =
-                        profile.stackLevel;
+                    int32_t stackLevel = profile.stackLevel;
+
+                    EVLOG_info << "period.has_value() limit = " << limit;
+                    EVLOG_info << "period.has_value() stackLevel = " << limit;
+
+                    // update data structure with limit and stack level for this profile
+                    current_purpose_and_stack_limits.at(profile.chargingProfilePurpose).limit = limit;
+                    current_purpose_and_stack_limits.at(profile.chargingProfilePurpose).stack_level = stackLevel;
                 } else {
                     // skip profiles with a lower stack level if a higher stack level already has a limit for this
                     // point in time
@@ -409,12 +464,16 @@ CompositeSchedule SmartChargingHandler::calculate_composite_schedule(std::vector
                 current_purpose_and_stack_limits.at(ChargingProfilePurposeEnum::ChargingStationMaxProfile);
         }
 
-        // insert new period to result only if limit changed or period was found
-        if (significant_limit_stack_level_pair.limit != current_period_limit and
-            significant_limit_stack_level_pair.limit != std::numeric_limits<int>::max()) {
+        bool should_insert_period = significant_limit_stack_level_pair.limit != current_period_limit and
+                                    significant_limit_stack_level_pair.limit != std::numeric_limits<int>::max();
 
-            const auto start_period =
-                duration_cast<seconds>(temp_time.to_time_point() - start_time.to_time_point()).count();
+        EVLOG_debug << "stack_level_pair.limit(" << significant_limit_stack_level_pair.limit
+                    << ") != current_period_limit(" << current_period_limit << ") and stack_level_pair.limit("
+                    << significant_limit_stack_level_pair.limit << ") != std::numeric_limits<int>::max() "
+                    << std::numeric_limits<int>::max() << " == " << should_insert_period;
+
+        // insert new period to result only if limit changed or period was found
+        if (should_insert_period) {
 
             ChargingSchedulePeriod new_period = ChargingSchedulePeriod{
                 .startPeriod =
@@ -665,9 +724,5 @@ int SmartChargingHandler::get_power_limit(const int limit, const int nr_phases,
         return limit * LOW_VOLTAGE * nr_phases;
     }
 }
-
-// ChargingSchedulePeriod SmartChargingHandler::lowest_limit(std::vector<ChargingSchedulePeriod> periods) {
-
-// }
 
 } // namespace ocpp::v201
