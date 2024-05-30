@@ -245,6 +245,40 @@ std::string to_string(ChargingSchedulePeriod csp) {
     return csp_json.dump(4);
 }
 
+std::string get_log_duration_string(int32_t duration) {
+    if (duration < 1) {
+        return "0 Seconds ";
+    }
+
+    int32_t remaining = duration;
+
+    std::string log_str = "";
+
+    if (remaining >= 86400) {
+        int32_t days = remaining / 86400;
+        remaining = remaining % 86400;
+        if (days > 1) {
+            log_str += std::to_string(days) + " Days ";
+        } else {
+            log_str += std::to_string(days) + " Day ";
+        }
+    }
+    if (remaining >= 3600) {
+        int32_t hours = remaining / 3600;
+        remaining = remaining % 3600;
+        log_str += std::to_string(hours) + " Hours ";
+    }
+    if (remaining >= 60) {
+        int32_t minutes = remaining / 60;
+        remaining = remaining % 60;
+        log_str += std::to_string(minutes) + " Minutes ";
+    }
+    if (remaining > 0) {
+        log_str += std::to_string(remaining) + " Seconds ";
+    }
+    return log_str;
+}
+
 // TODO: The structs type is float but it's being passed in as an int. Significant?
 int get_requested_limit(const int limit, const int nr_phases, const ChargingRateUnitEnum& requested_unit) {
     if (requested_unit == ChargingRateUnitEnum::A) {
@@ -467,12 +501,16 @@ bool continue_time_arrow(const ocpp::DateTime& temp_time, const ocpp::DateTime& 
 ocpp::DateTime SmartChargingHandler::get_next_temp_time(const ocpp::DateTime temp_time,
                                                         const std::vector<ChargingProfile>& valid_profiles,
                                                         const int32_t evse_id) {
+    EVLOG_debug << "get_next_temp_time> temp_time = " << temp_time;
+
     // Step 1 - lowest_next_time is set to maximum tine in the future
     ocpp::DateTime lowest_next_time = ocpp::DateTime(date::utc_clock::now() + hours(std::numeric_limits<int>::max()));
 
+    EVLOG_debug << "get_next_temp_time> lowest_next_time = " << lowest_next_time;
+
     // Step 2 - Iterate through the profiles
     for (const ChargingProfile& profile : valid_profiles) {
-        EVLOG_debug << "ChargingProfile> " << to_string(profile);
+        EVLOG_debug << "get_next_temp_time> ChargingProfile #" << profile.id;
 
         if (profile.chargingSchedule.size() > 1) {
             // TODO: Add support for Profiles with more than one ChargingSchedule.
@@ -486,16 +524,25 @@ ocpp::DateTime SmartChargingHandler::get_next_temp_time(const ocpp::DateTime tem
         // Step 4 - Get period_start_time and continue if available
         const std::optional<ocpp::DateTime> period_start_time_opt =
             this->get_profile_start_time(profile, temp_time, evse_id);
+
         if (period_start_time_opt.has_value()) {
             ocpp::DateTime period_start_time = period_start_time_opt.value();
 
+            EVLOG_debug << "get_next_temp_time> ChargingSchedule #" << schedule.id
+                        << " duration: " << get_log_duration_string(schedule.duration.value())
+                        << " startSchedule: " << schedule.startSchedule.value();
+
             // Step 5 - Iterate through the ChargingSchedulePeriods
             for (size_t i = 0; i < periods.size(); i++) {
+                ChargingSchedulePeriod period = periods.at(i);
+
                 // for (const ChargingSchedulePeriod period : schedule.chargingSchedulePeriod) {
-                EVLOG_debug << "ChargingSchedulePeriod> " << to_string(periods.at(i));
+                EVLOG_debug << "get_next_temp_time> ChargingSchedulePeriod #" << i << " limit: " << period.limit
+                            << " startPeriod: " << period.startPeriod;
 
                 // Step 6 - Get Period end time
                 const ocpp::DateTime period_end_time = get_period_end_time(i, period_start_time, schedule);
+                EVLOG_debug << "get_next_temp_time> period_end_time: " << period_end_time;
 
                 bool within_window =
                     continue_time_arrow(temp_time, period_start_time, period_end_time, lowest_next_time);
@@ -595,7 +642,7 @@ std::optional<ocpp::DateTime> SmartChargingHandler::get_profile_start_time(const
 
         // EVLOG_info << "ChargingProfile: " << to_string(profile);
     }
-    EVLOG_verbose << "get_profile_start_time> " << to_string(profile) << " temp_time: " << time.to_rfc3339()
+    EVLOG_verbose << "get_profile_start_time> profile #" << profile.id << " temp_time: " << time.to_rfc3339()
                   << " period_start_time: " << period_start_time.value().to_rfc3339() << " EVSE_ID #" << evse_id;
     return period_start_time;
 }

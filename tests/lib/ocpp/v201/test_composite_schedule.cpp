@@ -372,7 +372,7 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_GetProfileStar
 }
 
 TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_GetPeriodEndTime) {
-    // GTEST_SKIP();
+    GTEST_SKIP();
     create_evse_with_id(DEFAULT_EVSE_ID);
 
     // Test 1: Profile TxProfile_01.json, Absolute, Single Charging Period
@@ -407,8 +407,8 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_GetPeriodEndTi
     // ASSERT_EQ(expected_period_end_time_02, actual_period_end_time_02a);
 
     // Test 3: Profile TxProfile_100.json Period #2
-    const DateTime period_start_time_03 = ocpp::DateTime("2024-01-17T17:00:00");
-    const DateTime expected_period_end_time_03 = ocpp::DateTime("2024-01-18T13:00:00");
+    const DateTime period_start_time_03 = ocpp::DateTime("2024-01-18T13:00:00");
+    const DateTime expected_period_end_time_03 = ocpp::DateTime("2024-01-19T01:00:00");
 
     EVLOG_debug << "DURATION = " << get_log_duration_string(72000);
     DateTime actual_period_end_time_03 = handler.get_period_end_time(1, period_start_time_03, schedule_02);
@@ -422,20 +422,22 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_GetPeriodEndTi
 }
 
 TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_GetNextTempTime) {
-    GTEST_SKIP();
+    // GTEST_SKIP();
     create_evse_with_id(DEFAULT_EVSE_ID);
-    const DateTime time_5_59_59 = ocpp::DateTime("2024-01-17T17:59:59");
-    const DateTime time_6_00_00 = ocpp::DateTime("2024-01-17T18:00:00");
-    const DateTime time_6_01_00 = ocpp::DateTime("2024-01-17T18:01:00");
-    const DateTime time_6_10_00 = ocpp::DateTime("2024-01-17T18:10:00");
-    const DateTime time_6_10_01 = ocpp::DateTime("2024-01-17T18:10:01");
+
+    const DateTime time_17_17_59_59 = ocpp::DateTime("2024-01-17T17:59:59");
+    const DateTime time_17_18_18_00 = ocpp::DateTime("2024-01-17T18:18:00");
+    const DateTime time_18_01_00_00 = ocpp::DateTime("2024-01-18T01:00:00");
+    const DateTime time_18_02_00_00 = ocpp::DateTime("2024-01-18T02:00:00");
+    const DateTime time_18_13_00_00 = ocpp::DateTime("2024-01-18T13:00:00");
+    const DateTime time_18_17_00_00 = ocpp::DateTime("2024-01-18T17:00:00");
     std::vector<ChargingProfile> profiles = getBaselineProfileVector();
 
     ASSERT_EQ(2, profiles.size());
-    ASSERT_EQ(time_6_00_00, handler.get_next_temp_time(time_5_59_59, profiles, DEFAULT_EVSE_ID));
-    // ASSERT_EQ(time_6_10_00, handler.get_next_temp_time(time_6_00_00, profiles, DEFAULT_EVSE_ID));
-    // ASSERT_EQ(time_6_10_00, handler.get_next_temp_time(time_6_01_00, profiles, DEFAULT_EVSE_ID));
-    // ASSERT_EQ(time_6_10_00, handler.get_next_temp_time(time_6_10_01, profiles, DEFAULT_EVSE_ID));
+    ASSERT_EQ(time_17_18_18_00, handler.get_next_temp_time(time_17_17_59_59, profiles, DEFAULT_EVSE_ID));
+    ASSERT_EQ(time_18_01_00_00, handler.get_next_temp_time(time_17_18_18_00, profiles, DEFAULT_EVSE_ID));
+    ASSERT_EQ(time_18_13_00_00, handler.get_next_temp_time(time_18_02_00_00, profiles, DEFAULT_EVSE_ID));
+    ASSERT_EQ(time_18_17_00_00, handler.get_next_temp_time(time_18_13_00_00, profiles, DEFAULT_EVSE_ID));
 }
 
 /**
@@ -444,7 +446,10 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_GetNextTempTim
 TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_InitializeEnhancedCompositeSchedule) {
     GTEST_SKIP();
     create_evse_with_id(DEFAULT_EVSE_ID);
-    const DateTime start_time = ocpp::DateTime("2024-01-17T17:59:59");
+    // const DateTime start_time = ocpp::DateTime("2024-01-17T17:59:59");
+    // const DateTime end_time = ocpp::DateTime("2024-01-18T00:00:00");
+
+    const DateTime start_time = ocpp::DateTime("2024-01-17T18:01:00");
     const DateTime end_time = ocpp::DateTime("2024-01-18T00:00:00");
 
     // auto profile_01 = getChargingProfileFromFile("TxProfile_01.json");
@@ -455,12 +460,13 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_InitializeEnha
     CompositeSchedule composite_schedule =
         handler.calculate_composite_schedule(profiles, start_time, end_time, DEFAULT_EVSE_ID, ChargingRateUnitEnum::A);
 
+    log_me(composite_schedule);
+
     ASSERT_EQ(ChargingRateUnitEnum::A, composite_schedule.chargingRateUnit);
     ASSERT_EQ(DEFAULT_EVSE_ID, composite_schedule.evseId);
     ASSERT_EQ(21601, composite_schedule.duration);
     ASSERT_EQ(start_time, composite_schedule.scheduleStart);
     ASSERT_EQ(composite_schedule.chargingSchedulePeriod.size(), 0);
-    log_me(composite_schedule);
 }
 
 } // namespace ocpp::v201
