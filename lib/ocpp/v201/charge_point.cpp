@@ -5,9 +5,12 @@
 #include <ocpp/v201/charge_point.hpp>
 #include <ocpp/v201/ctrlr_component_variables.hpp>
 #include <ocpp/v201/device_model_storage_sqlite.hpp>
+#include <ocpp/v201/enums.hpp>
 #include <ocpp/v201/messages/FirmwareStatusNotification.hpp>
 #include <ocpp/v201/messages/LogStatusNotification.hpp>
+#include <ocpp/v201/messages/SetChargingProfile.hpp>
 #include <ocpp/v201/notify_report_requests_splitter.hpp>
+#include <ocpp/v201/smart_charging.hpp>
 
 #include <optional>
 #include <stdexcept>
@@ -173,6 +176,8 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
             std::make_pair(evse_id, std::make_unique<Evse>(evse_id, number_of_connectors, *this->device_model,
                                                            this->database_handler, component_state_manager,
                                                            transaction_meter_value_callback, pause_charging_callback)));
+
+        this->smart_charging_handler = std::make_unique<SmartChargingHandler>(this->evses, this->device_model);
     }
 
     // configure logging
@@ -3053,6 +3058,23 @@ void ChargePoint::handle_heartbeat_response(CallResult<HeartbeatResponse> call) 
     }
 }
 
+// Functional Block K: Smart Charging
+void ChargePoint::handle_set_charging_profile_req(Call<SetChargingProfileRequest> call) {
+    SetChargingProfileResponse response;
+    auto validity = this->smart_charging_handler->validate_profile(call.msg.chargingProfile, call.msg.evseId);
+
+    if (validity != ProfileValidationResultEnum::Valid) {
+        response.status = ChargingProfileStatusEnum::Rejected;
+    } else {
+        response = this->smart_charging_handler->add_profile(call.msg.evseId, call.msg.chargingProfile);
+        if (this->callbacks.signal_set_charging_profiles_callback.has_value()) {
+            this->callbacks.signal_set_charging_profiles_callback.value()();
+        }
+    }
+    ocpp::CallResult<SetChargingProfileResponse> call_result(response, call.uniqueId);
+    this->send<SetChargingProfileResponse>(call_result);
+}
+
 void ChargePoint::handle_firmware_update_req(Call<UpdateFirmwareRequest> call) {
     EVLOG_debug << "Received UpdateFirmwareRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
     if (call.msg.firmware.signingCertificate.has_value() or call.msg.firmware.signature.has_value()) {
@@ -3430,6 +3452,37 @@ void ChargePoint::execute_change_availability_request(ChangeAvailabilityRequest 
     } else {
         this->set_cs_operative_status(request.operationalStatus, persist);
     }
+}
+
+std::map<int32_t, EnhancedChargingSchedule>
+ChargePoint::get_all_enhanced_composite_charging_schedules(const int32_t duration_s) {
+
+    std::map<int32_t, EnhancedChargingSchedule> charging_schedules;
+
+    for (int evse_id = 0; evse_id <= this->evses.size(); evse_id++) {
+        const auto start_time = ocpp::DateTime();
+        const auto duration = std::chrono::seconds(duration_s);
+        const auto end_time = ocpp::DateTime(start_time.to_time_point() + duration);
+
+        const auto composite_schedule = EnhancedChargingSchedule {
+            .chargingRateUnit = ChargingRateUnitEnum::W,
+            .chargingSchedulePeriod = {
+                EnhancedChargingSchedulePeriod {
+                    .startPeriod = 0,
+                    .limit = 9000.0,
+                    .numberPhases = 1,
+                    .stackLevel = 1
+                }
+            },
+            .duration = duration_s,
+            .startSchedule = start_time,
+            .minChargingRate = 0.0
+        };
+
+        charging_schedules[evse_id] = composite_schedule;
+    }
+
+    return charging_schedules;
 }
 
 std::vector<GetVariableResult>
