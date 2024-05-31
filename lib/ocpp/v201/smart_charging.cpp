@@ -365,8 +365,7 @@ PeriodDateTimePair SmartChargingHandler::find_period_at(const ocpp::DateTime& ti
         }
     }
 
-    PeriodDateTimePair date_time_pair = {
-        std::nullopt, ocpp::DateTime(date::utc_clock::now() + hours(std::numeric_limits<int>::max()))};
+    PeriodDateTimePair date_time_pair = {std::nullopt, MAX_DATE_TIME};
     log_period_date_time_pair(date_time_pair);
     return date_time_pair;
 }
@@ -392,8 +391,8 @@ CompositeSchedule SmartChargingHandler::calculate_composite_schedule(std::vector
 
     ocpp::DateTime temp_time(start_time);
     ocpp::DateTime last_period_end_time(end_time);
-    int current_period_limit = std::numeric_limits<int>::max();
-    LimitStackLevelPair significant_limit_stack_level_pair = {std::numeric_limits<int>::max(), -1};
+    int current_period_limit = MAX_PERIOD_LIMIT;
+    LimitStackLevelPair significant_limit_stack_level_pair = {MAX_PERIOD_LIMIT, -1};
 
     // calculate every ChargingSchedulePeriod of result within this while loop
     while (SmartChargingHandler::within_time_window(end_time, temp_time)) {
@@ -449,8 +448,7 @@ CompositeSchedule SmartChargingHandler::calculate_composite_schedule(std::vector
         // break;
 
         // if there is a limit with purpose TxProfile it overrules the limit of purpose TxDefaultProfile
-        if (current_purpose_and_stack_limits.at(ChargingProfilePurposeEnum::TxProfile).limit !=
-            std::numeric_limits<int>::max()) {
+        if (current_purpose_and_stack_limits.at(ChargingProfilePurposeEnum::TxProfile).limit != MAX_PERIOD_LIMIT) {
             significant_limit_stack_level_pair =
                 current_purpose_and_stack_limits.at(ChargingProfilePurposeEnum::TxProfile);
         } else {
@@ -465,12 +463,12 @@ CompositeSchedule SmartChargingHandler::calculate_composite_schedule(std::vector
         }
 
         bool should_insert_period = significant_limit_stack_level_pair.limit != current_period_limit and
-                                    significant_limit_stack_level_pair.limit != std::numeric_limits<int>::max();
+                                    significant_limit_stack_level_pair.limit != MAX_PERIOD_LIMIT;
 
         EVLOG_debug << "stack_level_pair.limit(" << significant_limit_stack_level_pair.limit
                     << ") != current_period_limit(" << current_period_limit << ") and stack_level_pair.limit("
-                    << significant_limit_stack_level_pair.limit << ") != std::numeric_limits<int>::max() "
-                    << std::numeric_limits<int>::max() << " == " << should_insert_period;
+                    << significant_limit_stack_level_pair.limit << ") != MAX_PERIOD_LIMIT " << MAX_PERIOD_LIMIT
+                    << " == " << should_insert_period;
 
         // insert new period to result only if limit changed or period was found
         if (should_insert_period) {
@@ -526,7 +524,7 @@ ocpp::DateTime SmartChargingHandler::get_period_end_time(const int period_index,
         if (schedule.duration) {
             duration = schedule.duration.value();
         } else {
-            duration = std::numeric_limits<int>::max();
+            duration = MAX_PERIOD_LIMIT;
         }
 
         if (periods.at(period_index + 1).startPeriod < duration) {
@@ -540,7 +538,7 @@ ocpp::DateTime SmartChargingHandler::get_period_end_time(const int period_index,
         period_diff_in_seconds = schedule.duration.value() - periods.at(period_index).startPeriod;
         return ocpp::DateTime(period_start_time.to_time_point() + seconds(period_diff_in_seconds));
     } else {
-        return ocpp::DateTime(date::utc_clock::now() + hours(std::numeric_limits<int>::max()));
+        return MAX_DATE_TIME;
     }
 }
 
@@ -565,7 +563,7 @@ ocpp::DateTime SmartChargingHandler::get_next_temp_time(const ocpp::DateTime tem
     EVLOG_debug << "get_next_temp_time> temp_time = " << temp_time;
 
     // Step 1 - lowest_next_time is set to maximum tine in the future
-    ocpp::DateTime lowest_next_time = ocpp::DateTime(date::utc_clock::now() + hours(std::numeric_limits<int>::max()));
+    ocpp::DateTime lowest_next_time = MAX_DATE_TIME;
 
     EVLOG_debug << "get_next_temp_time> lowest_next_time = " << lowest_next_time;
 
@@ -710,9 +708,9 @@ std::optional<ocpp::DateTime> SmartChargingHandler::get_profile_start_time(const
 
 std::map<ChargingProfilePurposeEnum, LimitStackLevelPair> SmartChargingHandler::get_initial_purpose_and_stack_limits() {
     std::map<ChargingProfilePurposeEnum, LimitStackLevelPair> map;
-    map[ChargingProfilePurposeEnum::ChargingStationMaxProfile] = {std::numeric_limits<int>::max(), -1};
-    map[ChargingProfilePurposeEnum::TxDefaultProfile] = {std::numeric_limits<int>::max(), -1};
-    map[ChargingProfilePurposeEnum::TxProfile] = {std::numeric_limits<int>::max(), -1};
+    map[ChargingProfilePurposeEnum::ChargingStationMaxProfile] = {MAX_PERIOD_LIMIT, -1};
+    map[ChargingProfilePurposeEnum::TxDefaultProfile] = {MAX_PERIOD_LIMIT, -1};
+    map[ChargingProfilePurposeEnum::TxProfile] = {MAX_PERIOD_LIMIT, -1};
     return map;
 }
 

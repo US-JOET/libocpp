@@ -21,6 +21,10 @@ const int SECONDS_PER_HOUR = 3600;
 const int SECONDS_PER_DAY = 86400;
 const int DAYS_PER_WEEK = 7;
 
+const ocpp::DateTime MAX_DATE_TIME =
+    ocpp::DateTime(date::utc_clock::now() + std::chrono::hours(std::numeric_limits<int>::max()));
+const int MAX_PERIOD_LIMIT = std::numeric_limits<int>::max();
+
 enum class ProfileValidationResultEnum {
     Valid,
     EvseDoesNotExist,
