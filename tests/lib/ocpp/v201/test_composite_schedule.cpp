@@ -35,7 +35,7 @@ static const int DEFAULT_EVSE_ID = 1;
 static const int DEFAULT_PROFILE_ID = 1;
 static const int DEFAULT_STACK_LEVEL = 1;
 
-static const std::string BASE_JSON_PATH = "/tmp/EVerest/libocpp/json/";
+static const std::string BASE_JSON_PATH = "/tmp/EVerest/libocpp/json/v201/";
 
 class ChargepointTestFixtureV201 : public testing::Test {
 protected:
@@ -216,7 +216,7 @@ protected:
     /// \brief Returns a vector of ChargingProfiles to be used as a baseline for testing core functionality
     /// of generating an EnhancedChargingSchedule.
     std::vector<ChargingProfile> getBaselineProfileVector() {
-        return getChargingProfilesFromDirectory(BASE_JSON_PATH + "v201/baseline/");
+        return getChargingProfilesFromDirectory(BASE_JSON_PATH + "baseline/");
     }
 
     void log_duration(int32_t duration) {
@@ -452,7 +452,7 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_ValidateBaseli
 }
 
 TEST_F(ChargepointTestFixtureV201, getChargingProfilesFromDirectory) {
-    std::vector<ChargingProfile> vic = getChargingProfilesFromDirectory(BASE_JSON_PATH + "v201/baseline/");
+    std::vector<ChargingProfile> vic = getChargingProfilesFromDirectory(BASE_JSON_PATH + "baseline/");
 }
 
 } // namespace ocpp::v201
