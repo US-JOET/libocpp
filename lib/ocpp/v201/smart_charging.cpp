@@ -7,6 +7,7 @@
 #include "ocpp/v201/evse.hpp"
 #include "ocpp/v201/ocpp_types.hpp"
 #include "ocpp/v201/transaction.hpp"
+#include "ocpp/v201/utils.hpp"
 #include <iterator>
 #include <memory>
 #include <ocpp/v201/smart_charging.hpp>
@@ -224,66 +225,11 @@ std::vector<ChargingProfile> SmartChargingHandler::get_station_wide_tx_default_p
     return station_wide_tx_default_profiles;
 }
 
-std::string to_string(ChargingProfile cp) {
-    json cp_json;
-    to_json(cp_json, cp);
-
-    return cp_json.dump(4);
-}
-
-std::string to_string(ChargingSchedule cs) {
-    json cs_json;
-    to_json(cs_json, cs);
-
-    return cs_json.dump(4);
-}
-
-std::string to_string(ChargingSchedulePeriod csp) {
-    json csp_json;
-    to_json(csp_json, csp);
-
-    return csp_json.dump(4);
-}
-
-std::string get_log_duration_string(int32_t duration) {
-    if (duration < 1) {
-        return "0 Seconds ";
-    }
-
-    int32_t remaining = duration;
-
-    std::string log_str = "";
-
-    if (remaining >= 86400) {
-        int32_t days = remaining / 86400;
-        remaining = remaining % 86400;
-        if (days > 1) {
-            log_str += std::to_string(days) + " Days ";
-        } else {
-            log_str += std::to_string(days) + " Day ";
-        }
-    }
-    if (remaining >= 3600) {
-        int32_t hours = remaining / 3600;
-        remaining = remaining % 3600;
-        log_str += std::to_string(hours) + " Hours ";
-    }
-    if (remaining >= 60) {
-        int32_t minutes = remaining / 60;
-        remaining = remaining % 60;
-        log_str += std::to_string(minutes) + " Minutes ";
-    }
-    if (remaining > 0) {
-        log_str += std::to_string(remaining) + " Seconds ";
-    }
-    return log_str;
-}
-
 void log_period_date_time_pair(PeriodDateTimePair period_date_time_pair) {
     std::string log_str = "PeriodDateTimePair> ";
 
     if (period_date_time_pair.period.has_value()) {
-        log_str += " period: " + to_string(period_date_time_pair.period.value());
+        log_str += " period: " + utils::to_string(period_date_time_pair.period.value());
         // log_str += " period: " + std::to_string(period_date_time_pair.period.value().startPeriod);
         // EVLOG_info << "   Period: " << period_date_time_pair.period.value().startPeriod
         //            << " End Time: " << period_date_time_pair.end_time.to_rfc3339();
@@ -483,7 +429,7 @@ CompositeSchedule SmartChargingHandler::calculate_composite_schedule(std::vector
                 .numberPhases = temp_number_phases,
             };
 
-            EVLOG_debug << "calculate_composite_schedule> pushing period " << to_string(new_period);
+            EVLOG_debug << "calculate_composite_schedule> pushing period " << utils::to_string(new_period);
 
             periods.push_back(new_period);
 
@@ -588,7 +534,7 @@ ocpp::DateTime SmartChargingHandler::get_next_temp_time(const ocpp::DateTime tem
             ocpp::DateTime period_start_time = period_start_time_opt.value();
 
             EVLOG_debug << "get_next_temp_time> ChargingSchedule #" << schedule.id
-                        << " duration: " << get_log_duration_string(schedule.duration.value())
+                        << " duration: " << utils::get_log_duration_string(schedule.duration.value())
                         << " startSchedule: " << schedule.startSchedule.value();
 
             // Step 5 - Iterate through the ChargingSchedulePeriods
@@ -689,6 +635,27 @@ std::optional<ocpp::DateTime> SmartChargingHandler::get_profile_start_time(const
         if (profile.chargingProfileKind == ChargingProfileKindEnum::Absolute) {
             period_start_time = SmartChargingHandler::get_absolute_profile_start_time(schedule.startSchedule);
         } else if (profile.chargingProfileKind == ChargingProfileKindEnum::Relative) {
+
+            // Python psuedo code from Dr. Dan "The Man" Moore
+            // def calculate_relative_profile_charging_schedule_periods_start_time(charging_station, relative_profile,
+            //                                                                     profile_receipt_time, transaction) :
+            //     if transaction
+            //         .is_active
+            //     : return calculate_relative_profile_charging_schedule_periods_start_time_in_active_transaction(
+            //             charging_station, transaction, profile_receipt_time) else
+            //     : return THE END OF TIME
+
+            //           def
+            //           calculate_relative_profile_charging_schedule_periods_start_time_in_active_transaction(
+            //               charging_station, transaction, profile_receipt_time) :
+            //     if PowerPathClosed in charging_station.device_model.TxCtrlr.TxStartPoint
+            //     : transaction_profile_activation_time = transaction.power_path_closed_time else
+            //     : transaction_profile_activation_time = transaction.start_time
+
+            //                                             if profile_receipt_time <=
+            //                                             transaction_profile_activation_time
+            //     : return transaction_profile_activation_time else : return profile_receipt_time
+
             // TODO
             // if (this->evses.at(evse_id)->has_active_transaction()) {
             //     period_start_time.emplace(ocpp::DateTime(floor<seconds>(
