@@ -61,7 +61,7 @@ protected:
     }
 
     ChargingProfile getChargingProfileFromFile(const std::string& filename) {
-        const std::string base_path = "/tmp/EVerest/libocpp/json/v16/";
+        const std::string base_path = "/tmp/EVerest/libocpp/v16/json/";
         const std::string full_path = base_path + filename;
 
         std::ifstream f(full_path.c_str());

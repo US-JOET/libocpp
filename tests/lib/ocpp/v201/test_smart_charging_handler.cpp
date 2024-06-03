@@ -195,109 +195,6 @@ protected:
         handler.add_profile(evse_id, existing_profile);
     }
 
-    ChargingProfile getChargingProfileFromFile(const std::string& filename) {
-        const std::string base_path = "/tmp/EVerest/libocpp/json/";
-        const std::string full_path = base_path + filename;
-
-        std::ifstream f(full_path.c_str());
-        json data = json::parse(f);
-
-        ChargingProfile cp;
-        from_json(data, cp);
-        return cp;
-    }
-
-    /// \brief Returns a vector of ChargingProfiles to be used as a baseline for testing core functionality
-    /// of generating an EnhancedChargingSchedule.
-    std::vector<ChargingProfile> getBaselineProfileVector() {
-        auto profile_01 = getChargingProfileFromFile("TxDefaultProfile_01.json");
-        auto profile_100 = getChargingProfileFromFile("TxDefaultProfile_100.json");
-        return {profile_01, profile_100};
-    }
-
-    std::string get_log_duration_string(int32_t duration) {
-        if (duration < 1) {
-            return "0 Seconds ";
-        }
-
-        int32_t remaining = duration;
-
-        std::string log_str = "";
-
-        if (remaining >= 86400) {
-            int32_t days = remaining / 86400;
-            remaining = remaining % 86400;
-            if (days > 1) {
-                log_str += std::to_string(days) + " Days ";
-            } else {
-                log_str += std::to_string(days) + " Day ";
-            }
-        }
-        if (remaining >= 3600) {
-            int32_t hours = remaining / 3600;
-            remaining = remaining % 3600;
-            log_str += std::to_string(hours) + " Hours ";
-        }
-        if (remaining >= 60) {
-            int32_t minutes = remaining / 60;
-            remaining = remaining % 60;
-            log_str += std::to_string(minutes) + " Minutes ";
-        }
-        if (remaining > 0) {
-            log_str += std::to_string(remaining) + " Seconds ";
-        }
-        return log_str;
-    }
-
-    void log_duration(int32_t duration) {
-        EVLOG_info << get_log_duration_string(duration);
-    }
-
-    void log_me(ChargingProfile& cp) {
-        json cp_json;
-        to_json(cp_json, cp);
-
-        EVLOG_info << "  ChargingProfile> " << cp_json.dump(2);
-        // log_duration(cp.chargingSchedule.duration.value_or(0));
-    }
-
-    void log_me(std::vector<ChargingProfile> profiles) {
-        EVLOG_info << "[";
-        for (auto& profile : profiles) {
-            log_me(profile);
-        }
-        EVLOG_info << "]";
-    }
-
-    void log_me(CompositeSchedule& ecs) {
-        json ecs_json;
-        to_json(ecs_json, ecs);
-
-        EVLOG_info << "CompositeSchedule> " << ecs_json.dump(4);
-    }
-
-    // void log_me(CompositeSchedule& ecs, const DateTime start_time) {
-    //     log_me(ecs);
-    //     EVLOG_info << "Start Time> " << start_time.to_rfc3339();
-
-    //     int32_t i = 0;
-    //     for (auto& period : ecs.chargingSchedulePeriod) {
-    //         i++;
-    //         int32_t numberPhases = 0;
-    //         if (period.numberPhases.has_value()) {
-    //             numberPhases = period.numberPhases.value();
-    //         }
-    //         EVLOG_info << "   period #" << i << " {limit: " << period.limit << " numberPhases:" << numberPhases
-    //                    << " stackLevel:" << period.stackLevel << "} starts "
-    //                    << get_log_duration_string(period.startPeriod) << "in";
-    //     }
-    //     if (ecs.duration.has_value()) {
-    //         EVLOG_info << "   period #" << i << " ends after " << get_log_duration_string(ecs.duration.value());
-    //     } else {
-    //         EVLOG_info << "   period #" << i << " ends in 0 Seconds";
-    //     }
-    // }
-
     // Default values used within the tests
     std::map<int32_t, std::unique_ptr<EvseInterface>> evses;
     std::shared_ptr<DatabaseHandler> database_handler;
@@ -646,23 +543,6 @@ TEST_F(ChargepointTestFixtureV201, K01FR49_IfNumberPhasesMissingForACEVSE_ThenSe
 
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::Valid));
     EXPECT_THAT(numberPhases, testing::Eq(3));
-}
-
-/**
- * Calculate Composite Schedule
- */
-TEST_F(ChargepointTestFixtureV201, K08) {
-    create_evse_with_id(DEFAULT_EVSE_ID);
-    const DateTime my_date_start_range = ocpp::DateTime("2024-01-17T17:59:59");
-    const DateTime my_date_end_range = ocpp::DateTime("2024-01-18T00:00:00");
-    // std::vector<ChargingProfile> profiles = getBaselineProfileVector();
-    // log_me(profiles);
-    std::string same_transaction_id = uuid();
-    auto profile_1 = create_charging_profile(DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
-                                             create_charge_schedule(ChargingRateUnitEnum::A), same_transaction_id,
-                                             ChargingProfileKindEnum::Absolute, 1);
-
-    log_me(profile_1);
 }
 
 } // namespace ocpp::v201

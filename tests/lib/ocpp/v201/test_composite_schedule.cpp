@@ -35,7 +35,7 @@ static const int DEFAULT_EVSE_ID = 1;
 static const int DEFAULT_PROFILE_ID = 1;
 static const int DEFAULT_STACK_LEVEL = 1;
 
-static const std::string BASE_JSON_PATH = "/tmp/EVerest/libocpp/json/v201/";
+static const std::string BASE_JSON_PATH = "/tmp/EVerest/libocpp/v201/json/";
 
 class ChargepointTestFixtureV201 : public testing::Test {
 protected:

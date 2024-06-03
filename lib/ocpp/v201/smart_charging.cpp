@@ -636,11 +636,12 @@ std::optional<ocpp::DateTime> SmartChargingHandler::get_profile_start_time(const
             period_start_time = SmartChargingHandler::get_absolute_profile_start_time(schedule.startSchedule);
         } else if (profile.chargingProfileKind == ChargingProfileKindEnum::Relative) {
 
+            // if (this->evses(evse_id))
+
             // Python psuedo code from Dr. Dan "The Man" Moore
             // def calculate_relative_profile_charging_schedule_periods_start_time(charging_station, relative_profile,
             //                                                                     profile_receipt_time, transaction) :
-            //     if transaction
-            //         .is_active
+            //     if transaction.is_active and transaction.id == relative_profile.transactionId:
             //     : return calculate_relative_profile_charging_schedule_periods_start_time_in_active_transaction(
             //             charging_station, transaction, profile_receipt_time) else
             //     : return THE END OF TIME
