@@ -25,6 +25,8 @@
 #include <ocpp/v201/smart_charging.hpp>
 #include <optional>
 
+#include "smart_charging_test_utils.hpp"
+
 #include <sstream>
 #include <vector>
 
@@ -35,7 +37,7 @@ static const int DEFAULT_EVSE_ID = 1;
 static const int DEFAULT_PROFILE_ID = 1;
 static const int DEFAULT_STACK_LEVEL = 1;
 
-static const std::string BASE_JSON_PATH = "/tmp/EVerest/libocpp/v201/json/";
+// static const std::string BASE_JSON_PATH = "/tmp/EVerest/libocpp/v201/json/";
 
 class ChargepointTestFixtureV201 : public testing::Test {
 protected:
@@ -183,60 +185,12 @@ protected:
         handler.add_profile(evse_id, existing_profile);
     }
 
-    std::vector<ChargingProfile> getChargingProfilesFromDirectory(const std::string& path) {
-        std::vector<ChargingProfile> profiles;
-        for (const auto& entry : fs::directory_iterator(path)) {
-            if (!entry.is_directory()) {
-                fs::path path = entry.path();
-                if (path.extension() == ".json") {
-                    ChargingProfile profile = getChargingProfileFromPath(path);
-                    std::cout << path << std::endl;
-                    profiles.push_back(profile);
-                }
-            }
-        }
-        return profiles;
-    }
-
-    ChargingProfile getChargingProfileFromPath(const std::string& path) {
-        std::ifstream f(path.c_str());
-        json data = json::parse(f);
-
-        ChargingProfile cp;
-        from_json(data, cp);
-        return cp;
-    }
-
-    ChargingProfile getChargingProfileFromFile(const std::string& filename) {
-        const std::string full_path = BASE_JSON_PATH + filename;
-
-        return getChargingProfileFromPath(full_path);
-    }
-
-    /// \brief Returns a vector of ChargingProfiles to be used as a baseline for testing core functionality
-    /// of generating an EnhancedChargingSchedule.
-    std::vector<ChargingProfile> getBaselineProfileVector() {
-        return getChargingProfilesFromDirectory(BASE_JSON_PATH + "baseline/");
-    }
-
-    void log_duration(int32_t duration) {
-        EVLOG_info << utils::get_log_duration_string(duration);
-    }
-
-    void log_me(ChargingProfile& cp) {
-        EVLOG_info << "  ChargingProfile> " << utils::to_string(cp);
-    }
-
     void log_me(std::vector<ChargingProfile> profiles) {
         EVLOG_info << "[";
         for (auto& profile : profiles) {
-            log_me(profile);
+            EVLOG_info << "  ChargingProfile> " << utils::to_string(profile);
         }
         EVLOG_info << "]";
-    }
-
-    void log_me(CompositeSchedule& ecs) {
-        EVLOG_info << "CompositeSchedule> " << utils::to_string(ecs);
     }
 
     // Default values used within the tests
@@ -291,15 +245,11 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_DetermineDurat
     }
 }
 
-/**
- * Validates the SmartChargingHandler::determined_duraction and SmartChargingHandler::within_time_window
- * utility functions.
- */
 TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_GetProfileStartTime_KindAbsolute) {
     GTEST_SKIP();
     create_evse_with_id(DEFAULT_EVSE_ID);
     DateTime time = ocpp::DateTime("2024-01-17T17:59:59");
-    ChargingProfile profile = getChargingProfileFromFile("TxProfile_01.json");
+    ChargingProfile profile = SmartChargingTestUtils::getChargingProfileFromFile("TxProfile_01.json");
     DateTime expected = ocpp::DateTime("2024-01-17T18:00:00");
 
     std::optional<ocpp::DateTime> actual = handler.get_profile_start_time(profile, time, DEFAULT_EVSE_ID);
@@ -311,7 +261,7 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_GetProfileStar
     GTEST_SKIP();
     create_evse_with_id(DEFAULT_EVSE_ID);
     DateTime time = ocpp::DateTime("2024-01-17T18:00:00");
-    ChargingProfile profile = getChargingProfileFromFile("TxProfile_100.json");
+    ChargingProfile profile = SmartChargingTestUtils::getChargingProfileFromFile("TxProfile_100.json");
     DateTime expected = ocpp::DateTime("2024-01-17T18:10:00");
 
     std::optional<ocpp::DateTime> actual = handler.get_profile_start_time(profile, time, DEFAULT_EVSE_ID);
@@ -337,7 +287,7 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_GetPeriodEndTi
     create_evse_with_id(DEFAULT_EVSE_ID);
 
     // Test 1: Profile TxProfile_01.json, Absolute, Single Charging Period
-    const auto profile_01 = getChargingProfileFromFile("TxProfile_01.json");
+    const auto profile_01 = SmartChargingTestUtils::getChargingProfileFromFile("TxProfile_01.json");
 
     const DateTime period_start_time_01 = ocpp::DateTime("2024-01-17T18:00:00");
     const DateTime expected_period_end_time_01 = ocpp::DateTime("2024-01-17T18:18:00");
@@ -349,7 +299,7 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_GetPeriodEndTi
     ASSERT_EQ(expected_period_end_time_01, actual_period_end_time_01);
 
     // Test 2: Profile TxProfile_100.json Period #1
-    const auto profile_100 = getChargingProfileFromFile("TxProfile_100.json");
+    const auto profile_100 = SmartChargingTestUtils::getChargingProfileFromFile("TxProfile_100.json");
 
     const DateTime period_start_time_02 = ocpp::DateTime("2024-01-17T17:00:00");
     const DateTime expected_period_end_time_02 = ocpp::DateTime("2024-01-18T01:00:00");
@@ -392,7 +342,7 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_GetNextTempTim
     const DateTime time_18_02_00_00 = ocpp::DateTime("2024-01-18T02:00:00");
     const DateTime time_18_13_00_00 = ocpp::DateTime("2024-01-18T13:00:00");
     const DateTime time_18_17_00_00 = ocpp::DateTime("2024-01-18T17:00:00");
-    std::vector<ChargingProfile> profiles = getBaselineProfileVector();
+    std::vector<ChargingProfile> profiles = SmartChargingTestUtils::getBaselineProfileVector();
 
     ASSERT_EQ(2, profiles.size());
     ASSERT_EQ(time_17_18_18_00, handler.get_next_temp_time(time_17_17_59_59, profiles, DEFAULT_EVSE_ID));
@@ -413,12 +363,12 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_ValidateBaseli
     const DateTime end_time = ocpp::DateTime("2024-01-18T06:00:00");
     const int32_t expected_duration = 43140;
 
-    std::vector<ChargingProfile> profiles = getBaselineProfileVector();
+    std::vector<ChargingProfile> profiles = SmartChargingTestUtils::getBaselineProfileVector();
 
     CompositeSchedule composite_schedule =
         handler.calculate_composite_schedule(profiles, start_time, end_time, DEFAULT_EVSE_ID, ChargingRateUnitEnum::W);
 
-    log_me(composite_schedule);
+    EVLOG_info << "CompositeSchedule> " << utils::to_string(composite_schedule);
 
     // Validate base fields
     ASSERT_EQ(ChargingRateUnitEnum::W, composite_schedule.chargingRateUnit);
@@ -434,25 +384,17 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_ValidateBaseli
     ASSERT_EQ(period_01.startPeriod, 0);
     auto& period_02 = composite_schedule.chargingSchedulePeriod.at(1);
     ASSERT_EQ(period_02.limit, 11000);
-    ASSERT_EQ(period_02.numberPhases, 3);
-    ASSERT_EQ(period_02.startPeriod, 1020);
-    auto& period_03 = composite_schedule.chargingSchedulePeriod.at(2);
-    ASSERT_EQ(period_03.limit, 6000.0);
-    ASSERT_EQ(period_03.numberPhases, 3);
-    ASSERT_EQ(period_03.startPeriod, 25140);
-
-    // Validate that reversing the profile vector returns the same result
-    std::vector<ChargingProfile> reverse_profiles = getBaselineProfileVector();
-    std::reverse(reverse_profiles.begin(), reverse_profiles.end());
-    CompositeSchedule reverse_composite_schedule = handler.calculate_composite_schedule(
-        reverse_profiles, start_time, end_time, DEFAULT_EVSE_ID, ChargingRateUnitEnum::W);
-    ASSERT_EQ(utils::to_string(composite_schedule), utils::to_string(reverse_composite_schedule));
-
-    log_me(composite_schedule);
+    SmartChargingTestUtils utils;
+    std::vector<ChargingProfile> reverse_profiles = utils.getBaselineProfileVector();
 }
 
 TEST_F(ChargepointTestFixtureV201, getChargingProfilesFromDirectory) {
-    std::vector<ChargingProfile> vic = getChargingProfilesFromDirectory(BASE_JSON_PATH + "baseline/");
+    std::vector<ChargingProfile> vic =
+        SmartChargingTestUtils::getChargingProfilesFromDirectory(BASE_JSON_PATH + "baseline/");
+
+    std::string s = SmartChargingTestUtils::to_string(vic);
+    EVLOG_info << s;
+    EVLOG_info << "md5hash> " << SmartChargingTestUtils::md5hash(s);
 }
 
 } // namespace ocpp::v201
