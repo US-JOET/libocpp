@@ -76,3 +76,12 @@ target_link_libraries(${TEST_TARGET_NAME} PRIVATE
 )
 
 add_test(${TEST_TARGET_NAME} ${TEST_TARGET_NAME})
+
+
+add_executable(charin_demo_bin)
+target_link_libraries(charin_demo_bin PRIVATE
+        ocpp
+        GTest::gmock
+        GTest::gtest
+)
+add_subdirectory(lib/ocpp/v201/charin_demo)
