@@ -1,6 +1,7 @@
 #include "date/tz.h"
 #include "ocpp/common/types.hpp"
 #include "ocpp/v201/ctrlr_component_variables.hpp"
+#include "ocpp/v201/device_model.hpp"
 #include "ocpp/v201/device_model_storage_sqlite.hpp"
 #include "ocpp/v201/ocpp_types.hpp"
 #include <boost/uuid/uuid_generators.hpp>
@@ -30,6 +31,20 @@ static const int STATION_WIDE_ID = 0;
 static const int DEFAULT_EVSE_ID = 1;
 static const int DEFAULT_PROFILE_ID = 1;
 static const int DEFAULT_STACK_LEVEL = 1;
+
+class TestSmartChargingHandler : public SmartChargingHandler {
+public:
+    using SmartChargingHandler::validate_charging_station_max_profile;
+    using SmartChargingHandler::validate_evse_exists;
+    using SmartChargingHandler::validate_profile_schedules;
+    using SmartChargingHandler::validate_tx_default_profile;
+    using SmartChargingHandler::validate_tx_profile;
+
+    TestSmartChargingHandler(std::map<int32_t, std::unique_ptr<EvseInterface>>& evses,
+                             std::unique_ptr<DeviceModel>& device_model) :
+        SmartChargingHandler(evses, device_model) {
+    }
+};
 
 class ChargepointTestFixtureV201 : public testing::Test {
 protected:
@@ -191,8 +206,8 @@ protected:
         evses[id] = std::move(e1);
     }
 
-    SmartChargingHandler create_smart_charging_handler() {
-        return SmartChargingHandler(evses, device_model);
+    TestSmartChargingHandler create_smart_charging_handler() {
+        return TestSmartChargingHandler(evses, device_model);
     }
 
     std::string uuid() {
@@ -232,7 +247,7 @@ protected:
 
     bool ignore_no_transaction = true;
     std::unique_ptr<DeviceModel> device_model = create_device_model();
-    SmartChargingHandler handler = create_smart_charging_handler();
+    TestSmartChargingHandler handler = create_smart_charging_handler();
     boost::uuids::random_generator uuid_generator = boost::uuids::random_generator();
 };
 
