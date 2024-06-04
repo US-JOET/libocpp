@@ -1,4 +1,5 @@
 #include "ocpp/v201/ocpp_types.hpp"
+#include "ocpp/v201/smart_charging.hpp"
 #include "ocpp/v201/utils.hpp"
 #include <filesystem>
 #include <iomanip>
@@ -15,6 +16,11 @@ static const std::string BASE_JSON_PATH = "/tmp/EVerest/libocpp/v201/json/";
 
 class SmartChargingTestUtils {
 public:
+    static SmartChargingHandler smart_charging_handler_factory() {
+        std::map<int32_t, std::unique_ptr<EvseInterface>> evses = {};
+
+        return SmartChargingHandler(evses);
+    }
     static std::vector<ChargingProfile> getChargingProfilesFromDirectory(const std::string& path) {
         std::vector<ChargingProfile> profiles;
         for (const auto& entry : fs::directory_iterator(path)) {
@@ -77,6 +83,10 @@ public:
         }
 
         return sout.str();
+    }
+
+    static std::string filename_with_hash(std::string base_filename, std::string to_be_hashed) {
+        return base_filename + "-" + SmartChargingTestUtils::md5hash(to_be_hashed) + ".json";
     }
 };
 

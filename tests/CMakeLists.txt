@@ -84,4 +84,6 @@ target_link_libraries(charin_demo_bin PRIVATE
         GTest::gmock
         GTest::gtest
 )
+
+target_include_directories(charin_demo_bin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 add_subdirectory(lib/ocpp/v201/charin_demo)
