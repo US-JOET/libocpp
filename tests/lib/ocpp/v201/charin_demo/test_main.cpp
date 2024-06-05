@@ -56,8 +56,8 @@ int main(int argc, char** argv) {
 
     std::string input_directory;
     boost::optional<std::string> output_directory;
-    boost::optional<ocpp::DateTime> start_time;
-    boost::optional<ocpp::DateTime> end_time;
+    ocpp::DateTime start_time;
+    ocpp::DateTime end_time;
     boost::program_options::options_description desc("Allowed options");
     desc.add_options()("help",
                        "produce help message")("input-dir",
@@ -68,12 +68,12 @@ int main(int argc, char** argv) {
             output_directory = path;
         }),
         "optional path to spit out stuff")
-        ("start-time", boost::program_options::value<std::string>()->notifier(
+        ("start-time", boost::program_options::value<std::string>()->required()->notifier(
             [&start_time](std::string time) { start_time = ocpp::DateTime(time); }
-        ), "optional start time")
-        ("end-time", boost::program_options::value<std::string>()->notifier(
+        ), "the start time for calculating the composite schedule window")
+        ("end-time", boost::program_options::value<std::string>()->required()->notifier(
             [&end_time](std::string time) { end_time = ocpp::DateTime(time); }
-        ), "optional end time");
+        ), "the end time for calculating the composite schedule window");
 
     boost::program_options::basic_command_line_parser<char> parser(argc, argv);
     boost::program_options::parsed_options parsed = parser.options(desc).allow_unregistered().run();
@@ -92,18 +92,6 @@ int main(int argc, char** argv) {
         output_directory = CHARIN_DEFAULT_OUTPUT_PATH;
     }
 
-    if (start_time.has_value() != end_time.has_value()) {
-        throw boost::program_options::error("Either do not specify start and end times or specify both.");
-    }
-
-    if (!start_time.has_value()) {
-        start_time = ocpp::DateTime("2024-01-17T18:01:00");
-    }
-
-    if (!end_time.has_value()) {
-        end_time = ocpp::DateTime("2024-01-18T06:00:00");
-    }
-
     std::vector<ocpp::v201::ChargingProfile> profiles =
         ocpp::v201::SmartChargingTestUtils::getChargingProfilesFromDirectory(input_directory);
     std::string profiles_json = ocpp::v201::SmartChargingTestUtils::to_string(profiles);
@@ -111,7 +99,7 @@ int main(int argc, char** argv) {
     ocpp::v201::SmartChargingHandler handler = ocpp::v201::SmartChargingTestUtils::smart_charging_handler_factory();
 
     ocpp::v201::CompositeSchedule cs =
-        handler.calculate_composite_schedule(profiles, start_time.value(), end_time.value(), 1, ocpp::v201::ChargingRateUnitEnum::W);
+        handler.calculate_composite_schedule(profiles, start_time, end_time, 1, ocpp::v201::ChargingRateUnitEnum::W);
 
     std::string cs_filename =
         ocpp::v201::SmartChargingTestUtils::filename_with_hash("CompositeSchedule", profiles_json);
