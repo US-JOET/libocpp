@@ -1,6 +1,7 @@
 #include <boost/function/function_base.hpp>
 #include <boost/optional.hpp>
 #include <boost/optional/optional_io.hpp>
+#include <boost/program_options/errors.hpp>
 #include <boost/program_options/option.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
@@ -89,6 +90,10 @@ int main(int argc, char** argv) {
     if (!output_directory.has_value()) {
         // TODO: Make sure this directory exists.
         output_directory = CHARIN_DEFAULT_OUTPUT_PATH;
+    }
+
+    if (start_time.has_value() != end_time.has_value()) {
+        throw boost::program_options::error("Either do not specify start and end times or specify both.");
     }
 
     if (!start_time.has_value()) {
