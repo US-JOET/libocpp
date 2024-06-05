@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "lib/ocpp/v201/smart_charging_test_utils.hpp"
+#include "ocpp/common/types.hpp"
 #include "ocpp/v201/ocpp_types.hpp"
 #include "ocpp/v201/utils.hpp"
 
@@ -54,6 +55,8 @@ int main(int argc, char** argv) {
 
     std::string input_directory;
     boost::optional<std::string> output_directory;
+    boost::optional<ocpp::DateTime> start_time;
+    boost::optional<ocpp::DateTime> end_time;
     boost::program_options::options_description desc("Allowed options");
     desc.add_options()("help",
                        "produce help message")("input-dir",
@@ -63,7 +66,13 @@ int main(int argc, char** argv) {
         "output-dir", boost::program_options::value<std::string>()->notifier([&output_directory](std::string path) {
             output_directory = path;
         }),
-        "optional path to spit out stuff");
+        "optional path to spit out stuff")
+        ("start-time", boost::program_options::value<std::string>()->notifier(
+            [&start_time](std::string time) { start_time = ocpp::DateTime(time); }
+        ), "optional start time")
+        ("end-time", boost::program_options::value<std::string>()->notifier(
+            [&end_time](std::string time) { end_time = ocpp::DateTime(time); }
+        ), "optional end time");
 
     boost::program_options::basic_command_line_parser<char> parser(argc, argv);
     boost::program_options::parsed_options parsed = parser.options(desc).allow_unregistered().run();
@@ -77,13 +86,18 @@ int main(int argc, char** argv) {
 
     boost::program_options::notify(vm);
 
-    if (!output_directory) {
+    if (!output_directory.has_value()) {
         // TODO: Make sure this directory exists.
         output_directory = CHARIN_DEFAULT_OUTPUT_PATH;
     }
 
-    const ocpp::DateTime start_time = ocpp::DateTime("2024-01-17T18:01:00");
-    const ocpp::DateTime end_time = ocpp::DateTime("2024-01-18T06:00:00");
+    if (!start_time.has_value()) {
+        start_time = ocpp::DateTime("2024-01-17T18:01:00");
+    }
+
+    if (!end_time.has_value()) {
+        end_time = ocpp::DateTime("2024-01-18T06:00:00");
+    }
 
     std::vector<ocpp::v201::ChargingProfile> profiles =
         ocpp::v201::SmartChargingTestUtils::getChargingProfilesFromDirectory(input_directory);
@@ -92,7 +106,7 @@ int main(int argc, char** argv) {
     ocpp::v201::SmartChargingHandler handler = ocpp::v201::SmartChargingTestUtils::smart_charging_handler_factory();
 
     ocpp::v201::CompositeSchedule cs =
-        handler.calculate_composite_schedule(profiles, start_time, end_time, 1, ocpp::v201::ChargingRateUnitEnum::W);
+        handler.calculate_composite_schedule(profiles, start_time.value(), end_time.value(), 1, ocpp::v201::ChargingRateUnitEnum::W);
 
     std::string cs_filename =
         ocpp::v201::SmartChargingTestUtils::filename_with_hash("CompositeSchedule", profiles_json);
