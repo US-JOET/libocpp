@@ -377,7 +377,7 @@ public:
 
     /// \brief Calculate a composite schedule for each EVSE at this Charge Point
     /// \param duration_s The duration of the desired composite schedules in seconds.
-    virtual std::map<int32_t, EnhancedChargingSchedule> get_all_enhanced_composite_charging_schedules(const int32_t duration_s) = 0;
+    virtual std::map<int32_t, CompositeSchedule> get_all_composite_charging_schedules(const int32_t duration_s) = 0;
 
     /// \brief Gets variables specified within \p get_variable_data_vector from the device model and returns the result.
     /// This function is used internally in order to handle GetVariables.req messages and it can be used to get
@@ -868,7 +868,7 @@ public:
         this->message_queue_resume_delay = delay;
     }
 
-    std::map<int32_t, EnhancedChargingSchedule> get_all_enhanced_composite_charging_schedules(const int32_t duration_s) override;
+    std::map<int32_t, CompositeSchedule> get_all_composite_charging_schedules(const int32_t duration_s) override;
 
     std::vector<GetVariableResult> get_variables(const std::vector<GetVariableData>& get_variable_data_vector) override;
 

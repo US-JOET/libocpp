@@ -83,6 +83,11 @@ private:
     std::map<int32_t, std::vector<ChargingProfile>> charging_profiles;
     std::vector<ChargingProfile> station_wide_charging_profiles;
 
+    std::map<int, ChargingProfile> stack_level_charge_point_max_profiles_map;
+    std::mutex charge_point_max_profiles_map_mutex;
+    std::mutex tx_default_profiles_map_mutex;
+    std::mutex tx_profiles_map_mutex;
+
 public:
     explicit SmartChargingHandler(std::map<int32_t, std::unique_ptr<EvseInterface>>& evses,
                                   std::unique_ptr<DeviceModel>& device_model);
@@ -177,6 +182,16 @@ public:
     /// This method assumes that the existing profile will have dates set for validFrom and validTo
     ///
     bool is_overlapping_validity_period(int evse_id, const ChargingProfile& profile) const;
+
+    ///
+    /// \brief Gets all valid profiles within the given absoulte \p start_time and absolute \p end_time for the given \p
+    /// connector_id
+    ///
+    std::vector<ChargingProfile> get_valid_profiles(
+        const ocpp::DateTime& start_time,
+        const ocpp::DateTime& end_time,
+        const int evse_id
+    );
 
 private:
     std::vector<ChargingProfile> get_evse_specific_tx_default_profiles() const;

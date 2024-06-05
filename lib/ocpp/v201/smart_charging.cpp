@@ -453,7 +453,7 @@ PeriodDateTimePair SmartChargingHandler::find_period_at(const ocpp::DateTime& ti
 }
 
 ///
-/// \brief Calculates the composite schedule for the given \p valid_profiles and the given \p connector_id
+/// \brief Calculates the composite schedule for the given \p valid_profiles and the given \p evse_id
 ///
 /// Step 01-000 - Pass in profiles, start and end time, evse od add charging_rate_unit
 /// Step 01-001 - initialize_enhanced_composite_schedule(start_time, end_time, evse_id, charging_rate_unit)
@@ -862,6 +862,75 @@ void SmartChargingHandler::conform_validity_periods(ChargingProfile& profile) co
         profile.validFrom.has_value() ? profile.validFrom.value() : ocpp::DateTime(date::utc_clock::now());
     profile.validTo =
         profile.validTo.has_value() ? profile.validTo.value() : ocpp::DateTime(date::utc_clock::time_point::max());
+}
+
+bool overlap(const ocpp::DateTime& start_time, const ocpp::DateTime& end_time, const ChargingProfile profile) {
+    ocpp::DateTime latest_start(start_time);
+    ocpp::DateTime earliest_end(end_time);
+    if (profile.validFrom && profile.validFrom.value() > start_time) {
+        latest_start = profile.validFrom.value();
+    }
+    if (profile.validTo && profile.validTo.value() < end_time) {
+        earliest_end = profile.validTo.value();
+    }
+    const auto delta = earliest_end.to_time_point() - latest_start.to_time_point();
+    return delta.count() > 0;
+}
+
+std::vector<ChargingProfile> SmartChargingHandler::get_valid_profiles(
+    const ocpp::DateTime& start_time,
+    const ocpp::DateTime& end_time,
+    const int evse_id
+) {
+    std::vector<ChargingProfile> valid_profiles;
+
+    auto all_profiles = station_wide_charging_profiles;
+    for (auto evse_profile_pair : charging_profiles) {
+        if (evse_profile_pair.first == evse_id) {
+            all_profiles.insert(
+                all_profiles.end(),
+                evse_profile_pair.second.begin(),
+                evse_profile_pair.second.end()
+            );
+        }
+    }
+
+    for (auto candidate : all_profiles) {
+        if (overlap(start_time, end_time, candidate)) {
+            valid_profiles.push_back(candidate);
+        }
+    }
+    return valid_profiles;
+
+    // std::vector<ChargingProfile> valid_profiles;
+
+    // {
+    //     std::lock_guard<std::mutex> lk(this->charge_point_max_profiles_map_mutex);
+
+    //     for (const auto& [stack_level, profile] : this->stack_level_charge_point_max_profiles_map) {
+    //         if (overlap(start_time, end_time, profile)) {
+    //             valid_profiles.push_back(profile);
+    //         }
+    //     }
+    // }
+
+    // if (evse_id > 0 and this->evses.at(evse_id)->transaction != nullptr) {
+    //     std::lock_guard<std::mutex> lk_txd(this->tx_default_profiles_map_mutex);
+    //     std::lock_guard<std::mutex> lk_tx(this->tx_profiles_map_mutex);
+    //     for (const auto& [stack_level, profile] : this->evses.at(evse_id)->stack_level_tx_profiles_map) {
+    //         if (overlap(start_time, end_time, profile)) {
+    //             valid_profiles.push_back(profile);
+    //         }
+    //     }
+    //     for (const auto& [stack_level, profile] :
+    //          this->evses.at(evse_id)->stack_level_tx_default_profiles_map) {
+    //         if (overlap(start_time, end_time, profile)) {
+    //             valid_profiles.push_back(profile);
+    //         }
+    //     }
+    // }
+
+    // return valid_profiles;
 }
 
 } // namespace ocpp::v201

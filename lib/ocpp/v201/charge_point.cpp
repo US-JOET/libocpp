@@ -3454,32 +3454,21 @@ void ChargePoint::execute_change_availability_request(ChangeAvailabilityRequest 
     }
 }
 
-std::map<int32_t, EnhancedChargingSchedule>
-ChargePoint::get_all_enhanced_composite_charging_schedules(const int32_t duration_s) {
+std::map<int32_t, CompositeSchedule>
+ChargePoint::get_all_composite_charging_schedules(const int32_t duration_s) {
 
-    std::map<int32_t, EnhancedChargingSchedule> charging_schedules;
+    std::map<int32_t, CompositeSchedule> charging_schedules;
 
     for (int evse_id = 0; evse_id <= this->evses.size(); evse_id++) {
         const auto start_time = ocpp::DateTime();
         const auto duration = std::chrono::seconds(duration_s);
         const auto end_time = ocpp::DateTime(start_time.to_time_point() + duration);
 
-        const auto composite_schedule = EnhancedChargingSchedule {
-            .chargingRateUnit = ChargingRateUnitEnum::W,
-            .chargingSchedulePeriod = {
-                EnhancedChargingSchedulePeriod {
-                    .startPeriod = 0,
-                    .limit = 9000.0,
-                    .numberPhases = 1,
-                    .stackLevel = 1
-                }
-            },
-            .duration = duration_s,
-            .startSchedule = start_time,
-            .minChargingRate = 0.0
-        };
-
-        charging_schedules[evse_id] = composite_schedule;
+        const auto valid_profiles =
+            this->smart_charging_handler->get_valid_profiles(start_time, end_time, evse_id);
+        charging_schedules[evse_id] = this->smart_charging_handler->calculate_composite_schedule(
+            valid_profiles, start_time, end_time, evse_id, ChargingRateUnitEnum::W
+        );
     }
 
     return charging_schedules;

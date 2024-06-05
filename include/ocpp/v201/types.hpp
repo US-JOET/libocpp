@@ -165,31 +165,29 @@ MessageType string_to_messagetype(const std::string& s);
 /// \returns an output stream with the MessageType written to
 std::ostream& operator<<(std::ostream& os, const MessageType& message_type);
 
-/// \brief Enhances ChargingSchedulePeriod with stackLevel
-struct EnhancedChargingSchedulePeriod {
-    int32_t startPeriod;
-    float limit;
-    std::optional<int32_t> numberPhases;
-    int32_t stackLevel;
-};
-/// \brief Conversion from a given EnhancedChargingSchedulePeriod \p k to a given json object \p j
-void to_json(json& j, const EnhancedChargingSchedulePeriod& k);
-/// \brief Conversion from a given json object \p j to a given EnhancedChargingSchedulePeriod \p k
-void from_json(const json& j, EnhancedChargingSchedulePeriod& k);
+// struct ChargingSchedulePeriod {
+//     int32_t startPeriod;
+//     float limit;
+//     std::optional<int32_t> numberPhases;
+// };
+// /// \brief Conversion from a given ChargingSchedulePeriod \p k to a given json object \p j
+// void to_json(json& j, const ChargingSchedulePeriod& k);
+// /// \brief Conversion from a given json object \p j to a given ChargingSchedulePeriod \p k
+// void from_json(const json& j, ChargingSchedulePeriod& k);
 
-/// \brief Enhances ChargingSchedule by containing std::vector<EnhancedChargingSchedulePeriods> instead of
-/// std::vector<ChargingSchedulePeriod>
-struct EnhancedChargingSchedule {
-    ChargingRateUnitEnum chargingRateUnit;
-    std::vector<EnhancedChargingSchedulePeriod> chargingSchedulePeriod;
-    std::optional<int32_t> duration;
-    std::optional<ocpp::DateTime> startSchedule;
-    std::optional<float> minChargingRate;
-};
-/// \brief Conversion from a given EnhancedChargingSchedule \p k to a given json object \p j
-void to_json(json& j, const EnhancedChargingSchedule& k);
-/// \brief Conversion from a given json object \p j to a given EnhancedChargingSchedule \p k
-void from_json(const json& j, EnhancedChargingSchedule& k);
+// // /// \brief Enhances ChargingSchedule by containing std::vector<EnhancedChargingSchedulePeriods> instead of
+// // /// std::vector<ChargingSchedulePeriod>
+// struct ChargingSchedule {
+//     ChargingRateUnitEnum chargingRateUnit;
+//     std::vector<ChargingSchedulePeriod> chargingSchedulePeriod;
+//     std::optional<int32_t> duration;
+//     std::optional<ocpp::DateTime> startSchedule;
+//     std::optional<float> minChargingRate;
+// };
+// /// \brief Conversion from a given ChargingSchedule \p k to a given json object \p j
+// void to_json(json& j, const ChargingSchedule& k);
+// /// \brief Conversion from a given json object \p j to a given ChargingSchedule \p k
+// void from_json(const json& j, ChargingSchedule& k);
 
 } // namespace v201
 } // namespace ocpp
