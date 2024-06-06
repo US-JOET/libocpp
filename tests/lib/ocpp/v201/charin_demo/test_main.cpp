@@ -33,23 +33,27 @@ void write_file(std::string cs_json, std::string cs_filename, boost::optional<st
     }
 }
 
-std::string write_files(std::vector<ocpp::v201::ChargingProfile> profiles, ocpp::v201::CompositeSchedule cs,
+std::string write_files(std::string cs_filename, ocpp::v201::CompositeSchedule cs,
                         boost::optional<std::string> output_directory) {
-    // Create a single json string from all the profiles being processed.
-    std::string profiles_json = ocpp::v201::SmartChargingTestUtils::to_string(profiles);
-
     // Serialize the CompositeSchedule into a json string.
     std::string cs_json = ocpp::v201::utils::to_string(cs);
 
-    // Calculate the unique filename for the serialized json Composite Schedule.
-    std::string cs_filename =
-        ocpp::v201::SmartChargingTestUtils::filename_with_hash("CompositeSchedule", profiles_json);
     std::string default_filename = "currentCompositeSchedule.json";
 
     write_file(cs_json, cs_filename, output_directory);
     write_file(cs_json, default_filename, output_directory);
 
     return cs_json;
+}
+
+std::string generate_unique_hash_filename(std::vector<ocpp::v201::ChargingProfile> profiles, ocpp::DateTime start_time,
+                                          ocpp::DateTime end_time) {
+    // Create a single json string from all the profiles being processed.
+    std::string profiles_json = ocpp::v201::SmartChargingTestUtils::to_string(profiles);
+
+    std::string to_be_hashed = profiles_json + start_time.to_rfc3339() + end_time.to_rfc3339();
+
+    return ocpp::v201::SmartChargingTestUtils::filename_with_hash("CompositeSchedule", profiles_json);
 }
 
 int main(int argc, char** argv) {
@@ -67,13 +71,14 @@ int main(int argc, char** argv) {
         "output-dir", boost::program_options::value<std::string>()->notifier([&output_directory](std::string path) {
             output_directory = path;
         }),
-        "optional path to spit out stuff")
-        ("start-time", boost::program_options::value<std::string>()->required()->notifier(
-            [&start_time](std::string time) { start_time = ocpp::DateTime(time); }
-        ), "the start time for calculating the composite schedule window")
-        ("end-time", boost::program_options::value<std::string>()->required()->notifier(
-            [&end_time](std::string time) { end_time = ocpp::DateTime(time); }
-        ), "the end time for calculating the composite schedule window");
+        "optional path to spit out stuff")("start-time",
+                                           boost::program_options::value<std::string>()->required()->notifier(
+                                               [&start_time](std::string time) { start_time = ocpp::DateTime(time); }),
+                                           "the start time for calculating the composite schedule window")(
+        "end-time", boost::program_options::value<std::string>()->required()->notifier([&end_time](std::string time) {
+            end_time = ocpp::DateTime(time);
+        }),
+        "the end time for calculating the composite schedule window");
 
     boost::program_options::basic_command_line_parser<char> parser(argc, argv);
     boost::program_options::parsed_options parsed = parser.options(desc).allow_unregistered().run();
@@ -104,7 +109,8 @@ int main(int argc, char** argv) {
     std::string cs_filename =
         ocpp::v201::SmartChargingTestUtils::filename_with_hash("CompositeSchedule", profiles_json);
 
-    std::string cs_json = write_files(profiles, cs, output_directory);
+    std::string filename = generate_unique_hash_filename(profiles, start_time, end_time);
+    std::string cs_json = write_files(filename, cs, output_directory);
 
     std::cout << "composite_schedule: " << cs_json << std::endl;
     std::cout << "input_directory: " << input_directory << std::endl;
