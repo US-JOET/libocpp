@@ -53,7 +53,7 @@ std::string generate_unique_hash_filename(std::vector<ocpp::v201::ChargingProfil
 
     std::string to_be_hashed = profiles_json + start_time.to_rfc3339() + end_time.to_rfc3339();
 
-    return ocpp::v201::SmartChargingTestUtils::filename_with_hash("CompositeSchedule", profiles_json);
+    return ocpp::v201::SmartChargingTestUtils::filename_with_hash("CompositeSchedule", to_be_hashed);
 }
 
 int main(int argc, char** argv) {
