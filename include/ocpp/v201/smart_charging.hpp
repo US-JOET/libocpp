@@ -107,6 +107,13 @@ public:
     std::vector<ChargingProfile> get_profiles();
 
     ///
+    /// \brief Gets all valid profiles within the given absoulte \p start_time and absolute \p end_time for the given \p
+    /// evse_id
+    ///
+    std::vector<ChargingProfile> get_valid_profiles(const ocpp::DateTime& start_time, const ocpp::DateTime& end_time,
+                                                    const int evse_id);
+
+    ///
     /// \brief Calculates the composite schedule for the given \p valid_profiles and the given \p connector_id
     ///
     CompositeSchedule calculate_composite_schedule(std::vector<ChargingProfile> valid_profiles,

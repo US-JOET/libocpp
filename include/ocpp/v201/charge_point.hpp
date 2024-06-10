@@ -18,6 +18,7 @@
 #include <ocpp/v201/evse.hpp>
 #include <ocpp/v201/ocpp_types.hpp>
 #include <ocpp/v201/ocsp_updater.hpp>
+#include <ocpp/v201/smart_charging.hpp>
 #include <ocpp/v201/types.hpp>
 #include <ocpp/v201/utils.hpp>
 
@@ -48,6 +49,7 @@
 #include <ocpp/v201/messages/Reset.hpp>
 #include <ocpp/v201/messages/SecurityEventNotification.hpp>
 #include <ocpp/v201/messages/SendLocalList.hpp>
+#include <ocpp/v201/messages/SetChargingProfile.hpp>
 #include <ocpp/v201/messages/SetNetworkProfile.hpp>
 #include <ocpp/v201/messages/SetVariables.hpp>
 #include <ocpp/v201/messages/SignCertificate.hpp>
@@ -146,7 +148,7 @@ struct Callbacks {
         security_event_callback;
 
     /// \brief Callback for indicating when a charging profile is received and was accepted.
-    std::function<void()> set_charging_profiles_callback;
+    std::optional<std::function<void()>> signal_set_charging_profiles_callback;
 
     /// \brief  Callback for when a bootnotification response is received
     std::optional<std::function<void(const ocpp::v201::BootNotificationResponse& boot_notification_response)>>
@@ -399,6 +401,7 @@ private:
     std::unique_ptr<MessageQueue<v201::MessageType>> message_queue;
     std::shared_ptr<DeviceModel> device_model;
     std::shared_ptr<DatabaseHandler> database_handler;
+    std::shared_ptr<SmartChargingHandler> smart_charging_handler;
 
     std::map<int32_t, AvailabilityChange> scheduled_change_availability_requests;
 
@@ -690,6 +693,9 @@ private:
     void handle_change_availability_req(Call<ChangeAvailabilityRequest> call);
     void handle_heartbeat_response(CallResult<HeartbeatResponse> call);
 
+    // Functional Block K: Smart Charging
+    void handle_set_charging_profile_req(Call<SetChargingProfileRequest> call);
+
     // Functional Block L: Firmware management
     void handle_firmware_update_req(Call<UpdateFirmwareRequest> call);
 
@@ -861,6 +867,12 @@ public:
     void set_message_queue_resume_delay(std::chrono::seconds delay) override {
         this->message_queue_resume_delay = delay;
     }
+
+    /// \brief Calculates ChargingProfiles configured by the CSMS of all connectors from now until now + given \p
+    /// duration_s
+    /// \param duration_s
+    /// \return CompositeSchedules of all connectors
+    std::map<int32_t, CompositeSchedule> get_all_composite_charging_schedules(const int32_t duration_s);
 
     std::vector<GetVariableResult> get_variables(const std::vector<GetVariableData>& get_variable_data_vector) override;
 
