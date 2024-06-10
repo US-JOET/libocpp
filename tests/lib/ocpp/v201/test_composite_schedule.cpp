@@ -38,7 +38,7 @@ static const int DEFAULT_EVSE_ID = 1;
 static const int DEFAULT_PROFILE_ID = 1;
 static const int DEFAULT_STACK_LEVEL = 1;
 
-// static const std::string BASE_JSON_PATH = "/tmp/EVerest/libocpp/v201/json/";
+// static const std::string BASE_JSON_PATH = TEST_PROFILES_LOCATION_V201;
 
 class TestSmartChargingHandler : public SmartChargingHandler {
 public:
@@ -401,6 +401,13 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_GetNextTempTim
     ASSERT_EQ(time_18_17_00_00, handler.get_next_temp_time(time_18_13_00_00, profiles, DEFAULT_EVSE_ID));
 }
 
+TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_FoundationTest_Grid) {
+    create_evse_with_id(DEFAULT_EVSE_ID);
+
+    std::vector<ChargingProfile> profiles =
+        SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/grid/");
+}
+
 /**
  * Calculate Composite Schedule
  */
@@ -439,7 +446,7 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_ValidateBaseli
 
 TEST_F(ChargepointTestFixtureV201, getChargingProfilesFromDirectory) {
     std::vector<ChargingProfile> vic =
-        SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "baseline/");
+        SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/baseline/");
 
     std::string s = SmartChargingTestUtils::to_string(vic);
     EVLOG_info << s;

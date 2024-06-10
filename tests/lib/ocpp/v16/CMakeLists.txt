@@ -10,4 +10,4 @@ target_sources(libocpp_unit_tests PRIVATE
         test_smart_charging_handler.cpp
 )
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/json DESTINATION /tmp/EVerest/libocpp/v16)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/json DESTINATION ${TEST_PROFILES_LOCATION_V16})
