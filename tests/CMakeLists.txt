@@ -1,6 +1,8 @@
 set(MIGRATION_FILES_LOCATION_V16 "${CMAKE_CURRENT_BINARY_DIR}/resources/v16/migration_files")
 set(MIGRATION_FILES_LOCATION_V201 "${CMAKE_CURRENT_BINARY_DIR}/resources/v201/migration_files")
 set(DEVICE_MODEL_DB_LOCATION_V201 "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/everest/modules/OCPP201/device_model_storage.db")
+set(TEST_PROFILES_LOCATION_V16 "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/everest/tests/profiles/V16")
+set(TEST_PROFILES_LOCATION_V201 "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/everest/tests/profiles/V201")
 
 add_executable(database_tests database_tests.cpp)
 
@@ -33,6 +35,8 @@ target_compile_definitions(libocpp_unit_tests
     MIGRATION_FILE_VERSION_V16=${MIGRATION_FILE_VERSION_V16}
     MIGRATION_FILE_VERSION_V201=${MIGRATION_FILE_VERSION_V201}
     DEVICE_MODEL_DB_LOCATION_V201="${DEVICE_MODEL_DB_LOCATION_V201}"
+    TEST_PROFILES_LOCATION_V16="${TEST_PROFILES_LOCATION_V16}"
+    TEST_PROFILES_LOCATION_V201="${TEST_PROFILES_LOCATION_V201}"
 )
 
 add_custom_command(TARGET libocpp_unit_tests POST_BUILD
@@ -55,9 +59,9 @@ target_link_libraries(libocpp_unit_tests PRIVATE
 target_sources(libocpp_unit_tests PRIVATE
         comparators.cpp)
 
-# add_subdirectory(lib/ocpp/v16)
+add_subdirectory(lib/ocpp/v16)
 add_subdirectory(lib/ocpp/v201)
-# add_subdirectory(lib/ocpp/common)
+add_subdirectory(lib/ocpp/common)
 
 
 add_executable(utils_tests utils_tests.cpp)
