@@ -24,7 +24,7 @@ public:
         callbacks.is_reservation_for_token_callback = is_reservation_for_token_callback_mock.AsStdFunction();
         callbacks.update_firmware_request_callback = update_firmware_request_callback_mock.AsStdFunction();
         callbacks.security_event_callback = security_event_callback_mock.AsStdFunction();
-        callbacks.set_charging_profiles_callback = set_charging_profiles_callback_mock.AsStdFunction();
+        callbacks.signal_set_charging_profiles_callback = signal_set_charging_profiles_callback_mock.AsStdFunction();
     }
 
     testing::MockFunction<bool(const std::optional<const int32_t> evse_id, const ResetEnum& reset_type)>
@@ -48,7 +48,7 @@ public:
         update_firmware_request_callback_mock;
     testing::MockFunction<void(const CiString<50>& event_type, const std::optional<CiString<255>>& tech_info)>
         security_event_callback_mock;
-    testing::MockFunction<void()> set_charging_profiles_callback_mock;
+    testing::MockFunction<void()> signal_set_charging_profiles_callback_mock;
     ocpp::v201::Callbacks callbacks;
 };
 
@@ -140,7 +140,7 @@ TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfSecurityEventCallbac
 
 TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfSetChargingProfilesCallbackExists) {
     configure_callbacks_with_mocks();
-    callbacks.set_charging_profiles_callback = nullptr;
+    callbacks.signal_set_charging_profiles_callback = nullptr;
 
     EXPECT_FALSE(callbacks.all_callbacks_valid());
 }
