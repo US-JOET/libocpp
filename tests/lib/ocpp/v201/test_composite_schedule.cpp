@@ -406,7 +406,39 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_FoundationTest
 
     std::vector<ChargingProfile> profiles =
         SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/grid/");
+
+
+    const DateTime start_time = ocpp::DateTime("2024-01-17T00:00:00");
+    const DateTime end_time = ocpp::DateTime("2024-01-18T00:00:00");
+
+    CompositeSchedule composite_schedule =
+        handler.calculate_composite_schedule(profiles, start_time, end_time, DEFAULT_EVSE_ID, ChargingRateUnitEnum::W);
+
+    EVLOG_info << "CompositeSchedule> " << utils::to_string(composite_schedule);
+    ASSERT_EQ(start_time, composite_schedule.scheduleStart);
+    ASSERT_EQ(composite_schedule.chargingSchedulePeriod.size(), 24);
 }
+
+TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredTest) {
+    create_evse_with_id(DEFAULT_EVSE_ID);
+    std::vector<ChargingProfile> profiles =
+        SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/layered/");
+
+    // TODO: Why doesn't the layered profile show up if the start_time date is a month ahead?
+    // Or if start_time is before the profile's start time?
+    const DateTime start_time = ocpp::DateTime("2024-01-17T15:04:00");
+    const DateTime end_time = ocpp::DateTime("2024-01-17T18:23:00");
+
+    CompositeSchedule composite_schedule =
+        handler.calculate_composite_schedule(profiles, start_time, end_time, DEFAULT_EVSE_ID, ChargingRateUnitEnum::W);
+
+    EVLOG_info << "CompositeSchedule> " << utils::to_string(composite_schedule);
+    EVLOG_info << "CompositeSchedule duration> " << utils::get_log_duration_string(composite_schedule.duration);
+    ASSERT_EQ(start_time, composite_schedule.scheduleStart);
+    ASSERT_EQ(composite_schedule.chargingSchedulePeriod.size(), 24);
+
+}
+
 
 /**
  * Calculate Composite Schedule
