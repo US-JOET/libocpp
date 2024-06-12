@@ -13,7 +13,8 @@
         ],
         "duration": 1080,
         "minChargingRate": 0.0,
-        "startSchedule": "2024-01-17T18:00:30.000Z"
+        "startSchedule": "2024-01-17T18:04:00.000Z"
     },
+    "recurrencyKind": "Daily",
     "stackLevel": 2
 }
