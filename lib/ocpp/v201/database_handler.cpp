@@ -634,5 +634,19 @@ void DatabaseHandler::insert_or_update_charging_profile(const int evse_id, const
     }
 }
 
+void DatabaseHandler::delete_charging_profile(const int profile_id) {
+    std::string sql = "DELETE FROM CHARGING_PROFILES WHERE ID = @profile_id;";
+    auto stmt = this->database->new_statement(sql);
+
+    stmt->bind_int("@profile_id", profile_id);
+    if (stmt->step() != SQLITE_DONE) {
+        EVLOG_error << "Could not delete from table: " << this->database->get_error_message();
+    }
+}
+
+void DatabaseHandler::delete_charging_profiles() {
+    this->database->clear_table("CHARGING_PROFILES");
+}
+
 } // namespace v201
 } // namespace ocpp
