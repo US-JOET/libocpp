@@ -249,5 +249,30 @@ TEST_F(CompositeScheduleTestFixture, CalculateEnhancedCompositeSchedule_TxProfil
         profiles, my_date_start_range, my_date_end_range, 1, profiles.at(0).chargingSchedule.chargingRateUnit);
 }
 
+TEST_F(CompositeScheduleTestFixture, CalculateCompositeSchedule_LayeredTest_SameStartTime) {
+    GTEST_SKIP(); // Failing at the moment; unclear if this is a valid situation/scenario; same issue as v201's
+                  // K08_CalculateCompositeSchedule_LayeredTest_SameStartTime.
+    auto handler = create_smart_charging_handler(1);
+
+    ChargingProfile profile_grid = get_charging_profile_from_file("TxProfile_grid.json");
+    ChargingProfile txprofile_02 = get_charging_profile_from_file("TxProfile_02.json");
+    std::vector<ChargingProfile> profiles = {profile_grid, txprofile_02};
+
+    const DateTime my_date_start_range = ocpp::DateTime("2024-01-18T18:04:00");
+    const DateTime my_date_end_range = ocpp::DateTime("2024-01-18T18:22:00");
+
+    EVLOG_info << "    Start> " << my_date_start_range.to_rfc3339();
+    EVLOG_info << "      End> " << my_date_end_range.to_rfc3339();
+
+    auto composite_schedule = handler->calculate_enhanced_composite_schedule(
+        profiles, my_date_start_range, my_date_end_range, 1, profiles.at(0).chargingSchedule.chargingRateUnit);
+
+    log_me(composite_schedule, my_date_start_range);
+
+    ASSERT_EQ(composite_schedule.chargingSchedulePeriod.size(), 1);
+    ASSERT_EQ(composite_schedule.duration, 1080);
+    ASSERT_EQ(composite_schedule.chargingSchedulePeriod.at(0).limit, 2000.0);
+}
+
 } // namespace v16
 } // namespace ocpp
