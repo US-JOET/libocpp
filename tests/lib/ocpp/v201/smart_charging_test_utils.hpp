@@ -48,6 +48,12 @@ public:
         return get_charging_profile_from_path(full_path);
     }
 
+    static std::vector<ChargingProfile> get_charging_profiles_from_file(const std::string& filename) {
+        std::vector<ChargingProfile> profiles;
+        profiles.push_back(get_charging_profile_from_file(filename));
+        return profiles;
+    }
+
     /// \brief Returns a vector of ChargingProfiles to be used as a baseline for testing core functionality
     /// of generating an EnhancedChargingSchedule.
     static std::vector<ChargingProfile> get_baseline_profile_vector() {
