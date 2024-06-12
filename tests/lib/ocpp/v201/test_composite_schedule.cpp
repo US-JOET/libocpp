@@ -563,13 +563,16 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_ValidateBaseli
     std::vector<ChargingProfile> reverse_profiles = utils.get_baseline_profile_vector();
 }
 
-TEST_F(ChargepointTestFixtureV201, getChargingProfilesFromDirectory) {
-    std::vector<ChargingProfile> vic =
-        SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/baseline/");
+TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_RelativeProfile) {
+    create_evse_with_id(DEFAULT_EVSE_ID);
+    ChargingProfile profile =
+        SmartChargingTestUtils::get_charging_profile_from_file("relative/TxProfile_relative.json");
+    open_evse_transaction(DEFAULT_EVSE_ID, profile.transactionId.value());
+    ProfileValidationResultEnum validate = handler.validate_profile(profile, 1);
 
-    std::string s = SmartChargingTestUtils::to_string(vic);
-    EVLOG_info << s;
-    EVLOG_info << "md5hash> " << SmartChargingTestUtils::md5hash(s);
+    ASSERT_EQ(ProfileValidationResultEnum::Valid, validate);
+
+    // The Plan™
 }
 
 } // namespace ocpp::v201

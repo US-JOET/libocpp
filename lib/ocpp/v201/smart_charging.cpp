@@ -771,6 +771,38 @@ std::optional<ocpp::DateTime> SmartChargingHandler::get_profile_start_time(const
             period_start_time = SmartChargingHandler::get_absolute_profile_start_time(schedule.startSchedule);
         } else if (profile.chargingProfileKind == ChargingProfileKindEnum::Relative) {
             // TODO: Needs to be finished
+
+            // if (this->evses(evse_id))
+
+            // calculate_relative_profile_charging_schedule_periods_start_time(const int32_t evse_id, const
+            // ChargingProfile& relative_profile, const ocpp::DateTime& profile_receipt_time
+            //                                                                     profile_receipt_time, transaction)
+            // Step 1: Does
+
+            // Python psuedo code from Dr. Dan "The Man" Moore
+            // def calculate_relative_profile_charging_schedule_periods_start_time(charging_station, relative_profile,
+            //                                                                     profile_receipt_time, transaction) :
+            //     if transaction.is_active and transaction.id == relative_profile.transactionId:
+            //     : return calculate_relative_profile_charging_schedule_periods_start_time_in_active_transaction(
+            //             charging_station, transaction, profile_receipt_time) else
+            //     : return THE END OF TIME
+
+            //           def
+            //           calculate_relative_profile_charging_schedule_periods_start_time_in_active_transaction(
+            //               charging_station, transaction, profile_receipt_time) :
+            //     if PowerPathClosed in charging_station.device_model.TxCtrlr.TxStartPoint
+            //     : transaction_profile_activation_time = transaction.power_path_closed_time else
+            //     : transaction_profile_activation_time = transaction.start_time
+
+            //                                             if profile_receipt_time <=
+            //                                             transaction_profile_activation_time
+            //     : return transaction_profile_activation_time else : return profile_receipt_time
+
+            // TODO
+            // if (this->evses.at(evse_id)->has_active_transaction()) {
+            //     period_start_time.emplace(ocpp::DateTime(floor<seconds>(
+            //         this->evses.at(evse_id)->get_transaction()->get_start_energy_wh()->timestamp.to_time_point())));
+            // }
         } else if (profile.chargingProfileKind == ChargingProfileKindEnum::Recurring) {
             period_start_time = SmartChargingHandler::get_recurring_profile_start_time(time, schedule.startSchedule,
                                                                                        profile.recurrencyKind);
