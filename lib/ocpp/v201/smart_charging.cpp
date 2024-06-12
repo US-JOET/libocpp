@@ -528,7 +528,7 @@ CompositeSchedule SmartChargingHandler::calculate_composite_schedule(std::vector
                     int32_t stackLevel = profile.stackLevel;
 
                     EVLOG_info << "period.has_value() limit = " << limit;
-                    EVLOG_info << "period.has_value() stackLevel = " << limit;
+                    EVLOG_info << "period.has_value() stackLevel = " << stackLevel;
 
                     // update data structure with limit and stack level for this profile
                     current_purpose_and_stack_limits.at(profile.chargingProfilePurpose).limit = limit;

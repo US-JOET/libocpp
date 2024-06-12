@@ -407,7 +407,6 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_FoundationTest
     std::vector<ChargingProfile> profiles =
         SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/grid/");
 
-
     const DateTime start_time = ocpp::DateTime("2024-01-17T00:00:00");
     const DateTime end_time = ocpp::DateTime("2024-01-18T00:00:00");
 
@@ -419,23 +418,55 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_FoundationTest
     ASSERT_EQ(composite_schedule.chargingSchedulePeriod.size(), 24);
 }
 
-TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredTest) {
+TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredTest_SameStartTime) {
     create_evse_with_id(DEFAULT_EVSE_ID);
     std::vector<ChargingProfile> profiles =
         SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/layered/");
 
-    const DateTime start_time = ocpp::DateTime("2024-01-17T18:04:00");
-    const DateTime end_time = ocpp::DateTime("2024-01-17T18:33:00");
+    // Time Window: START = Stack #1 start time || END = Stack #1 end time
+    {
+        const DateTime start_time = ocpp::DateTime("2024-01-18T18:04:00");
+        const DateTime end_time = ocpp::DateTime("2024-01-18T18:22:00");
 
-    CompositeSchedule composite_schedule =
-        handler.calculate_composite_schedule(profiles, start_time, end_time, DEFAULT_EVSE_ID, ChargingRateUnitEnum::W);
+        CompositeSchedule composite_schedule = handler.calculate_composite_schedule(
+            profiles, start_time, end_time, DEFAULT_EVSE_ID, ChargingRateUnitEnum::W);
 
-    EVLOG_info << "CompositeSchedule> " << utils::to_string(composite_schedule);
-    EVLOG_info << "CompositeSchedule duration> " << utils::get_log_duration_string(composite_schedule.duration);
-    ASSERT_EQ(start_time, composite_schedule.scheduleStart);
-    ASSERT_EQ(composite_schedule.chargingSchedulePeriod.size(), 1);
-    ASSERT_EQ(composite_schedule.duration, 1080);
+        EVLOG_info << "CompositeSchedule> " << utils::to_string(composite_schedule);
+        EVLOG_info << "CompositeSchedule duration> " << utils::get_log_duration_string(composite_schedule.duration);
+        ASSERT_EQ(start_time, composite_schedule.scheduleStart);
+        ASSERT_EQ(composite_schedule.chargingSchedulePeriod.size(), 1);
+        ASSERT_EQ(composite_schedule.duration, 1080);
+    }
 
+    // Time Window: START = Stack #1 start time || END = After Stack #1 end time Before next Start #0 start time
+    {
+        const DateTime start_time = ocpp::DateTime("2024-01-17T18:04:00");
+        const DateTime end_time = ocpp::DateTime("2024-01-17T18:33:00");
+
+        CompositeSchedule composite_schedule = handler.calculate_composite_schedule(
+            profiles, start_time, end_time, DEFAULT_EVSE_ID, ChargingRateUnitEnum::W);
+
+        EVLOG_info << "CompositeSchedule> " << utils::to_string(composite_schedule);
+        EVLOG_info << "CompositeSchedule duration> " << utils::get_log_duration_string(composite_schedule.duration);
+        ASSERT_EQ(start_time, composite_schedule.scheduleStart);
+        ASSERT_EQ(composite_schedule.chargingSchedulePeriod.size(), 2);
+        ASSERT_EQ(composite_schedule.duration, 1740);
+    }
+
+    // Time Window: START = Stack #1 start time || END = After next Start #0 start time
+    {
+        const DateTime start_time = ocpp::DateTime("2024-01-17T18:04:00");
+        const DateTime end_time = ocpp::DateTime("2024-01-17T19:04:00");
+
+        CompositeSchedule composite_schedule = handler.calculate_composite_schedule(
+            profiles, start_time, end_time, DEFAULT_EVSE_ID, ChargingRateUnitEnum::W);
+
+        EVLOG_info << "CompositeSchedule> " << utils::to_string(composite_schedule);
+        EVLOG_info << "CompositeSchedule duration> " << utils::get_log_duration_string(composite_schedule.duration);
+        ASSERT_EQ(start_time, composite_schedule.scheduleStart);
+        ASSERT_EQ(composite_schedule.chargingSchedulePeriod.size(), 3);
+        ASSERT_EQ(composite_schedule.duration, 3600);
+    }
 }
 
 TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredTest_FutureStartTime) {
@@ -457,10 +488,11 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredTest_Fu
     ASSERT_EQ(composite_schedule.duration, 60);
 }
 
+// TODO Question: Is this expected behaviour when the time window starts before the first period of the only profile.
 TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredTest_PreviousStartTime) {
     create_evse_with_id(DEFAULT_EVSE_ID);
     std::vector<ChargingProfile> profiles =
-        SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/layered/");
+        SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/null_start/");
 
     // TODO: Why doesn't the layered profile show up if the start_time is before the profile's start time?
     const DateTime start_time = ocpp::DateTime("2024-01-17T18:00:00");
@@ -472,10 +504,28 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredTest_Pr
     EVLOG_info << "CompositeSchedule> " << utils::to_string(composite_schedule);
     EVLOG_info << "CompositeSchedule duration> " << utils::get_log_duration_string(composite_schedule.duration);
     ASSERT_EQ(start_time, composite_schedule.scheduleStart);
+    ASSERT_EQ(composite_schedule.chargingSchedulePeriod.size(), 0);
+    ASSERT_EQ(composite_schedule.duration, 300);
+}
+
+TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredRecurringTest_PreviousStartTime) {
+    create_evse_with_id(DEFAULT_EVSE_ID);
+    std::vector<ChargingProfile> profiles =
+        SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/layered_recurring/");
+
+    // TODO: Why doesn't the layered profile show up if the start_time is before the profile's start time?
+    const DateTime start_time = ocpp::DateTime("2024-02-19T18:00:00");
+    const DateTime end_time = ocpp::DateTime("2024-02-19T19:04:00");
+
+    CompositeSchedule composite_schedule =
+        handler.calculate_composite_schedule(profiles, start_time, end_time, DEFAULT_EVSE_ID, ChargingRateUnitEnum::W);
+
+    EVLOG_info << "CompositeSchedule> " << utils::to_string(composite_schedule);
+    EVLOG_info << "CompositeSchedule duration> " << utils::get_log_duration_string(composite_schedule.duration);
+    ASSERT_EQ(start_time, composite_schedule.scheduleStart);
     ASSERT_EQ(composite_schedule.chargingSchedulePeriod.size(), 1);
     ASSERT_EQ(composite_schedule.duration, 60);
 }
-
 
 /**
  * Calculate Composite Schedule
