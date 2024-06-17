@@ -444,6 +444,10 @@ bool SmartChargingHandler::within_time_window(const ocpp::DateTime& start_time, 
     return SmartChargingHandler::determine_duration(start_time, end_time) > 0;
 }
 
+ChargingProfile SmartChargingHandler::convert_relative_to_absolute(const ChargingProfile& relative_profile) {
+    return SmartChargingHandler::convert_relative_to_absolute(relative_profile, ocpp::DateTime(date::utc_clock::now()));
+}
+
 ChargingProfile SmartChargingHandler::convert_relative_to_absolute(const ChargingProfile& relative_profile,
                                                                    const ocpp::DateTime& start_schedule) {
     if (relative_profile.chargingProfileKind != ChargingProfileKindEnum::Relative) {
@@ -795,12 +799,15 @@ std::optional<ocpp::DateTime> SmartChargingHandler::get_profile_start_time(const
 
             // calculate_relative_profile_charging_schedule_periods_start_time(const int32_t evse_id, const
             // ChargingProfile& relative_profile, const ocpp::DateTime& profile_receipt_time
-            //                                                                     profile_receipt_time, transaction)
+            //                                                                     profile_receipt_time,
+            //                                                                     transaction)
             // Step 1: Does
 
             // Python psuedo code from Dr. Dan "The Man" Moore
-            // def calculate_relative_profile_charging_schedule_periods_start_time(charging_station, relative_profile,
-            //                                                                     profile_receipt_time, transaction) :
+            // def calculate_relative_profile_charging_schedule_periods_start_time(charging_station,
+            // relative_profile,
+            //                                                                     profile_receipt_time,
+            //                                                                     transaction) :
             //     if transaction.is_active and transaction.id == relative_profile.transactionId:
             //     : return calculate_relative_profile_charging_schedule_periods_start_time_in_active_transaction(
             //             charging_station, transaction, profile_receipt_time) else

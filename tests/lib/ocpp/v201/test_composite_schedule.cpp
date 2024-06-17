@@ -605,4 +605,14 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_ConvertRelativ
     ASSERT_FALSE(resulting_profile.recurrencyKind.has_value());
 }
 
+TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_ConvertRelativeProfileToAbsoluteWithNow) {
+    ChargingProfile relative_profile =
+        SmartChargingTestUtils::get_charging_profile_from_file("singles/Relative_MultipleChargingSchedules.json");
+
+    ChargingProfile resulting_profile = handler.convert_relative_to_absolute(relative_profile);
+
+    ASSERT_EQ(resulting_profile.chargingProfileKind, ChargingProfileKindEnum::Absolute);
+    ASSERT_FALSE(resulting_profile.recurrencyKind.has_value());
+}
+
 } // namespace ocpp::v201
