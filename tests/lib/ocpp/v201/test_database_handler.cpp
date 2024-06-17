@@ -188,4 +188,27 @@ TEST_F(DatabaseHandlerV201, KO1_FR27_DatabaseWithMultipleProfileSameEvse_LoadsCh
 
 }
 
+TEST_F(DatabaseHandlerV201, KO1_FR27_DatabaseWithMultipleProfileDiffEvse_LoadsCharingProfile) {
+    db_handler->insert_or_update_charging_profile(1, ChargingProfile{.id = 1, .stackLevel = 1});
+    db_handler->insert_or_update_charging_profile(2, ChargingProfile{.id = 2, .stackLevel = 2});
+    db_handler->insert_or_update_charging_profile(3, ChargingProfile{.id = 3, .stackLevel = 3});
+
+    auto sut = db_handler->get_all_charging_profiles_by_evse();
+
+    ASSERT_EQ(sut.size(), 3); 
+  
+    ASSERT_FALSE(sut.find(1) == sut.end()); 
+    ASSERT_FALSE(sut.find(2) == sut.end()); 
+    ASSERT_FALSE(sut.find(3) == sut.end()); 
+
+    auto profiles1 = sut[1];
+    auto profiles2 = sut[2];
+    auto profiles3 = sut[3];
+
+    ASSERT_EQ(profiles1.size(), 1);
+    ASSERT_EQ(profiles2.size(), 1);
+    ASSERT_EQ(profiles3.size(), 1);
+
+}
+
 } // namespace ocpp::v201
