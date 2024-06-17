@@ -324,7 +324,8 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_GetProfileStar
 // TODO: functionality currently not supported.
 TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_GetProfileStartTime_KindRelative) {
     create_evse_with_id(DEFAULT_EVSE_ID);
-    ChargingProfile profile = SmartChargingTestUtils::get_charging_profile_from_file("relative/TxProfile_relative.json");
+    ChargingProfile profile =
+        SmartChargingTestUtils::get_charging_profile_from_file("relative/TxProfile_relative.json");
     open_evse_transaction(DEFAULT_EVSE_ID, profile.transactionId.value());
 
     DateTime time = ocpp::DateTime("2024-01-17T18:00:00");
@@ -613,6 +614,19 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_ConvertRelativ
 
     ASSERT_EQ(resulting_profile.chargingProfileKind, ChargingProfileKindEnum::Absolute);
     ASSERT_FALSE(resulting_profile.recurrencyKind.has_value());
+}
+
+TEST_F(ChargepointTestFixtureV201, K08_ValidateProfileTransactionActiveOnEVSE) {
+    create_evse_with_id(DEFAULT_EVSE_ID);
+    open_evse_transaction(DEFAULT_EVSE_ID, "g1522902-1170-416f-8e43-9e3bce28fab7");
+    create_evse_with_id(DEFAULT_EVSE_ID + 1);
+    open_evse_transaction(DEFAULT_EVSE_ID + 1, "f1522902-1170-416f-8e43-9e3bce28fde7");
+
+    ChargingProfile relative_profile =
+        SmartChargingTestUtils::get_charging_profile_from_file("relative/TxProfile_relative.json");
+
+    ASSERT_TRUE(handler.profile_transaction_active_on_evse(relative_profile, DEFAULT_EVSE_ID));
+    ASSERT_FALSE(handler.profile_transaction_active_on_evse(relative_profile, DEFAULT_EVSE_ID + 1));
 }
 
 } // namespace ocpp::v201

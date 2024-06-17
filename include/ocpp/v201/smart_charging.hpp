@@ -111,6 +111,9 @@ public:
     CompositeSchedule calculate_composite_schedule(std::vector<ChargingProfile> valid_profiles,
                                                    const ocpp::DateTime& start_time, const ocpp::DateTime& end_time,
                                                    const int32_t evse_id, ChargingRateUnitEnum charging_rate_unit);
+    
+    bool profile_transaction_active_on_evse(const ChargingProfile & profile, int evse_id) const;
+
 
 protected:
     ///
