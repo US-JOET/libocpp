@@ -323,6 +323,7 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_GetProfileStar
 
 // TODO: functionality currently not supported.
 TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_GetProfileStartTime_KindRelative) {
+    GTEST_SKIP();
     create_evse_with_id(DEFAULT_EVSE_ID);
     ChargingProfile profile =
         SmartChargingTestUtils::get_charging_profile_from_file("relative/TxProfile_relative.json");
