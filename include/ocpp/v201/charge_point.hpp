@@ -67,6 +67,7 @@
 #include <ocpp/v201/messages/UpdateFirmware.hpp>
 
 #include "component_state_manager.hpp"
+#include "ocpp/v201/smart_charging.hpp"
 
 namespace ocpp {
 namespace v201 {
@@ -780,6 +781,7 @@ protected:
     std::shared_ptr<SmartChargingHandlerInterface> smart_charging_handler;
 
     void handle_message(const EnhancedMessage<v201::MessageType>& message);
+    void load_charging_profiles();
 
 public:
     /// \brief Construct a new ChargePoint object

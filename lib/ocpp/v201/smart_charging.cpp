@@ -3,6 +3,7 @@
 
 #include "date/tz.h"
 #include "everest/logging.hpp"
+#include "ocpp/common/message_queue.hpp"
 #include "ocpp/common/types.hpp"
 #include "ocpp/v201/ctrlr_component_variables.hpp"
 #include "ocpp/v201/device_model.hpp"
@@ -139,8 +140,9 @@ SmartChargingHandlerInterface::~SmartChargingHandlerInterface() {
 }
 
 SmartChargingHandler::SmartChargingHandler(EvseManagerInterface& evse_manager,
-                                           std::shared_ptr<DeviceModel>& device_model) :
-    evse_manager(evse_manager), device_model(device_model) {
+                                           std::shared_ptr<DeviceModel>& device_model,
+                                           std::shared_ptr<ocpp::v201::DatabaseHandler> database_handler) :
+    evse_manager(evse_manager), device_model(device_model), database_handler(database_handler) {
 }
 
 ProfileValidationResultEnum SmartChargingHandler::validate_profile(ChargingProfile& profile, int32_t evse_id) {
@@ -367,11 +369,19 @@ SetChargingProfileResponse SmartChargingHandler::add_profile(ChargingProfile& pr
                      [&profile](const ChargingProfile existing_profile) { return profile.id == existing_profile.id; });
 
     // K01.FR05 - replace non-ChargingStationExternalConstraints profiles if id exists.
-    if (profile_with_id != profile_storage.end() &&
-        profile_with_id->chargingProfilePurpose != ChargingProfilePurposeEnum::ChargingStationExternalConstraints) {
-        *profile_with_id = profile;
-    } else {
-        profile_storage.push_back(profile);
+    try {
+        // K01.FR27 - add profiles to database when valid
+        this->database_handler->insert_or_update_charging_profile(evse_id, profile);
+
+        if (profile_with_id != profile_storage.end() &&
+            profile_with_id->chargingProfilePurpose != ChargingProfilePurposeEnum::ChargingStationExternalConstraints) {
+            *profile_with_id = profile;
+        } else {
+            profile_storage.push_back(profile);
+        }
+
+    } catch (const QueryExecutionException& e) {
+        EVLOG_warning << "Could not store ChargingProfile in the database: " << e.what();
     }
 
     return response;

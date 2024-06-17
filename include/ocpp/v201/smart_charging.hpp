@@ -80,7 +80,8 @@ private:
     std::vector<ChargingProfile> station_wide_charging_profiles;
 
 public:
-    SmartChargingHandler(EvseManagerInterface& evse_manager, std::shared_ptr<DeviceModel>& device_model);
+    SmartChargingHandler(EvseManagerInterface& evse_manager, std::shared_ptr<DeviceModel>& device_model,
+                         std::shared_ptr<ocpp::v201::DatabaseHandler> database_handler);
 
     ///
     /// \brief validates the given \p profile according to the specification.
