@@ -152,4 +152,40 @@ TEST_F(DatabaseHandlerV201, KO1_FR27_DatabaseNoProfileData_DeleteAllDoesNotFail)
     } while (select_stmt->step() != SQLITE_DONE);
 }
 
+TEST_F(DatabaseHandlerV201, KO1_FR27_DatabaseWithSingleProfileData_LoadsCharingProfile) {
+    db_handler->insert_or_update_charging_profile(1, ChargingProfile{1, 1});
+
+    
+    auto sut = db_handler->get_all_charging_profiles_by_evse();
+
+    ASSERT_EQ(sut.size(), 1);
+
+    // The evse id is found
+    ASSERT_FALSE(sut.find(1) == sut.end());
+
+    auto profiles = sut[1];
+
+    ASSERT_EQ(profiles.size(), 1);
+
+}
+
+TEST_F(DatabaseHandlerV201, KO1_FR27_DatabaseWithMultipleProfileSameEvse_LoadsCharingProfile) {
+    db_handler->insert_or_update_charging_profile(1, ChargingProfile{.id = 1, .stackLevel = 1});
+    db_handler->insert_or_update_charging_profile(1, ChargingProfile{.id = 2, .stackLevel = 2});
+    db_handler->insert_or_update_charging_profile(1, ChargingProfile{.id = 3, .stackLevel = 3});
+
+    
+    auto sut = db_handler->get_all_charging_profiles_by_evse();
+
+    ASSERT_EQ(sut.size(), 1);
+
+    // The evse id is found
+    ASSERT_FALSE(sut.find(1) == sut.end());
+
+    auto profiles = sut[1];
+
+    ASSERT_EQ(profiles.size(), 3);
+
+}
+
 } // namespace ocpp::v201

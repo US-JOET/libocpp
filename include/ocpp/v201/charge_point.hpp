@@ -58,6 +58,7 @@
 #include <ocpp/v201/messages/UpdateFirmware.hpp>
 
 #include "component_state_manager.hpp"
+#include "ocpp/v201/smart_charging.hpp"
 
 namespace ocpp {
 namespace v201 {
@@ -394,7 +395,10 @@ class ChargePoint : public ChargePointInterface, private ocpp::ChargingStationBa
 private:
     // reference to evses
     std::map<int32_t, std::unique_ptr<EvseInterface>> evses;
-
+   
+    // reference to smart charing handler
+    std::unique_ptr<SmartChargingHandler> smart_charging_handler;
+    
     // utility
     std::unique_ptr<MessageQueue<v201::MessageType>> message_queue;
     std::shared_ptr<DeviceModel> device_model;
@@ -749,6 +753,7 @@ private:
     /// \brief Immediately execute the given \param request to change the operational state of a component
     /// If \param persist is set to true, the change will be persisted across a reboot
     void execute_change_availability_request(ChangeAvailabilityRequest request, bool persist);
+    void load_charging_profiles();
 
 public:
     /// \brief Construct a new ChargePoint object

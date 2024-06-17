@@ -3509,6 +3509,37 @@ void ChargePoint::execute_change_availability_request(ChangeAvailabilityRequest 
     }
 }
 
+void ChargePoint::load_charging_profiles() {
+    try {
+        auto evses = this->database_handler->get_all_charging_profiles_by_evse();
+        EVLOG_info << "Found " << evses.size() << " charging profile(s) in the database";
+        // TODO: Is this needed in v2.0.1
+        // const auto supported_purpose_types = this->configuration->getSupportedChargingProfilePurposeTypes();
+        for (auto& profiles : evses) {
+            try {
+                auto evse_id = profiles.first;
+                for (auto profile : profiles.second) {
+                    if (this->smart_charging_handler->validate_profile(profile, evse_id) ==
+                        ProfileValidationResultEnum::Valid) {
+                            this->smart_charging_handler->add_profile(evse_id, profile);
+                    } else {
+                        // delete if not valid anymore
+                        this->database_handler->delete_charging_profile(profile.id);
+                    }
+                }
+            } catch (common::RequiredEntryNotFoundException& e) {
+                EVLOG_warning << "Could not get connector id from database: " << e.what();
+            } catch (const QueryExecutionException& e) {
+                EVLOG_warning << "Could not get connector id from database: " << e.what();
+            }
+        }
+    } catch (const QueryExecutionException& e) {
+        EVLOG_warning << "Could not load charging profiles from database: " << e.what();
+    } catch (const std::exception& e) {
+        EVLOG_warning << "Unknown error while loading charging profiles from database: " << e.what();
+    }
+}
+
 std::vector<GetVariableResult>
 ChargePoint::get_variables(const std::vector<GetVariableData>& get_variable_data_vector) {
     std::vector<GetVariableResult> response;

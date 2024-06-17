@@ -144,6 +144,9 @@ public:
 
     /// \brief Deletes all profiles from table CHARGING_PROFILES
     void delete_charging_profiles();
+
+    /// \brief Retrieves all ChargingProfiles
+    virtual std::map<int32_t, std::vector<v201::ChargingProfile>> get_all_charging_profiles_by_evse();
 };
 
 } // namespace v201

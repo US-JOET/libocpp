@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
+#include "everest/logging.hpp"
 #include <ocpp/common/message_queue.hpp>
 #include <ocpp/v201/database_handler.hpp>
 #include <ocpp/v201/types.hpp>
@@ -646,6 +647,26 @@ void DatabaseHandler::delete_charging_profile(const int profile_id) {
 
 void DatabaseHandler::delete_charging_profiles() {
     this->database->clear_table("CHARGING_PROFILES");
+}
+
+std::map<int32_t, std::vector<v201::ChargingProfile>> DatabaseHandler::get_all_charging_profiles_by_evse() {
+    std::map<int32_t, std::vector<v201::ChargingProfile>> map;
+
+    std::string sql = "SELECT EVSE_ID, PROFILE FROM CHARGING_PROFILES";
+
+    auto stmt = this->database->new_statement(sql);
+
+    while (stmt->step() != SQLITE_DONE) {
+        auto evse_id = stmt->column_int(0);
+        auto profile = json::parse(stmt->column_text(1));
+
+        auto profiles = map[evse_id];
+        profiles.emplace_back(profile);
+
+        map[evse_id] = profiles;
+    }
+
+    return map;
 }
 
 } // namespace v201
