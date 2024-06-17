@@ -23,12 +23,17 @@ public:
             if (!entry.is_directory()) {
                 fs::path path = entry.path();
                 if (path.extension() == ".json") {
+                    EVLOG_debug << "DID I MAKE IT HERE FIRST?";
+
                     ChargingProfile profile = get_charging_profile_from_path(path);
+                    EVLOG_debug << "DID I MAKE IT HERE?";
                     std::cout << path << std::endl;
                     profiles.push_back(profile);
                 }
             }
         }
+
+        EVLOG_debug << "get_charging_profiles_from_directory END";
         return profiles;
     }
 

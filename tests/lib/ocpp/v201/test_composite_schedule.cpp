@@ -323,15 +323,15 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_GetProfileStar
 
 // TODO: functionality currently not supported.
 TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_GetProfileStartTime_KindRelative) {
-    GTEST_SKIP();
-    // create_evse_with_id(DEFAULT_EVSE_ID);
-    // DateTime time = ocpp::DateTime("2024-01-17T18:00:00");
-    // ChargingProfile profile = getChargingProfileFromFile("TxProfile_100.json");
-    // DateTime expected = ocpp::DateTime("2024-01-17T18:10:00");
+    create_evse_with_id(DEFAULT_EVSE_ID);
+    ChargingProfile profile = SmartChargingTestUtils::get_charging_profile_from_file("relative/TxProfile_relative.json");
+    open_evse_transaction(DEFAULT_EVSE_ID, profile.transactionId.value());
 
-    // std::optional<ocpp::DateTime> actual = handler.get_profile_start_time(profile, time, DEFAULT_EVSE_ID);
+    DateTime time = ocpp::DateTime("2024-01-17T18:00:00");
+    std::optional<ocpp::DateTime> actual = handler.get_profile_start_time(profile, time, DEFAULT_EVSE_ID);
 
-    // ASSERT_EQ(expected, actual.value());
+    DateTime expected = ocpp::DateTime("2024-01-17T18:10:00");
+    ASSERT_EQ(expected, actual.value());
 }
 
 TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_GetPeriodEndTime) {

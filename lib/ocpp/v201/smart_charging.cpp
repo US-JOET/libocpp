@@ -793,9 +793,21 @@ std::optional<ocpp::DateTime> SmartChargingHandler::get_profile_start_time(const
         if (profile.chargingProfileKind == ChargingProfileKindEnum::Absolute) {
             period_start_time = SmartChargingHandler::get_absolute_profile_start_time(schedule.startSchedule);
         } else if (profile.chargingProfileKind == ChargingProfileKindEnum::Relative) {
-            // TODO: Needs to be finished
+            period_start_time = MAX_DATE_TIME;
+            if (evses.count(evse_id) != 0) {
 
-            // if (this->evses(evse_id))
+                {
+                    auto & evse = evses.at(evse_id);
+                    if (evse->has_active_transaction()) {
+                        auto & transaction = evse->get_transaction();
+                        if (transaction->transactionId == profile.transactionId) {
+                            // TODO: Somehow get the start time of the transaction? From the device_model?
+                        }
+                    }
+                }
+
+                // period_start_time = calculate_relative_profile_charging_schedule_periods_start_time(evse_id, profile, time)
+
 
             // calculate_relative_profile_charging_schedule_periods_start_time(const int32_t evse_id, const
             // ChargingProfile& relative_profile, const ocpp::DateTime& profile_receipt_time
