@@ -166,8 +166,21 @@ protected:
     static bool within_time_window(const ocpp::DateTime& start_time, const ocpp::DateTime& end_time);
 
     ///
-    /// \brief Iterates over the periods of the given \p valid_profiles and determines the earliest next absolute period
-    /// end time later than \p temp_time
+    /// \brief Converts a Relative ChargingProfile to an Absolute ChargingProfile with a start schedule
+    /// time of now.
+    ///
+    static ChargingProfile convert_relative_to_absolute(const ChargingProfile& relative_profile);
+
+    ///
+    /// \brief Converts a Relative ChargingProfile to an Absolute ChargingProfile, setting the start schedule
+    /// to the time passed in.
+    ///
+    static ChargingProfile convert_relative_to_absolute(const ChargingProfile& relative_profile,
+                                                        const ocpp::DateTime& start_schedule);
+
+    ///
+    /// \brief Iterates over the periods of the given \p valid_profiles and determines the earliest next absolute
+    /// period end time later than \p temp_time
     ///
     ocpp::DateTime get_next_temp_time(const ocpp::DateTime temp_time,
                                       const std::vector<ChargingProfile>& valid_profiles, const int32_t evse_id);

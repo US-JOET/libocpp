@@ -444,6 +444,25 @@ bool SmartChargingHandler::within_time_window(const ocpp::DateTime& start_time, 
     return SmartChargingHandler::determine_duration(start_time, end_time) > 0;
 }
 
+ChargingProfile SmartChargingHandler::convert_relative_to_absolute(const ChargingProfile& relative_profile,
+                                                                   const ocpp::DateTime& start_schedule) {
+    if (relative_profile.chargingProfileKind != ChargingProfileKindEnum::Relative) {
+        EVLOG_warning << "convert_relative_to_absolute ChargingProfile.id " << relative_profile.id
+                      << " not Relative ChargingProfile";
+        return relative_profile;
+    }
+
+    ChargingProfile profile = relative_profile;
+
+    profile.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+
+    for (int i = 0; i < profile.chargingSchedule.size(); i++) {
+        profile.chargingSchedule.at(i).startSchedule = start_schedule;
+    }
+
+    return profile;
+}
+
 PeriodDateTimePair SmartChargingHandler::find_period_at(const ocpp::DateTime& time, const ChargingProfile& profile,
                                                         const int evse_id) {
     auto period_start_time = this->get_profile_start_time(profile, time, evse_id);
