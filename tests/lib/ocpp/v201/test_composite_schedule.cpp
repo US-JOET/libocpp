@@ -617,16 +617,32 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_ConvertRelativ
 }
 
 TEST_F(ChargepointTestFixtureV201, K08_ValidateProfileTransactionActiveOnEVSE) {
+    ChargingProfile relative_profile =
+        SmartChargingTestUtils::get_charging_profile_from_file("relative/TxProfile_relative.json");
+
     create_evse_with_id(DEFAULT_EVSE_ID);
-    open_evse_transaction(DEFAULT_EVSE_ID, "g1522902-1170-416f-8e43-9e3bce28fab7");
+    open_evse_transaction(DEFAULT_EVSE_ID, relative_profile.transactionId.value());
+    ASSERT_TRUE(handler.profile_transaction_active_on_evse(relative_profile, DEFAULT_EVSE_ID));
+
     create_evse_with_id(DEFAULT_EVSE_ID + 1);
     open_evse_transaction(DEFAULT_EVSE_ID + 1, "f1522902-1170-416f-8e43-9e3bce28fde7");
+    ASSERT_FALSE(handler.profile_transaction_active_on_evse(relative_profile, DEFAULT_EVSE_ID + 1));
+}
+
+TEST_F(ChargepointTestFixtureV201, K08_ValidateProfileTransaction_NoEVSE) {
+    ChargingProfile relative_profile =
+        SmartChargingTestUtils::get_charging_profile_from_file("relative/TxProfile_relative.json");
+
+    ASSERT_FALSE(handler.profile_transaction_active_on_evse(relative_profile, DEFAULT_EVSE_ID));
+}
+
+TEST_F(ChargepointTestFixtureV201, K08_ValidateProfileTransaction_NoActiveTransaction) {
+    create_evse_with_id(DEFAULT_EVSE_ID);
 
     ChargingProfile relative_profile =
         SmartChargingTestUtils::get_charging_profile_from_file("relative/TxProfile_relative.json");
 
-    ASSERT_TRUE(handler.profile_transaction_active_on_evse(relative_profile, DEFAULT_EVSE_ID));
-    ASSERT_FALSE(handler.profile_transaction_active_on_evse(relative_profile, DEFAULT_EVSE_ID + 1));
+    ASSERT_FALSE(handler.profile_transaction_active_on_evse(relative_profile, DEFAULT_EVSE_ID));
 }
 
 } // namespace ocpp::v201
