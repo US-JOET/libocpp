@@ -511,17 +511,18 @@ CompositeSchedule SmartChargingHandler::uber_calculate_composite_schedule(
 
 std::vector<ChargingProfile> SmartChargingHandler::align_profiles_for_composite_schedule(
     std::vector<ChargingProfile> valid_profiles, const ocpp::DateTime& activation_time, const int32_t evse_id) {
-    for (int i = 0; i < valid_profiles.size(); i++) {
-        if (valid_profiles.at(i).chargingProfileKind == ChargingProfileKindEnum::Relative) {
-            // Convert to Absolute
-            if (this->profile_transaction_active_on_evse(valid_profiles.at(i), evse_id)) {
-                ChargingProfile absolute_profile =
-                    this->convert_relative_to_absolute(valid_profiles.at(i), activation_time);
-                valid_profiles[i] = absolute_profile;
+    std::vector<ChargingProfile> aligned_profiles;
+    for (auto profile : valid_profiles) {
+        if (profile.chargingProfileKind == ChargingProfileKindEnum::Relative) {
+            if (this->profile_transaction_active_on_evse(profile, evse_id)) {
+                ChargingProfile absolute_profile = this->convert_relative_to_absolute(profile, activation_time);
+                aligned_profiles.push_back(absolute_profile);
             }
+        } else {
+            aligned_profiles.push_back(profile);
         }
     }
-    return valid_profiles;
+    return aligned_profiles;
 }
 
 ///
