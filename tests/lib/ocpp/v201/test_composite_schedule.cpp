@@ -646,4 +646,19 @@ TEST_F(ChargepointTestFixtureV201, K08_ValidateProfileTransaction_NoActiveTransa
     ASSERT_FALSE(handler.profile_transaction_active_on_evse(relative_profile, DEFAULT_EVSE_ID));
 }
 
+TEST_F(ChargepointTestFixtureV201, K08_AlignProfilesForCompositeSchedule) {
+    std::vector<ChargingProfile> profiles =
+        SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/relative/");
+    create_evse_with_id(DEFAULT_EVSE_ID);
+    open_evse_transaction(DEFAULT_EVSE_ID, profiles.at(0).transactionId.value());
+    const DateTime time_20_17_59_59 = ocpp::DateTime("2024-01-20T17:59:59");
+
+    std::vector<ChargingProfile> sut =
+        handler.align_profiles_for_composite_schedule(profiles, time_20_17_59_59, DEFAULT_EVSE_ID);
+
+    ASSERT_EQ(sut.at(0).chargingProfileKind, ChargingProfileKindEnum::Absolute);
+    ASSERT_EQ(sut.at(0).chargingSchedule.at(0).startSchedule.value(), time_20_17_59_59);
+    ASSERT_EQ(sut.at(1).chargingProfileKind, ChargingProfileKindEnum::Recurring);
+}
+
 } // namespace ocpp::v201

@@ -501,6 +501,29 @@ PeriodDateTimePair SmartChargingHandler::find_period_at(const ocpp::DateTime& ti
     return date_time_pair;
 }
 
+CompositeSchedule SmartChargingHandler::uber_calculate_composite_schedule(
+    std::vector<ChargingProfile> valid_profiles, const ocpp::DateTime& start_time, const ocpp::DateTime& end_time,
+    const ocpp::DateTime& activation_time, const int32_t evse_id, ChargingRateUnitEnum charging_rate_unit) {
+    return this->calculate_composite_schedule(
+        this->align_profiles_for_composite_schedule(valid_profiles, activation_time, evse_id), start_time, end_time,
+        evse_id, charging_rate_unit);
+}
+
+std::vector<ChargingProfile> SmartChargingHandler::align_profiles_for_composite_schedule(
+    std::vector<ChargingProfile> valid_profiles, const ocpp::DateTime& activation_time, const int32_t evse_id) {
+    for (int i = 0; i < valid_profiles.size(); i++) {
+        if (valid_profiles.at(i).chargingProfileKind == ChargingProfileKindEnum::Relative) {
+            // Convert to Absolute
+            if (this->profile_transaction_active_on_evse(valid_profiles.at(i), evse_id)) {
+                ChargingProfile absolute_profile =
+                    this->convert_relative_to_absolute(valid_profiles.at(i), activation_time);
+                valid_profiles[i] = absolute_profile;
+            }
+        }
+    }
+    return valid_profiles;
+}
+
 ///
 /// \brief Calculates the composite schedule for the given \p valid_profiles and the given \p connector_id
 ///
