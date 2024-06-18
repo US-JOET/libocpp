@@ -193,6 +193,10 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     this->auth_cache_cleanup_thread = std::thread(&ChargePoint::cache_cleanup_handler, this);
 }
 
+ChargePoint::~ChargePoint() {
+    this->auth_cache_cleanup_thread.detach();
+}
+
 void ChargePoint::start(BootReasonEnum bootreason) {
     this->bootreason = bootreason;
     // Trigger all initial status notifications and callbacks related to component state

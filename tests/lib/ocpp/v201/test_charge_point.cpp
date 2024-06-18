@@ -1,14 +1,103 @@
+#include "evse_security_mock.hpp"
+#include "ocpp/common/evse_security.hpp"
 #include "ocpp/v201/charge_point.hpp"
+#include "ocpp/v201/device_model_storage_sqlite.hpp"
 #include "gmock/gmock.h"
 #include <gmock/gmock.h>
+#include <gtest/gtest_prod.h>
+#include <memory>
+#include <string>
+
+static const std::string DEVICE_MODEL_DB_PATH = "file:device_model?mode=memory&cache=shared";
+static const std::string TEMP_OUTPUT_PATH = "/tmp/ocpp201";
 
 namespace ocpp::v201 {
+
+class TestEvseSecurity : public EvseSecurity {
+public:
+    TestEvseSecurity();
+};
+
+class TestChargePoint : public ChargePoint {
+    using ChargePoint::handle_message;
+
+public:
+    TestChargePoint(std::map<int32_t, int32_t>& evse_connector_structure,
+                    std::unique_ptr<DeviceModelStorage> device_model_storage, const std::string& ocpp_main_path,
+                    const std::string& core_database_path, const std::string& sql_init_path,
+                    const std::string& message_log_path, const std::shared_ptr<EvseSecurity> evse_security,
+                    const Callbacks& callbacks) :
+        ChargePoint(evse_connector_structure, std::move(device_model_storage), ocpp_main_path, core_database_path,
+                    sql_init_path, message_log_path, evse_security, callbacks) {
+    }
+};
 
 class ChargePointFixture : public testing::Test {
 public:
     ChargePointFixture() {
     }
     ~ChargePointFixture() {
+    }
+
+    void create_device_model_db(const std::string& path) {
+        sqlite3* source_handle;
+        sqlite3_open(DEVICE_MODEL_DB_LOCATION_V201, &source_handle);
+        sqlite3_open(path.c_str(), &db_handle);
+
+        auto* backup = sqlite3_backup_init(db_handle, "main", source_handle, "main");
+        sqlite3_backup_step(backup, -1);
+        sqlite3_backup_finish(backup);
+
+        sqlite3_close(source_handle);
+    }
+
+    std::shared_ptr<DeviceModel>
+    create_device_model(const std::string& path = DEVICE_MODEL_DB_PATH,
+                        const std::optional<std::string> ac_phase_switching_supported = "true") {
+        create_device_model_db(path);
+        auto device_model_storage = std::make_unique<DeviceModelStorageSqlite>(path);
+        auto device_model = std::make_shared<DeviceModel>(std::move(device_model_storage));
+
+        // Defaults
+        const auto& charging_rate_unit_cv = ControllerComponentVariables::ChargingScheduleChargingRateUnit;
+        device_model->set_value(charging_rate_unit_cv.component, charging_rate_unit_cv.variable.value(),
+                                AttributeEnum::Actual, "A,W", true);
+
+        const auto& ac_phase_switching_cv = ControllerComponentVariables::ACPhaseSwitchingSupported;
+        device_model->set_value(ac_phase_switching_cv.component, ac_phase_switching_cv.variable.value(),
+                                AttributeEnum::Actual, ac_phase_switching_supported.value_or(""), true);
+
+        return device_model;
+    }
+
+    std::unique_ptr<TestChargePoint> create_charge_point() {
+        std::map<int32_t, int32_t> evse_connector_structure = {{1, 1}, {2, 1}};
+        std::unique_ptr<DeviceModelStorage> device_model_storage =
+            std::make_unique<DeviceModelStorageSqlite>(DEVICE_MODEL_DB_PATH);
+        auto charge_point = std::make_unique<TestChargePoint>(evse_connector_structure, std::move(device_model_storage),
+                                                              "", TEMP_OUTPUT_PATH, MIGRATION_FILES_LOCATION_V201, TEMP_OUTPUT_PATH,
+                                                              std::make_shared<EvseSecurityMock>(), create_callbacks_with_mocks());
+        return charge_point;
+    }
+
+    ocpp::v201::Callbacks create_callbacks_with_mocks() {
+        ocpp::v201::Callbacks callbacks;
+
+        callbacks.is_reset_allowed_callback = is_reset_allowed_callback_mock.AsStdFunction();
+        callbacks.reset_callback = reset_callback_mock.AsStdFunction();
+        callbacks.stop_transaction_callback = stop_transaction_callback_mock.AsStdFunction();
+        callbacks.pause_charging_callback = pause_charging_callback_mock.AsStdFunction();
+        callbacks.connector_effective_operative_status_changed_callback =
+            connector_effective_operative_status_changed_callback_mock.AsStdFunction();
+        callbacks.get_log_request_callback = get_log_request_callback_mock.AsStdFunction();
+        callbacks.unlock_connector_callback = unlock_connector_callback_mock.AsStdFunction();
+        callbacks.remote_start_transaction_callback = remote_start_transaction_callback_mock.AsStdFunction();
+        callbacks.is_reservation_for_token_callback = is_reservation_for_token_callback_mock.AsStdFunction();
+        callbacks.update_firmware_request_callback = update_firmware_request_callback_mock.AsStdFunction();
+        callbacks.security_event_callback = security_event_callback_mock.AsStdFunction();
+        callbacks.set_charging_profiles_callback = set_charging_profiles_callback_mock.AsStdFunction();
+        
+        return callbacks;
     }
 
     void configure_callbacks_with_mocks() {
@@ -26,6 +115,10 @@ public:
         callbacks.security_event_callback = security_event_callback_mock.AsStdFunction();
         callbacks.set_charging_profiles_callback = set_charging_profiles_callback_mock.AsStdFunction();
     }
+
+    sqlite3* db_handle;
+    std::shared_ptr<DeviceModel> device_model = create_device_model();
+    std::unique_ptr<TestChargePoint> charge_point = create_charge_point();
 
     testing::MockFunction<bool(const std::optional<const int32_t> evse_id, const ResetEnum& reset_type)>
         is_reset_allowed_callback_mock;

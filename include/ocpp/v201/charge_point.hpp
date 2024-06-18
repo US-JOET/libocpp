@@ -499,7 +499,6 @@ private:
     /// device model
     void remove_network_connection_profiles_below_actual_security_profile();
 
-    void handle_message(const EnhancedMessage<v201::MessageType>& message);
     void message_callback(const std::string& message);
     void update_aligned_data_interval();
 
@@ -750,6 +749,9 @@ private:
     /// If \param persist is set to true, the change will be persisted across a reboot
     void execute_change_availability_request(ChangeAvailabilityRequest request, bool persist);
 
+protected:
+    void handle_message(const EnhancedMessage<v201::MessageType>& message);
+
 public:
     /// \brief Construct a new ChargePoint object
     /// \param evse_connector_structure Map that defines the structure of EVSE and connectors of the chargepoint. The
@@ -785,6 +787,7 @@ public:
                 const std::string& core_database_path, const std::string& sql_init_path,
                 const std::string& message_log_path, const std::shared_ptr<EvseSecurity> evse_security,
                 const Callbacks& callbacks);
+    ~ChargePoint();
 
     void start(BootReasonEnum bootreason = BootReasonEnum::PowerUp) override;
 
