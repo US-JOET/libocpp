@@ -626,7 +626,7 @@ TEST_F(ChargepointTestFixtureV201, K08_ValidateProfileTransactionActiveOnEVSE) {
     ASSERT_TRUE(handler.profile_transaction_active_on_evse(relative_profile, DEFAULT_EVSE_ID));
 
     create_evse_with_id(DEFAULT_EVSE_ID + 1);
-    open_evse_transaction(DEFAULT_EVSE_ID + 1, "f1522902-1170-416f-8e43-9e3bce28fde7");
+    open_evse_transaction(DEFAULT_EVSE_ID + 1, "another-transaction-id");
     ASSERT_FALSE(handler.profile_transaction_active_on_evse(relative_profile, DEFAULT_EVSE_ID + 1));
 }
 
