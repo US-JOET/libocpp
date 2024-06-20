@@ -105,32 +105,14 @@ public:
     ///
     std::vector<ChargingProfile> get_profiles();
 
-    CompositeSchedule uber_calculate_composite_schedule(std::vector<ChargingProfile> valid_profiles,
-                                                        const ocpp::DateTime& start_time,
-                                                        const ocpp::DateTime& end_time,
-                                                        const ocpp::DateTime& activation_time, const int32_t evse_id,
-                                                        ChargingRateUnitEnum charging_rate_unit);
-
-    CompositeSchedule uber_calculate_composite_schedule(std::vector<ChargingProfile> valid_profiles,
-                                                        const ocpp::DateTime& start_time,
-                                                        const ocpp::DateTime& end_time, const int32_t evse_id,
-                                                        ChargingRateUnitEnum charging_rate_unit);
-
-    ///
-    /// \brief Calculates the composite schedule for the given \p valid_profiles and the given \p connector_id
-    ///
-    CompositeSchedule calculate_composite_schedule(std::vector<ChargingProfile> valid_profiles,
-                                                   const ocpp::DateTime& start_time, const ocpp::DateTime& end_time,
-                                                   const int32_t evse_id, ChargingRateUnitEnum charging_rate_unit);
-
-    ///
-    /// \brief Calculates the composite schedule for the given \p valid_profiles and the given \p connector_id.
-    /// OPTION 1: Overloading method for inclusion of Relative profiles
-    ///
     CompositeSchedule calculate_composite_schedule(std::vector<ChargingProfile> valid_profiles,
                                                    const ocpp::DateTime& start_time, const ocpp::DateTime& end_time,
                                                    const ocpp::DateTime& activation_time, const int32_t evse_id,
                                                    ChargingRateUnitEnum charging_rate_unit);
+
+    CompositeSchedule calculate_composite_schedule(std::vector<ChargingProfile> valid_profiles,
+                                                   const ocpp::DateTime& start_time, const ocpp::DateTime& end_time,
+                                                   const int32_t evse_id, ChargingRateUnitEnum charging_rate_unit);
 
     std::vector<ChargingProfile> align_profiles_for_composite_schedule(std::vector<ChargingProfile> valid_profiles,
                                                                        const ocpp::DateTime& activation_time,
@@ -174,6 +156,14 @@ protected:
     bool is_overlapping_validity_period(int evse_id, const ChargingProfile& profile) const;
 
     ///
+    /// \brief Calculates the composite schedule for the given \p valid_profiles and the given \p connector_id
+    ///
+    CompositeSchedule calculate_composite_schedule_algo(std::vector<ChargingProfile> valid_profiles,
+                                                        const ocpp::DateTime& start_time,
+                                                        const ocpp::DateTime& end_time, const int32_t evse_id,
+                                                        ChargingRateUnitEnum charging_rate_unit);
+
+    ///
     /// \brief Iterates over the periods of the given \p profile and returns a struct that contains the period and the
     /// absolute end time of the period that refers to the given absoulte \p time as a pair.
     ///
@@ -212,6 +202,8 @@ protected:
 
     ocpp::DateTime get_period_end_time(const int period_index, const ocpp::DateTime& period_start_time,
                                        const ChargingSchedule& schedule);
+
+    ocpp::DateTime get_now();
 
 private:
     std::vector<ChargingProfile> get_evse_specific_tx_default_profiles() const;

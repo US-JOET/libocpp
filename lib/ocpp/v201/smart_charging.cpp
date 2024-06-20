@@ -501,10 +501,21 @@ PeriodDateTimePair SmartChargingHandler::find_period_at(const ocpp::DateTime& ti
     return date_time_pair;
 }
 
-CompositeSchedule SmartChargingHandler::uber_calculate_composite_schedule(
+CompositeSchedule SmartChargingHandler::calculate_composite_schedule(std::vector<ChargingProfile> valid_profiles,
+                                                                     const ocpp::DateTime& start_time,
+                                                                     const ocpp::DateTime& end_time,
+                                                                     const int32_t evse_id,
+                                                                     ChargingRateUnitEnum charging_rate_unit) {
+    const ocpp::DateTime activation_time = ocpp::DateTime(date::utc_clock::now());
+    return this->calculate_composite_schedule_algo(
+        this->align_profiles_for_composite_schedule(valid_profiles, activation_time, evse_id), start_time, end_time,
+        evse_id, charging_rate_unit);
+}
+
+CompositeSchedule SmartChargingHandler::calculate_composite_schedule(
     std::vector<ChargingProfile> valid_profiles, const ocpp::DateTime& start_time, const ocpp::DateTime& end_time,
     const ocpp::DateTime& activation_time, const int32_t evse_id, ChargingRateUnitEnum charging_rate_unit) {
-    return this->calculate_composite_schedule(
+    return this->calculate_composite_schedule_algo(
         this->align_profiles_for_composite_schedule(valid_profiles, activation_time, evse_id), start_time, end_time,
         evse_id, charging_rate_unit);
 }
@@ -515,7 +526,16 @@ std::vector<ChargingProfile> SmartChargingHandler::align_profiles_for_composite_
     for (auto profile : valid_profiles) {
         if (profile.chargingProfileKind == ChargingProfileKindEnum::Relative) {
             if (this->profile_transaction_active_on_evse(profile, evse_id)) {
-                ChargingProfile absolute_profile = this->convert_relative_to_absolute(profile, activation_time);
+
+                ocpp::DateTime start_schedule = activation_time;
+
+                if (this->device_model->get_value<std::string>(ControllerComponentVariables::TxStartPoint) ==
+                    "PowerPathClosed") {
+                    EVLOG_info << "TODO: Talk to Dan and Peter about how to support this outlined work.";
+                    // start_schedule = this->evses.at(evse_id)->get_transaction() // No timestamp in 2.0.1 transactions
+                }
+
+                ChargingProfile absolute_profile = this->convert_relative_to_absolute(profile, start_schedule);
                 aligned_profiles.push_back(absolute_profile);
             }
         } else {
@@ -528,11 +548,11 @@ std::vector<ChargingProfile> SmartChargingHandler::align_profiles_for_composite_
 ///
 /// \brief Calculates the composite schedule for the given \p valid_profiles and the given \p connector_id
 ///
-CompositeSchedule SmartChargingHandler::calculate_composite_schedule(std::vector<ChargingProfile> valid_profiles,
-                                                                     const ocpp::DateTime& start_time,
-                                                                     const ocpp::DateTime& end_time,
-                                                                     const int32_t evse_id,
-                                                                     ChargingRateUnitEnum charging_rate_unit) {
+CompositeSchedule SmartChargingHandler::calculate_composite_schedule_algo(std::vector<ChargingProfile> valid_profiles,
+                                                                          const ocpp::DateTime& start_time,
+                                                                          const ocpp::DateTime& end_time,
+                                                                          const int32_t evse_id,
+                                                                          ChargingRateUnitEnum charging_rate_unit) {
 
     CompositeSchedule composite_schedule =
         this->initialize_composite_schedule(start_time, end_time, evse_id, charging_rate_unit);
@@ -901,6 +921,10 @@ bool SmartChargingHandler::profile_transaction_active_on_evse(const ChargingProf
         }
     }
     return false;
+}
+
+ocpp::DateTime SmartChargingHandler::get_now() {
+    return ocpp::DateTime(date::utc_clock::now());
 }
 
 } // namespace ocpp::v201
