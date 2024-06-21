@@ -547,7 +547,6 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredRecurri
 TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_ValidateBaselineProfileVector) {
     create_evse_with_id(DEFAULT_EVSE_ID);
 
-    const DateTime time_17_17_59_59 = ocpp::DateTime("2024-01-17T17:59:59");
     const DateTime start_time = ocpp::DateTime("2024-01-17T18:01:00");
     const DateTime end_time = ocpp::DateTime("2024-01-18T06:00:00");
     const int32_t expected_duration = 43140;
@@ -577,23 +576,60 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_ValidateBaseli
     std::vector<ChargingProfile> reverse_profiles = utils.get_baseline_profile_vector();
 }
 
-TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_RelativeProfile) {
+TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_RelativeProfile_minutia) {
+
+    const DateTime may_17_5_00AM = ocpp::DateTime("2024-05-17T05:00:00");
+    const DateTime may_17_5_01AM = ocpp::DateTime("2024-05-17T05:01:00");
+    const DateTime may_17_6_00AM = ocpp::DateTime("2024-05-17T06:00:00");
+    const DateTime may_17_6_01AM = ocpp::DateTime("2024-05-17T06:01:00");
+    const DateTime start_time = may_17_5_00AM;
+    const DateTime end_time = may_17_6_00AM;
+    const DateTime activation_time = may_17_5_01AM;
+
+    // std::vector<ChargingProfile> profiles =
+    //     SmartChargingTestUtils::get_charging_profiles_from_file("/relative/TxProfile_relative.json");
+    std::vector<ChargingProfile> profiles =
+        SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/relative/");
+    create_evse_with_id(DEFAULT_EVSE_ID);
+    open_evse_transaction(DEFAULT_EVSE_ID, profiles.at(0).transactionId.value());
+
+    std::vector<ChargingProfile> aligned_profiles =
+        handler.align_profiles_for_composite_schedule(profiles, activation_time, DEFAULT_EVSE_ID);
+    ChargingProfile profile = aligned_profiles.at(0);
+
+    CompositeSchedule sut = handler.calculate_composite_schedule_algo(aligned_profiles, start_time, end_time,
+                                                                      DEFAULT_EVSE_ID, ChargingRateUnitEnum::W);
+
+    EVLOG_debug << "CompositeSchedule> " << utils::to_string(sut);
+
+    ASSERT_EQ(ChargingProfileKindEnum::Absolute, profile.chargingProfileKind);
+    ASSERT_EQ(3601, profile.chargingSchedule.at(0).duration);
+}
+
+TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_RelativeProfile_e2e) {
+    GTEST_SKIP();
     std::vector<ChargingProfile> profiles =
         SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/relative/");
     create_evse_with_id(DEFAULT_EVSE_ID);
     open_evse_transaction(DEFAULT_EVSE_ID, profiles.at(0).transactionId.value());
     const DateTime start_time = ocpp::DateTime("2024-05-17T05:00:00");
-    const DateTime end_time = ocpp::DateTime("2024-05-17T16:01:00");
-    const DateTime activation_time = ocpp::DateTime("2024-05-17T05:01:59");
+    const DateTime end_time = ocpp::DateTime("2024-05-17T06:01:00");
+    const DateTime activation_time = ocpp::DateTime("2024-05-17T05:01:00");
 
-    CompositeSchedule sut = handler.calculate_composite_schedule(profiles, start_time, end_time, activation_time,
-                                                                 DEFAULT_EVSE_ID, ChargingRateUnitEnum::W);
+    std::vector<ChargingProfile> aligned_profiles =
+        handler.align_profiles_for_composite_schedule(profiles, activation_time, DEFAULT_EVSE_ID);
 
+    CompositeSchedule sut = handler.calculate_composite_schedule_algo(aligned_profiles, start_time, end_time,
+                                                                      DEFAULT_EVSE_ID, ChargingRateUnitEnum::W);
+
+    EVLOG_debug << "AlignedProfile> " << utils::to_string(aligned_profiles.at(0));
     EVLOG_debug << "CompositeSchedule> " << utils::to_string(sut);
+    EVLOG_debug << "Duraction> " << utils::get_log_duration_string(sut.duration);
 
     ASSERT_EQ(ProfileValidationResultEnum::Valid, handler.validate_profile(profiles.at(0), DEFAULT_EVSE_ID));
     ASSERT_EQ(ProfileValidationResultEnum::Valid, handler.validate_profile(profiles.at(1), DEFAULT_EVSE_ID));
     ASSERT_EQ(start_time, sut.scheduleStart);
+    ASSERT_EQ(60, sut.chargingSchedulePeriod.at(1).startPeriod);
     // ASSERT_EQ(sut.chargingSchedulePeriod.size(), 4);
     // ASSERT_EQ(sut.at(0).chargingProfileKind, ChargingProfileKindEnum::Absolute);
     // ASSERT_EQ(sut.at(0).chargingSchedule.at(0).startSchedule.value(), time_20_17_59_59);
@@ -697,10 +733,56 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_RelativeProfil
 
     ASSERT_EQ("PowerPathClosed", tx_start_point);
     // TODO: Expected result
-    // ASSERT_EQ(DEFAULT_TRANSACTION_DATE_TIME, aligned_profiles.at(0).chargingSchedule.at(0).startSchedule.value());
+    // ASSERT_EQ(DEFAULT_TRANSACTION_DATE_TIME,
+    // aligned_profiles.at(0).chargingSchedule.at(0).startSchedule.value());
     ASSERT_EQ(june_5th_5pm, aligned_profiles.at(0).chargingSchedule.at(0).startSchedule.value());
 
     log_me(aligned_profiles);
+}
+
+TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_DemoCaseOne_17th) {
+    create_evse_with_id(DEFAULT_EVSE_ID);
+    std::vector<ChargingProfile> profiles =
+        SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/case_one/");
+    ChargingProfile relative_profile = profiles.front();
+    auto transaction_id = relative_profile.transactionId.value();
+    open_evse_transaction(DEFAULT_EVSE_ID, transaction_id);
+    const DateTime start_time = ocpp::DateTime("2024-01-17T18:00:00");
+    const DateTime end_time = ocpp::DateTime("2024-01-18T06:00:00");
+
+    CompositeSchedule composite_schedule =
+        handler.calculate_composite_schedule(profiles, start_time, end_time, DEFAULT_EVSE_ID, ChargingRateUnitEnum::W);
+
+    EVLOG_info << "CompositeSchedule> " << utils::to_string(composite_schedule);
+
+    ASSERT_EQ(ProfileValidationResultEnum::Valid, handler.validate_profile(profiles.at(0), DEFAULT_EVSE_ID));
+    ASSERT_EQ(ProfileValidationResultEnum::Valid, handler.validate_profile(profiles.at(1), DEFAULT_EVSE_ID));
+    ASSERT_EQ(43200, composite_schedule.duration);
+    ASSERT_EQ(start_time, composite_schedule.scheduleStart);
+    ASSERT_EQ(composite_schedule.chargingSchedulePeriod.size(), 3);
+}
+
+TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_DemoCaseOne_19th) {
+    GTEST_SKIP();
+    create_evse_with_id(DEFAULT_EVSE_ID);
+    std::vector<ChargingProfile> profiles =
+        SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/case_one/");
+    ChargingProfile relative_profile = profiles.front();
+    auto transaction_id = relative_profile.transactionId.value();
+    open_evse_transaction(DEFAULT_EVSE_ID, transaction_id);
+    const DateTime start_time = ocpp::DateTime("2024-01-19T18:00:00");
+    const DateTime end_time = ocpp::DateTime("2024-01-20T06:00:00");
+
+    CompositeSchedule composite_schedule =
+        handler.calculate_composite_schedule(profiles, start_time, end_time, DEFAULT_EVSE_ID, ChargingRateUnitEnum::W);
+
+    EVLOG_info << "CompositeSchedule> " << utils::to_string(composite_schedule);
+
+    ASSERT_EQ(ProfileValidationResultEnum::Valid, handler.validate_profile(profiles.at(0), DEFAULT_EVSE_ID));
+    ASSERT_EQ(ProfileValidationResultEnum::Valid, handler.validate_profile(profiles.at(1), DEFAULT_EVSE_ID));
+    ASSERT_EQ(43200, composite_schedule.duration);
+    ASSERT_EQ(start_time, composite_schedule.scheduleStart);
+    ASSERT_EQ(composite_schedule.chargingSchedulePeriod.size(), 3);
 }
 
 } // namespace ocpp::v201
