@@ -6,6 +6,8 @@
 #include <ostream>
 #include <string>
 
+#include <ocpp/common/types.hpp>
+
 namespace ocpp {
 namespace v201 {
 

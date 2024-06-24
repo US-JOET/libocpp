@@ -120,6 +120,11 @@ public:
 
     bool profile_transaction_active_on_evse(const ChargingProfile& profile, int evse_id) const;
 
+    CompositeSchedule calculate_enhanced_composite_schedule(const std::vector<ChargingProfile>& valid_profiles,
+                                                            const ocpp::DateTime& start_time,
+                                                            const ocpp::DateTime& end_time, const int32_t evse_id,
+                                                            ChargingRateUnitEnum charging_rate_unit);
+
 protected:
     ///
     /// \brief validates the existence of the given \p evse_id according to the specification

@@ -5,10 +5,15 @@
 #include <nlohmann/json.hpp>
 #include <optional>
 
+#include "everest/logging.hpp"
+#include "ocpp/common/constants.hpp"
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
 
 #include <ocpp/v201/ocpp_types.hpp>
+
+using std::chrono::duration_cast;
+using std::chrono::seconds;
 
 namespace ocpp {
 namespace v201 {
@@ -2529,6 +2534,123 @@ std::ostream& operator<<(std::ostream& os, const Firmware& k) {
     os << json(k).dump(4);
     return os;
 }
+
+inline std::int32_t elapsed_seconds(const ocpp::DateTime& to, const ocpp::DateTime& from) {
+    return duration_cast<seconds>(to.to_time_point() - from.to_time_point()).count();
+}
+
+inline ocpp::DateTime floor_seconds(const ocpp::DateTime& dt) {
+    return ocpp::DateTime(std::chrono::floor<seconds>(dt.to_time_point()));
+}
+
+/// \brief calculate the start times for the profile
+/// \param in_now the current date and time
+/// \param in_end the end of the composite schedule
+/// \param in_session_start optional when the charging session started
+/// \param in_profile the charging profile
+/// \return a list of the start times of the profile
+std::vector<DateTime> calculate_start(const DateTime& in_now, const DateTime& in_end,
+                                      const std::optional<DateTime>& session_start, const ChargingProfile& in_profile) {
+    /*
+     * Absolute schedules start at the defined startSchedule
+     * Relative schedules start at session start
+     * Recurring schedules start based on startSchedule and the current date/time
+     * start can be affected by the profile validFrom. See period_entry_t::validate()
+     */
+    std::vector<DateTime> start_times;
+    DateTime start = floor_seconds(in_now); // fallback when a better value can't be found
+
+    switch (in_profile.chargingProfileKind) {
+    case ChargingProfileKindEnum::Absolute:
+        // TODO how to deal with multible ChargingSchedules? Currently only handling one.
+        if (in_profile.chargingSchedule.front().startSchedule) {
+            start = in_profile.chargingSchedule.front().startSchedule.value();
+        } else {
+            // Absolute should have a startSchedule
+            EVLOG_warning << "Absolute charging profile (" << in_profile.id << ") without startSchedule";
+
+            // use validFrom where available
+            if (in_profile.validFrom) {
+                start = in_profile.validFrom.value();
+            }
+        }
+        start_times.push_back(floor_seconds(start));
+        break;
+    case ChargingProfileKindEnum::Recurring:
+        // TODO how to deal with multible ChargingSchedules?
+        if (in_profile.recurrencyKind && in_profile.chargingSchedule.front().startSchedule) {
+            const auto start_schedule = floor_seconds(in_profile.chargingSchedule.front().startSchedule.value());
+            const auto end = floor_seconds(in_end);
+            const auto now_tp = start.to_time_point();
+            int seconds_to_go_back{0};
+            int seconds_to_go_forward{0};
+
+            /*
+             example problem case:
+             - allow daily charging 08:00 to 18:00
+               at 07:00 and 19:00 what should the start time be?
+
+             a) profile could have 1 period (32A) at 0s with a duration of 36000s (10 hours)
+                relying on a lower stack level to deny charging
+             b) profile could have 2 periods (32A) at 0s and (0A) at 36000s (10 hours)
+                i.e. the profile covers the full 24 hours
+
+             at 07:00 is the start time in 1 hour, or 23 hours ago?
+
+             23 hours ago is the chosen result - however the profile code needs to consider that
+             a new daily profile is about to start hence the next start time is provided.
+
+             Weekly has a similar problem
+            */
+
+            switch (in_profile.recurrencyKind.value()) {
+            case RecurrencyKindEnum::Daily:
+                seconds_to_go_back = duration_cast<seconds>(now_tp - start_schedule.to_time_point()).count() %
+                                     (HOURS_PER_DAY * SECONDS_PER_HOUR);
+                if (seconds_to_go_back < 0) {
+                    seconds_to_go_back += HOURS_PER_DAY * SECONDS_PER_HOUR;
+                }
+                seconds_to_go_forward = HOURS_PER_DAY * SECONDS_PER_HOUR;
+                break;
+            case RecurrencyKindEnum::Weekly:
+                seconds_to_go_back = duration_cast<seconds>(now_tp - start_schedule.to_time_point()).count() %
+                                     (SECONDS_PER_DAY * DAYS_PER_WEEK);
+                if (seconds_to_go_back < 0) {
+                    seconds_to_go_back += SECONDS_PER_DAY * DAYS_PER_WEEK;
+                }
+                seconds_to_go_forward = SECONDS_PER_DAY * DAYS_PER_WEEK;
+                break;
+            default:
+                EVLOG_error << "Invalid RecurrencyKindType: " << static_cast<int>(in_profile.recurrencyKind.value());
+                break;
+            }
+
+            start = std::move(DateTime(now_tp - seconds(seconds_to_go_back)));
+
+            while (start <= end) {
+                start_times.push_back(start);
+                start = DateTime(start.to_time_point() + seconds(seconds_to_go_forward));
+            }
+        }
+        break;
+    case ChargingProfileKindEnum::Relative:
+        break;
+    }
+    return start_times;
+}
+std::vector<period_entry_t> calculate_profile_entry(const DateTime& now, const DateTime& end,
+                                                    const std::optional<DateTime>& session_start,
+                                                    const ChargingProfile& profile, std::uint8_t period_index);
+std::vector<period_entry_t> calculate_profile(const DateTime& now, const DateTime& end,
+                                              const std::optional<DateTime>& session_start,
+                                              const ChargingProfile& profile);
+
+ChargingSchedule calculate_composite_schedule(std::vector<period_entry_t>& combined_schedules, const DateTime& now,
+                                              const DateTime& end,
+                                              std::optional<ChargingRateUnitEnum> charging_rate_unit);
+
+ChargingSchedule calculate_composite_schedule(const ChargingSchedule& charge_point_max,
+                                              const ChargingSchedule& tx_default, const ChargingSchedule& tx);
 
 } // namespace v201
 } // namespace ocpp

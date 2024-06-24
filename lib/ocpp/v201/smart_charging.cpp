@@ -880,4 +880,17 @@ ocpp::DateTime SmartChargingHandler::get_now() {
     return ocpp::DateTime(date::utc_clock::now());
 }
 
+CompositeSchedule calculate_enhanced_composite_schedule(const std::vector<ChargingProfile>& valid_profiles,
+                                                        const ocpp::DateTime& start_time,
+                                                        const ocpp::DateTime& end_time, const int32_t evse_id,
+                                                        ChargingRateUnitEnum charging_rate_unit) {
+    std::optional<ocpp::DateTime> session_start{};
+
+    std::vector<period_entry_t> charge_point_max{};
+    std::vector<period_entry_t> tx_default{};
+    std::vector<period_entry_t> tx{};
+
+    return {};
+}
+
 } // namespace ocpp::v201

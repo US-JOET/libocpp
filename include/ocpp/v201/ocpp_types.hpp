@@ -959,6 +959,37 @@ void from_json(const json& j, Firmware& k);
 std::ostream& operator<<(std::ostream& os, const Firmware& k);
 
 struct RequiredComponentVariable : ComponentVariable {};
+
+struct period_entry_t {
+    void init(const ocpp::DateTime& in_start, int in_duration, const ChargingSchedulePeriod& in_period,
+              const ChargingProfile& in_profile);
+    bool validate(const ChargingProfile& profile, const ocpp::DateTime& now);
+
+    ocpp::DateTime start;
+    ocpp::DateTime end;
+    float limit;
+    std::optional<std::int32_t> number_phases;
+    std::int32_t stack_level;
+    ChargingRateUnitEnum charging_rate_unit;
+    std::optional<float> min_charging_rate;
+};
+
+std::vector<DateTime> calculate_start(const DateTime& now, const DateTime& end,
+                                      const std::optional<DateTime>& session_start, const ChargingProfile& profile);
+std::vector<period_entry_t> calculate_profile_entry(const DateTime& now, const DateTime& end,
+                                                    const std::optional<DateTime>& session_start,
+                                                    const ChargingProfile& profile, std::uint8_t period_index);
+std::vector<period_entry_t> calculate_profile(const DateTime& now, const DateTime& end,
+                                              const std::optional<DateTime>& session_start,
+                                              const ChargingProfile& profile);
+
+ChargingSchedule calculate_composite_schedule(std::vector<period_entry_t>& combined_schedules, const DateTime& now,
+                                              const DateTime& end,
+                                              std::optional<ChargingRateUnitEnum> charging_rate_unit);
+
+ChargingSchedule calculate_composite_schedule(const ChargingSchedule& charge_point_max,
+                                              const ChargingSchedule& tx_default, const ChargingSchedule& tx);
+
 } // namespace v201
 } // namespace ocpp
 
