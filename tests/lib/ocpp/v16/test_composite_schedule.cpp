@@ -172,7 +172,6 @@ protected:
 };
 
 TEST_F(CompositeScheduleTestFixture, CalculateEnhancedCompositeSchedule_ValidatedBaseline) {
-    // GTEST_SKIP();
     auto handler = create_smart_charging_handler(1);
     std::vector<ChargingProfile> profiles = getBaselineProfileVector();
     log_me(profiles);
@@ -210,7 +209,6 @@ TEST_F(CompositeScheduleTestFixture, CalculateEnhancedCompositeSchedule_Validate
 }
 
 TEST_F(CompositeScheduleTestFixture, CalculateEnhancedCompositeSchedule_Baseline__PossibleDefect) {
-    GTEST_SKIP();
     auto handler = create_smart_charging_handler(1);
 
     std::vector<ChargingProfile> profiles = getBaselineProfileVector();
@@ -229,7 +227,6 @@ TEST_F(CompositeScheduleTestFixture, CalculateEnhancedCompositeSchedule_Baseline
 }
 
 TEST_F(CompositeScheduleTestFixture, CalculateEnhancedCompositeSchedule_TxProfile) {
-    GTEST_SKIP();
     auto handler = create_smart_charging_handler(1);
 
     ChargingProfile profile_01 = get_charging_profile_from_file("TxDefaultProfile_01.json");
@@ -249,9 +246,38 @@ TEST_F(CompositeScheduleTestFixture, CalculateEnhancedCompositeSchedule_TxProfil
         profiles, my_date_start_range, my_date_end_range, 1, profiles.at(0).chargingSchedule.chargingRateUnit);
 }
 
-TEST_F(CompositeScheduleTestFixture, CalculateCompositeSchedule_LayeredTest_SameStartTime) {
-    GTEST_SKIP(); // Failing at the moment; unclear if this is a valid situation/scenario; same issue as v201's
-                  // K08_CalculateCompositeSchedule_LayeredTest_SameStartTime.
+///
+/// This was a defect in the earier 1.6 code that has now been fixed. Basically a tight test with a higher
+/// stack Profile that is Absolute but marked with a recurrencyKind of Daily.
+///
+TEST_F(CompositeScheduleTestFixture, CalculateEnhancedCompositeSchedule_TightLayeredTestWithAbsoluteProfile) {
+    auto handler = create_smart_charging_handler(1);
+
+    ChargingProfile profile_grid = get_charging_profile_from_file("TxProfile_grid.json");
+    ChargingProfile txprofile_03 = get_charging_profile_from_file("TxProfile_03_Absolute.json");
+    std::vector<ChargingProfile> profiles = {profile_grid, txprofile_03};
+
+    const DateTime my_date_start_range = ocpp::DateTime("2024-01-18T18:04:00");
+    const DateTime my_date_end_range = ocpp::DateTime("2024-01-18T18:22:00");
+
+    EVLOG_info << "    Start> " << my_date_start_range.to_rfc3339();
+    EVLOG_info << "      End> " << my_date_end_range.to_rfc3339();
+
+    auto composite_schedule = handler->calculate_enhanced_composite_schedule(
+        profiles, my_date_start_range, my_date_end_range, 1, profiles.at(0).chargingSchedule.chargingRateUnit);
+
+    log_me(composite_schedule, my_date_start_range);
+
+    ASSERT_EQ(composite_schedule.chargingSchedulePeriod.size(), 1);
+    ASSERT_EQ(composite_schedule.duration, 1080);
+    ASSERT_EQ(composite_schedule.chargingSchedulePeriod.at(0).limit, 19.0);
+}
+
+///
+/// A tight CompositeSchedude test is one where the start and end times exactly match the time window of the
+/// highest stack level.
+///
+TEST_F(CompositeScheduleTestFixture, CalculateEnhancedCompositeSchedule_TightLayeredTest) {
     auto handler = create_smart_charging_handler(1);
 
     ChargingProfile profile_grid = get_charging_profile_from_file("TxProfile_grid.json");
@@ -272,6 +298,63 @@ TEST_F(CompositeScheduleTestFixture, CalculateCompositeSchedule_LayeredTest_Same
     ASSERT_EQ(composite_schedule.chargingSchedulePeriod.size(), 1);
     ASSERT_EQ(composite_schedule.duration, 1080);
     ASSERT_EQ(composite_schedule.chargingSchedulePeriod.at(0).limit, 2000.0);
+}
+
+///
+/// A fat CompositeSchedude test is one where the start time begins before the time window of the highest stack level
+/// profile, and end time is afterwards.
+///
+TEST_F(CompositeScheduleTestFixture, CalculateEnhancedCompositeSchedule_FatLayeredTest) {
+    auto handler = create_smart_charging_handler(1);
+
+    ChargingProfile profile_grid = get_charging_profile_from_file("TxProfile_grid.json");
+    ChargingProfile txprofile_02 = get_charging_profile_from_file("TxProfile_02.json");
+    std::vector<ChargingProfile> profiles = {profile_grid, txprofile_02};
+
+    const DateTime my_date_start_range = ocpp::DateTime("2024-01-18T18:02:00");
+    const DateTime my_date_end_range = ocpp::DateTime("2024-01-18T18:24:00");
+
+    EVLOG_info << "    Start> " << my_date_start_range.to_rfc3339();
+    EVLOG_info << "      End> " << my_date_end_range.to_rfc3339();
+
+    auto composite_schedule = handler->calculate_enhanced_composite_schedule(
+        profiles, my_date_start_range, my_date_end_range, 1, profiles.at(0).chargingSchedule.chargingRateUnit);
+
+    log_me(composite_schedule, my_date_start_range);
+
+    ASSERT_EQ(composite_schedule.chargingSchedulePeriod.size(), 3);
+    ASSERT_EQ(composite_schedule.duration, 1320);
+    ASSERT_EQ(composite_schedule.chargingSchedulePeriod.at(0).limit, 19.0);
+    ASSERT_EQ(composite_schedule.chargingSchedulePeriod.at(1).limit, 2000.0);
+    ASSERT_EQ(composite_schedule.chargingSchedulePeriod.at(1).startPeriod, 120.0);
+    ASSERT_EQ(composite_schedule.chargingSchedulePeriod.at(2).limit, 19.0);
+    ASSERT_EQ(composite_schedule.chargingSchedulePeriod.at(2).startPeriod, 1200.0);
+}
+
+///
+/// A simple test to verify that the generated CompositeSchedule where the start and end times
+/// are thin, aka they fall inside a specific ChargingSchedulePeriod's time window
+///
+TEST_F(CompositeScheduleTestFixture, CalculateEnhancedCompositeSchedule_ThinTest) {
+    auto handler = create_smart_charging_handler(1);
+
+    ChargingProfile profile_grid = get_charging_profile_from_file("TxProfile_grid.json");
+    std::vector<ChargingProfile> profiles = {profile_grid};
+
+    const DateTime my_date_start_range = ocpp::DateTime("2024-01-18T18:04:00");
+    const DateTime my_date_end_range = ocpp::DateTime("2024-01-18T18:22:00");
+
+    EVLOG_info << "    Start> " << my_date_start_range.to_rfc3339();
+    EVLOG_info << "      End> " << my_date_end_range.to_rfc3339();
+
+    auto composite_schedule = handler->calculate_enhanced_composite_schedule(
+        profiles, my_date_start_range, my_date_end_range, 1, profiles.at(0).chargingSchedule.chargingRateUnit);
+
+    log_me(composite_schedule, my_date_start_range);
+
+    ASSERT_EQ(composite_schedule.chargingSchedulePeriod.size(), 1);
+    ASSERT_EQ(composite_schedule.duration, 1080);
+    ASSERT_EQ(composite_schedule.chargingSchedulePeriod.at(0).limit, 19.0);
 }
 
 } // namespace v16
