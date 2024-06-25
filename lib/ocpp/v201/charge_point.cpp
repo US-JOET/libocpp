@@ -190,14 +190,17 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
             this->device_model->get_value<int>(ControllerComponentVariables::MessageTimeout)},
         this->database_handler);
 
-    this->auth_cache_cleanup_thread = std::thread(&ChargePoint::cache_cleanup_handler, this);
+    // this->auth_cache_cleanup_thread = std::thread(&ChargePoint::cache_cleanup_handler, this);
 }
 
 ChargePoint::~ChargePoint() {
-    this->auth_cache_cleanup_thread.detach();
+    // this->auth_cache_cleanup_thread.detach();
 }
 
 void ChargePoint::start(BootReasonEnum bootreason) {
+    // FIXME? 
+    this->message_queue->start();
+    
     this->bootreason = bootreason;
     // Trigger all initial status notifications and callbacks related to component state
     // Should be done before sending the BootNotification.req so that the correct states can be reported

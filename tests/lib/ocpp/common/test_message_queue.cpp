@@ -296,7 +296,8 @@ protected:
             message_queue->stop();
         }
         message_queue = std::make_unique<MessageQueue<TestMessageType>>(send_callback_mock.AsStdFunction(), config, db);
-        message_queue->resume(std::chrono::seconds(0));
+        message_queue->start();
+        // message_queue->resume(std::chrono::seconds(0));
     }
 
     void SetUp() override {
