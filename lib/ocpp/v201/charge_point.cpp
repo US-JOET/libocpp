@@ -89,7 +89,8 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     csr_attempt(1),
     client_certificate_expiration_check_timer([this]() { this->scheduled_check_client_certificate_expiration(); }),
     v2g_certificate_expiration_check_timer([this]() { this->scheduled_check_v2g_certificate_expiration(); }),
-    callbacks(callbacks) {
+    callbacks(callbacks),
+    stop_auth_cache_cleanup_handler(false) {
     // Make sure the received callback struct is completely filled early before we actually start running
     if (!this->callbacks.all_callbacks_valid()) {
         EVLOG_AND_THROW(std::invalid_argument("All non-optional callbacks must be supplied"));
@@ -178,6 +179,7 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     // configure logging
     this->configure_message_logging_format(message_log_path);
 
+    // TODO - this should this be dependency injected.
     this->message_queue = std::make_unique<ocpp::MessageQueue<v201::MessageType>>(
         [this](json message) -> bool { return this->websocket->send(message.dump()); },
         MessageQueueConfig{
@@ -189,16 +191,20 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
                 .value_or(false),
             this->device_model->get_value<int>(ControllerComponentVariables::MessageTimeout)},
         this->database_handler);
+        
+    this->auth_cache_cleanup_thread = std::thread(&ChargePoint::cache_cleanup_handler, this);
 
-    // this->auth_cache_cleanup_thread = std::thread(&ChargePoint::cache_cleanup_handler, this);
 }
 
 ChargePoint::~ChargePoint() {
-    // this->auth_cache_cleanup_thread.detach();
+    {
+        std::scoped_lock lk(this->auth_cache_cleanup_mutex);
+        this->stop_auth_cache_cleanup_handler = true;
+    }
+    this->auth_cache_cleanup_thread.join();
 }
 
 void ChargePoint::start(BootReasonEnum bootreason) {
-    // FIXME? 
     this->message_queue->start();
     
     this->bootreason = bootreason;
@@ -3373,7 +3379,7 @@ void ChargePoint::cache_cleanup_handler() {
     // Run the update once so the ram variable gets initialized
     this->update_authorization_cache_size();
 
-    while (true) {
+    while (!this->stop_auth_cache_cleanup_handler) {
         {
             // Wait for next wakeup or timeout
             std::unique_lock lk(this->auth_cache_cleanup_mutex);

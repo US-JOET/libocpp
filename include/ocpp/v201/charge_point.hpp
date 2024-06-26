@@ -421,6 +421,7 @@ private:
     std::condition_variable auth_cache_cleanup_cv;
     std::mutex auth_cache_cleanup_mutex;
     std::thread auth_cache_cleanup_thread;
+    std::atomic_bool stop_auth_cache_cleanup_handler;
 
     // states
     RegistrationStatusEnum registration_status;
