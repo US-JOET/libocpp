@@ -2550,7 +2550,8 @@ inline ocpp::DateTime floor_seconds(const ocpp::DateTime& dt) {
 /// \param in_profile the charging profile
 /// \return a list of the start times of the profile
 std::vector<DateTime> calculate_start(const DateTime& in_now, const DateTime& in_end,
-                                      const std::optional<DateTime>& session_start, const ChargingProfile& in_profile) {
+                                      const std::optional<DateTime>& in_session_start,
+                                      const ChargingProfile& in_profile) {
     /*
      * Absolute schedules start at the defined startSchedule
      * Relative schedules start at session start
@@ -2634,13 +2635,112 @@ std::vector<DateTime> calculate_start(const DateTime& in_now, const DateTime& in
         }
         break;
     case ChargingProfileKindEnum::Relative:
+        // if there isn't a session start then assume the session starts now
+        if (in_session_start) {
+            start = floor_seconds(in_session_start.value());
+        }
+        start_times.push_back(start);
         break;
     }
     return start_times;
 }
-std::vector<period_entry_t> calculate_profile_entry(const DateTime& now, const DateTime& end,
-                                                    const std::optional<DateTime>& session_start,
-                                                    const ChargingProfile& profile, std::uint8_t period_index);
+
+/// \brief calculate the start times for the schedule period
+/// \param in_now the current date and time
+/// \param in_end the end of the composite schedule
+/// \param in_session_start optional when the charging session started
+/// \param in_profile the charging profile
+/// \param in_period_index the schedule period index
+/// \return the list of start times
+std::vector<period_entry_t> calculate_profile_entry(const DateTime& in_now, const DateTime& in_end,
+                                                    const std::optional<DateTime>& in_session_start,
+                                                    const ChargingProfile& in_profile, std::uint8_t in_period_index) {
+    std::vector<period_entry_t> entries;
+
+    if (in_period_index >= in_profile.chargingSchedule.front().chargingSchedulePeriod.size()) {
+        EVLOG_error << "Invalid schedule period index [" << static_cast<int>(in_period_index)
+                    << "] (too large) for profile " << in_profile.id;
+    } else {
+        const auto& this_period = in_profile.chargingSchedule.front().chargingSchedulePeriod[in_period_index];
+
+        if ((in_period_index == 0) && (this_period.startPeriod != 0)) {
+            // invalid profile - first period must be 0
+            EVLOG_error << "Invalid schedule period index [0] startPeriod " << this_period.startPeriod
+                        << " for profile " << in_profile.id;
+        } else if ((in_period_index > 0) &&
+                   (in_profile.chargingSchedule.front().chargingSchedulePeriod[in_period_index - 1].startPeriod >=
+                    this_period.startPeriod)) {
+            // invalid profile - periods must be in order and with increasing startPeriod values
+            EVLOG_error << "Invalid schedule period index [" << static_cast<int>(in_period_index) << "] startPeriod "
+                        << this_period.startPeriod << " for profile " << in_profile.id;
+        } else {
+            const bool has_next_period =
+                (in_period_index + 1) < in_profile.chargingSchedule.front().chargingSchedulePeriod.size();
+
+            // start time(s) of the schedule
+            // the start time of this period is calculated in period_entry_t::init()
+            const auto schedule_start = calculate_start(in_now, in_end, in_session_start, in_profile);
+
+            for (std::uint8_t i = 0; i < schedule_start.size(); i++) {
+                const bool has_next_occurrance = (i + 1) < schedule_start.size();
+                const auto& entry_start = schedule_start[i];
+
+                /*
+                 * The duration of this period (from the start of the schedule) is the sooner of
+                 * - forever
+                 * - next period start time
+                 * - optional duration
+                 * - the start of the next recurrence
+                 * - optional validTo
+                 */
+
+                int duration = std::numeric_limits<int>::max(); // forever
+
+                if (has_next_period) {
+                    duration =
+                        in_profile.chargingSchedule.front().chargingSchedulePeriod[in_period_index + 1].startPeriod;
+                }
+
+                // check optional chargingSchedule duration field
+                if (in_profile.chargingSchedule.front().duration &&
+                    (in_profile.chargingSchedule.front().duration.value() < duration)) {
+                    duration = in_profile.chargingSchedule.front().duration.value();
+                }
+
+                // check duration doesn't extend into the next recurrence
+                if (has_next_occurrance) {
+                    const auto next_start =
+                        duration_cast<seconds>(schedule_start[i + 1].to_time_point() - entry_start.to_time_point())
+                            .count();
+                    if (next_start < duration) {
+                        duration = next_start;
+                    }
+                }
+
+                // check duration doesn't extend beyond profile validity
+                if (in_profile.validTo) {
+                    // note can be negative
+                    const auto valid_to = floor_seconds(in_profile.validTo.value());
+                    const auto valid_to_seconds =
+                        duration_cast<seconds>(valid_to.to_time_point() - entry_start.to_time_point()).count();
+                    if (valid_to_seconds < duration) {
+                        duration = valid_to_seconds;
+                    }
+                }
+
+                // period_entry_t entry;
+                // entry.init(entry_start, duration, this_period, in_profile);
+                // const auto now = floor_seconds(in_now);
+
+                // if (entry.validate(in_profile, now)) {
+                //     entries.push_back(std::move(entry));
+                // }
+            }
+        }
+    }
+
+    return entries;
+}
 std::vector<period_entry_t> calculate_profile(const DateTime& now, const DateTime& end,
                                               const std::optional<DateTime>& session_start,
                                               const ChargingProfile& profile);

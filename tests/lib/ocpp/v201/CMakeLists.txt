@@ -10,7 +10,8 @@ target_sources(libocpp_unit_tests PRIVATE
         test_composite_schedule.cpp
         test_device_model.cpp
         test_smart_charging_handler.cpp
+        test_ocpp_types.cpp
         smart_charging_test_utils.hpp
-        )
+)
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/json DESTINATION ${TEST_PROFILES_LOCATION_V201})
