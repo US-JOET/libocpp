@@ -3067,7 +3067,6 @@ void ChargePoint::handle_heartbeat_response(CallResult<HeartbeatResponse> call) 
 }
 
 // Functional Block K: Smart Charging
-// void ChargePoint::handle_set_charging_profile_req(json& manual_json) {
 void ChargePoint::handle_set_charging_profile_req(Call<SetChargingProfileRequest> call) {
     SetChargingProfileResponse response;
     EVLOG_info << "Received SetChargingProfile: " << call.msg << "\nwith messageId: " << call.uniqueId;
