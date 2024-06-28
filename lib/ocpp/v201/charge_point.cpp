@@ -17,6 +17,7 @@
 #include <string>
 
 using namespace std::chrono_literals;
+using namespace nlohmann;
 
 const auto DEFAULT_MAX_CUSTOMER_INFORMATION_DATA_LENGTH = 51200;
 
@@ -1178,7 +1179,9 @@ void ChargePoint::remove_network_connection_profiles_below_actual_security_profi
 }
 
 void ChargePoint::handle_message(const EnhancedMessage<v201::MessageType>& message) {
+    EVLOG_error << "Handle_message called: " << message.message;
     const auto& json_message = message.message;
+    EVLOG_error << "json_message called: " << json_message;
     switch (message.messageType) {
     case MessageType::BootNotificationResponse:
         this->handle_boot_notification_response(json_message);
@@ -1261,6 +1264,22 @@ void ChargePoint::handle_message(const EnhancedMessage<v201::MessageType>& messa
     case MessageType::CustomerInformation:
         this->handle_customer_information_req(json_message);
         break;
+    case MessageType::SetChargingProfile:
+	{
+    	EVLOG_error << "before calling, json_message: " << json_message;
+    	EVLOG_error << "before calling, actual message part: " << json_message[3];
+	/*
+	json manual_json = {
+        	{"evseId", 1},
+        	{"chargingProfile", json_message[3]},
+    	};
+    	EVLOG_error << "before calling, json_wrapped message: " << manual_json;
+	json_message[3] = manual_json;
+	*/
+    	EVLOG_error << "before calling, reconstructed call: " << json_message;
+        this->handle_set_charging_profile_req(json_message);
+        break;
+	}
     default:
         if (message.messageTypeId == MessageTypeId::CALL) {
             const auto call_error = CallError(message.uniqueId, "NotImplemented", "", json({}));
@@ -3059,8 +3078,11 @@ void ChargePoint::handle_heartbeat_response(CallResult<HeartbeatResponse> call) 
 }
 
 // Functional Block K: Smart Charging
+// void ChargePoint::handle_set_charging_profile_req(json& manual_json) {
 void ChargePoint::handle_set_charging_profile_req(Call<SetChargingProfileRequest> call) {
+    EVLOG_error << "here before initializing response";
     SetChargingProfileResponse response;
+    EVLOG_error << "Received SetChargingProfile: " << call.msg << "\nwith messageId: " << call.uniqueId;
     auto validity = this->smart_charging_handler->validate_profile(call.msg.chargingProfile, call.msg.evseId);
 
     if (validity != ProfileValidationResultEnum::Valid) {
@@ -3071,6 +3093,7 @@ void ChargePoint::handle_set_charging_profile_req(Call<SetChargingProfileRequest
             this->callbacks.signal_set_charging_profiles_callback.value()();
         }
     }
+    EVLOG_error << "Received profile validity: " << validity << "setting response to " << response;
     ocpp::CallResult<SetChargingProfileResponse> call_result(response, call.uniqueId);
     this->send<SetChargingProfileResponse>(call_result);
 }
