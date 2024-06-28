@@ -972,7 +972,20 @@ struct period_entry_t {
     std::int32_t stack_level;
     ChargingRateUnitEnum charging_rate_unit;
     std::optional<float> min_charging_rate;
+
+    bool equals(const period_entry_t& other) const {
+        return (start == other.end) && (end == other.end) && (limit == other.limit) &&
+               (number_phases == other.number_phases) && (stack_level == other.stack_level) &&
+               (charging_rate_unit == other.charging_rate_unit) && (min_charging_rate == other.min_charging_rate);
+        // Add comparisons for other fields as necessary
+    }
 };
+
+bool operator==(const period_entry_t& a, const period_entry_t& b);
+bool operator!=(const period_entry_t& a, const period_entry_t& b);
+bool operator==(const std::vector<period_entry_t>& a, const std::vector<period_entry_t>& b);
+std::string to_string(const period_entry_t& entry);
+std::ostream& operator<<(std::ostream& os, const period_entry_t& entry);
 
 std::vector<DateTime> calculate_start(const DateTime& now, const DateTime& end,
                                       const std::optional<DateTime>& session_start, const ChargingProfile& profile);

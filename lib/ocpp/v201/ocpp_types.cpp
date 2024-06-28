@@ -2543,6 +2543,112 @@ inline ocpp::DateTime floor_seconds(const ocpp::DateTime& dt) {
     return ocpp::DateTime(std::chrono::floor<seconds>(dt.to_time_point()));
 }
 
+/// \brief populate a schedule period
+/// \param in_start the start time of the profile
+/// \param in_duration the time in seconds from the start of the profile to the end of this period
+/// \param in_period the details of this period
+void period_entry_t::init(const DateTime& in_start, int in_duration, const ChargingSchedulePeriod& in_period,
+                          const ChargingProfile& in_profile) {
+    // note duration can be negative and hence end time is before start time
+    // see period_entry_t::validate()
+    const auto start_tp = std::chrono::floor<seconds>(in_start.to_time_point());
+    start = std::move(DateTime(start_tp + seconds(in_period.startPeriod)));
+    end = std::move(DateTime(start_tp + seconds(in_duration)));
+    limit = in_period.limit;
+    number_phases = in_period.numberPhases;
+    stack_level = in_profile.stackLevel;
+    charging_rate_unit = in_profile.chargingSchedule.front().chargingRateUnit;
+    min_charging_rate = in_profile.chargingSchedule.front().minChargingRate;
+}
+
+bool period_entry_t::validate(const ChargingProfile& profile, const ocpp::DateTime& now) {
+    bool b_valid{true};
+
+    if (profile.validFrom) {
+        const auto valid_from = floor_seconds(profile.validFrom.value());
+        if (valid_from > start) {
+            // the calculated start is before the profile is valid
+            if (valid_from >= end) {
+                // the whole period isn't valid
+                b_valid = false;
+            } else {
+                // adjust start to match validFrom
+                start = valid_from;
+            }
+        }
+    }
+
+    b_valid = b_valid && end > start; // check end time is after the start time
+    b_valid = b_valid && end > now;   // ignore expired periods
+    return b_valid;
+}
+
+#include <iostream>
+// Include the header where period_entry_t is defined
+// #include "path_to_period_entry_t_definition.hpp"
+
+// bool operator==(const period_entry_t& lhs, const period_entry_t& rhs) {
+//     return (lhs.start == rhs.end) && (lhs.end == rhs.end) && (lhs.limit == rhs.limit) &&
+//            (lhs.number_phases == rhs.number_phases) && (lhs.stack_level == rhs.stack_level) &&
+//            (lhs.charging_rate_unit == rhs.charging_rate_unit) && (lhs.min_charging_rate == rhs.min_charging_rate);
+// }
+
+bool operator==(const period_entry_t& a, const period_entry_t& b) {
+    bool bRes = (a.start == b.start) && (a.end == b.end) && (a.limit == b.limit) && (a.stack_level == b.stack_level) &&
+                (a.charging_rate_unit == b.charging_rate_unit);
+    if (a.number_phases && b.number_phases) {
+        bRes = bRes && a.number_phases.value() == b.number_phases.value();
+    }
+    if (a.min_charging_rate && b.min_charging_rate) {
+        bRes = bRes && a.min_charging_rate.value() == b.min_charging_rate.value();
+    }
+    return bRes;
+}
+
+bool operator!=(const period_entry_t& a, const period_entry_t& b) {
+    return !(a == b);
+}
+
+bool operator==(const std::vector<period_entry_t>& a, const std::vector<period_entry_t>& b) {
+    bool bRes = a.size() == b.size();
+    if (bRes) {
+        for (std::uint8_t i = 0; i < a.size(); i++) {
+            bRes = a[i] == b[i];
+            if (!bRes) {
+                break;
+            }
+        }
+    }
+    return bRes;
+}
+std::string to_string(const period_entry_t& entry) {
+    std::string result = "Period Entry: {";
+    result += "Start: " + entry.start.to_rfc3339() + ", ";
+    result += "End: " + entry.end.to_rfc3339() + ", ";
+    result += "Limit: " + std::to_string(entry.limit) + ", ";
+    if (entry.number_phases.has_value()) {
+        result += "Number of Phases: " + std::to_string(entry.number_phases.value()) + ", ";
+    }
+    result += "Stack Level: " + std::to_string(entry.stack_level) + ", ";
+    result += "ChargingRateUnit:" + conversions::charging_rate_unit_enum_to_string(entry.charging_rate_unit);
+
+    if (entry.min_charging_rate.has_value()) {
+        result += ", Min Charging Rate: " + std::to_string(entry.min_charging_rate.value());
+    }
+
+    result += "}";
+    return result;
+}
+
+std::ostream& operator<<(std::ostream& os, const period_entry_t& entry) {
+    os << to_string(entry);
+    return os;
+}
+
+// bool period_entry_t::equals(const period_entry_t& other) const {
+//     return startPeriod == other.startPeriod && endPeriod == other.endPeriod;
+// }
+
 /// \brief calculate the start times for the profile
 /// \param in_now the current date and time
 /// \param in_end the end of the composite schedule
@@ -2728,13 +2834,13 @@ std::vector<period_entry_t> calculate_profile_entry(const DateTime& in_now, cons
                     }
                 }
 
-                // period_entry_t entry;
-                // entry.init(entry_start, duration, this_period, in_profile);
-                // const auto now = floor_seconds(in_now);
+                period_entry_t entry;
+                entry.init(entry_start, duration, this_period, in_profile);
+                const auto now = floor_seconds(in_now);
 
-                // if (entry.validate(in_profile, now)) {
-                //     entries.push_back(std::move(entry));
-                // }
+                if (entry.validate(in_profile, now)) {
+                    entries.push_back(std::move(entry));
+                }
             }
         }
     }
