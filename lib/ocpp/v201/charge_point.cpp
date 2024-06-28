@@ -17,7 +17,6 @@
 #include <string>
 
 using namespace std::chrono_literals;
-using namespace nlohmann;
 
 const auto DEFAULT_MAX_CUSTOMER_INFORMATION_DATA_LENGTH = 51200;
 
