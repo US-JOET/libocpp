@@ -55,6 +55,8 @@ const DateTime time03_08_30 = ocpp::DateTime("2024-01-03T08:30:00Z");
 const DateTime time03_08_45 = ocpp::DateTime("2024-01-03T08:45:00Z");
 const DateTime time03_09_00 = ocpp::DateTime("2024-01-03T09:00:00Z");
 const DateTime time03_16_00 = ocpp::DateTime("2024-01-03T16:00:00Z");
+const DateTime time03_16_10 = ocpp::DateTime("2024-01-03T16:10:00Z");
+const DateTime time03_16_30 = ocpp::DateTime("2024-01-03T16:30:00Z");
 const DateTime time03_20_50 = ocpp::DateTime("2024-01-03T20:50:00Z");
 const DateTime time03_23_10 = ocpp::DateTime("2024-01-03T23:10:00Z");
 const DateTime time04_08_00 = ocpp::DateTime("2024-01-04T08:00:00Z");
@@ -67,6 +69,7 @@ const DateTime time06_20_50 = ocpp::DateTime("2024-01-06T20:50:00Z");
 const DateTime time07_20_50 = ocpp::DateTime("2024-01-07T20:50:00Z");
 const DateTime time10_07_10 = ocpp::DateTime("2024-01-10T07:10:00Z");
 const DateTime time10_16_00 = ocpp::DateTime("2024-01-10T16:00:00Z");
+const DateTime time10_16_30 = ocpp::DateTime("2024-01-10T16:30:00Z");
 const DateTime time10_20_10 = ocpp::DateTime("2024-01-10T20:10:00Z");
 const DateTime time10_20_50 = ocpp::DateTime("2024-01-10T20:50:00Z");
 const DateTime time12_20_50 = ocpp::DateTime("2024-01-12T20:50:00Z");
@@ -224,7 +227,9 @@ INSTANTIATE_TEST_SUITE_P(
         std::make_tuple(time08_10, time02_20_50, nullopt, daily_profile, time02_08_45, time02_09_00, 2, nullopt,
                         nullopt),
         std::make_tuple(time08_10, time03_20_50, nullopt, daily_profile_no_duration, time12_00, time02_08_00, 2,
-                        time02_08_45, time03_08_00)
+                        time02_08_45, time03_08_00),
+        std::make_tuple(time03_16_10, time10_20_50, nullopt, weekly_profile, time03_16_00, time03_16_30, 0,
+                        time10_16_00, time10_16_30)
 
         //                 ,
         // std::make_tuple(time02_08_10, time04_08_00, nullopt, daily_profile_no_duration, time02_08_45, time03_08_00,
