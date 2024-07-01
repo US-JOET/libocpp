@@ -87,7 +87,8 @@ const DateTime time02_04_20_50 = ocpp::DateTime("2024-02-04T20:50:00Z");
 const DateTime time02_04_08_00 = ocpp::DateTime("2024-02-04T08:00:00Z");
 const DateTime time02_07_16_00 = ocpp::DateTime("2024-02-07T16:00:00Z");
 const DateTime time02_10_20_50 = ocpp::DateTime("2024-02-10T20:50:00Z");
-const DateTime time03_01_08_10 = ocpp::DateTime("2024-02-01T08:10:00Z");
+const DateTime time03_01_08_10 = ocpp::DateTime("2024-03-01T08:10:00Z");
+const DateTime time03_10_20_50 = ocpp::DateTime("2024-03-10T20:50:00Z");
 
 const DateTime time2023_12_27_16_00 = ocpp::DateTime("2023-12-27T16:00:00Z");
 const DateTime time2023_12_28_08_10 = ocpp::DateTime("2023-12-28T08:10:00Z");
@@ -316,7 +317,8 @@ INSTANTIATE_TEST_SUITE_P(CalculateProfileEntryType_NegativeBoundary_Param_Test_I
                              std::make_tuple(time18_00, time20_50, time12_15, relative_profile_no_duration, 1),
                              std::make_tuple(time08_10, time20_50, nullopt, daily_profile, 3),
                              std::make_tuple(time03_01_08_10, time20_50, nullopt, daily_profile_no_duration, 1),
-                             std::make_tuple(time03_16_10, time20_50, nullopt, weekly_profile, 3)
+                             std::make_tuple(time03_16_10, time20_50, nullopt, weekly_profile_no_duration, 3),
+                             std::make_tuple(time03_01_08_10, time03_10_20_50, nullopt, weekly_profile, 1)
                              //
                              ));
 
