@@ -92,6 +92,21 @@ public:
 
         return sout.str();
     }
+
+    static bool validate_profile_result(const std::vector<period_entry_t>& result) {
+        bool bRes{true};
+        DateTime last{"1900-01-01T00:00:00Z"};
+        for (const auto& i : result) {
+            // ensure no overlaps
+            bRes = i.start < i.end;
+            bRes = bRes && i.start >= last;
+            last = i.end;
+            if (!bRes) {
+                break;
+            }
+        }
+        return bRes;
+    }
 };
 
 } // namespace ocpp::v201

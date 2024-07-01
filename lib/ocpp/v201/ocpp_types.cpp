@@ -2849,7 +2849,28 @@ std::vector<period_entry_t> calculate_profile_entry(const DateTime& in_now, cons
 }
 std::vector<period_entry_t> calculate_profile(const DateTime& now, const DateTime& end,
                                               const std::optional<DateTime>& session_start,
-                                              const ChargingProfile& profile);
+                                              const ChargingProfile& profile) {
+    std::vector<period_entry_t> entries;
+
+    for (std::uint8_t i = 0; i < profile.chargingSchedule.front().chargingSchedulePeriod.size(); i++) {
+        const auto results = calculate_profile_entry(now, end, session_start, profile, i);
+        for (const auto& entry : results) {
+            if (entry.start <= end) {
+                entries.push_back(entry);
+            }
+        }
+    }
+
+    // sort into date order
+    struct {
+        bool operator()(const period_entry_t& a, const period_entry_t& b) const {
+            // earliest first
+            return a.start < b.start;
+        }
+    } less_than;
+    std::sort(entries.begin(), entries.end(), less_than);
+    return entries;
+}
 
 ChargingSchedule calculate_composite_schedule(std::vector<period_entry_t>& combined_schedules, const DateTime& now,
                                               const DateTime& end,
