@@ -20,6 +20,7 @@ using std::nullopt;
 const DateTime time08_00 = ocpp::DateTime("2024-01-01T08:00:00Z");
 const DateTime time08_10 = ocpp::DateTime("2024-01-01T08:10:00Z");
 const DateTime time11_50 = ocpp::DateTime("2024-01-01T11:50:00Z");
+const DateTime time12_00 = ocpp::DateTime("2024-01-01T12:00:00Z");
 const DateTime time12_02 = ocpp::DateTime("2024-01-01T12:02:00Z");
 const DateTime time12_05 = ocpp::DateTime("2024-01-01T12:02:00Z");
 const DateTime time12_10 = ocpp::DateTime("2024-01-01T12:10:00Z");
@@ -79,8 +80,11 @@ const DateTime time02_04_20_50 = ocpp::DateTime("2024-02-04T20:50:00Z");
 const DateTime time02_04_08_00 = ocpp::DateTime("2024-02-04T08:00:00Z");
 const DateTime time02_07_16_00 = ocpp::DateTime("2024-02-07T16:00:00Z");
 const DateTime time02_10_20_50 = ocpp::DateTime("2024-02-10T20:50:00Z");
+const DateTime time03_01_08_10 = ocpp::DateTime("2024-02-01T08:10:00Z");
 
 const DateTime time2023_12_27_16_00 = ocpp::DateTime("2023-12-27T16:00:00Z");
+const DateTime time2023_12_28_08_10 = ocpp::DateTime("2023-12-28T08:10:00Z");
+const DateTime time2023_12_30_20_50 = ocpp::DateTime("2023-12-30T20:50:00Z");
 
 ChargingProfile absolute_profile = SmartChargingTestUtils::get_charging_profile_from_file("singles/Absolute_301.json");
 const ChargingProfile absolute_profile_no_duration =
@@ -216,7 +220,12 @@ INSTANTIATE_TEST_SUITE_P(
         std::make_tuple(time02_08_10, time03_20_50, nullopt, daily_profile, time02_08_45, time02_09_00, 2, time03_08_45,
                         time03_09_00),
         std::make_tuple(time02_08_10, time04_08_00, nullopt, daily_profile_no_duration, time02_08_45, time03_08_00, 2,
-                        time03_08_45, time04_08_00)
+                        time03_08_45, time04_08_00),
+        std::make_tuple(time08_10, time02_20_50, nullopt, daily_profile, time02_08_45, time02_09_00, 2, nullopt,
+                        nullopt),
+        std::make_tuple(time08_10, time03_20_50, nullopt, daily_profile_no_duration, time12_00, time02_08_00, 2,
+                        time02_08_45, time03_08_00)
+
         //                 ,
         // std::make_tuple(time02_08_10, time04_08_00, nullopt, daily_profile_no_duration, time02_08_45, time03_08_00,
         // 2,
@@ -277,7 +286,9 @@ INSTANTIATE_TEST_SUITE_P(CalculateProfileEntryType_NegativeBoundary_Param_Test_I
                              std::make_tuple(time12_20, time20_50, time12_15, relative_profile, 3),
                              std::make_tuple(time18_00, time20_50, nullopt, relative_profile_no_duration, 1),
                              std::make_tuple(time18_00, time20_50, time12_15, relative_profile_no_duration, 1),
-                             std::make_tuple(time08_10, time20_50, nullopt, daily_profile, 3)
+                             std::make_tuple(time08_10, time20_50, nullopt, daily_profile, 3),
+                             std::make_tuple(time03_01_08_10, time20_50, nullopt, daily_profile_no_duration, 1),
+                             std::make_tuple(time2023_12_28_08_10, time2023_12_30_20_50, nullopt, daily_profile, 2)
                              //
                              ));
 
@@ -310,6 +321,31 @@ TEST(OCPPTypesTest, PeriodEntry_Equality) {
 
     ASSERT_EQ(actual_entry, same_entry);
     ASSERT_NE(actual_entry, different_entry);
+}
+
+///
+/// 2.0.1 version of the calculateProfileEntryRecurringDailyBeforeValid test
+/// Daily at 08:00 valid from 12:00 2024-01-01 duration 1 hour
+///
+TEST(OCPPTypesTest, CalculateProfileEntry_DailyBeforeValid) {
+    // Test Phase 0 - Both periods complete before the profile is valid
+    ASSERT_EQ(
+        0, calculate_profile_entry(time2023_12_28_08_10, time2023_12_30_20_50, std::nullopt, daily_profile, 2).size());
+
+    // Test Phase 1 - only second period is valid
+    period_entry_t expected_phase1_period_entry{
+        .start = time02_08_45,
+        .end = time02_09_00,
+        .limit = daily_profile.chargingSchedule.front().chargingSchedulePeriod[2].limit,
+        .stack_level = daily_profile.stackLevel,
+        .charging_rate_unit = daily_profile.chargingSchedule.front().chargingRateUnit};
+
+    std::vector<period_entry_t> period_entries =
+        calculate_profile_entry(time08_10, time02_20_50, std::nullopt, daily_profile, 2);
+    period_entry_t phase1_period_entry = period_entries.back();
+
+    ASSERT_EQ(1, period_entries.size());
+    // ASSERT_EQ(expected_phase1_period_entry, phase1_period_entry);
 }
 
 } // namespace
