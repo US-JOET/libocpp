@@ -106,6 +106,8 @@ const ChargingProfile daily_profile_no_duration =
     SmartChargingTestUtils::get_charging_profile_from_file("singles/Recurring_Daily_NoDuration_301.json");
 const ChargingProfile weekly_profile =
     SmartChargingTestUtils::get_charging_profile_from_file("singles/Recurring_Weekly_301.json");
+const ChargingProfile weekly_profile_no_duration =
+    SmartChargingTestUtils::get_charging_profile_from_file("singles/Recurring_Weekly_NoDuration_301.json");
 
 class ChargingProfileType_Param_Test
     : public ::testing::TestWithParam<std::tuple<ocpp::DateTime, ocpp::DateTime, std::optional<ocpp::DateTime>,
@@ -236,10 +238,29 @@ INSTANTIATE_TEST_SUITE_P(
                         time10_16_00, time10_16_30),
         std::make_tuple(time03_16_10, time10_20_50, nullopt, weekly_profile, time03_16_30, time03_16_45, 1,
                         time10_16_30, time10_16_45),
-        std::make_tuple(time03_16_10, time10_20_50, nullopt, weekly_profile, time03_16_45, time03_17_00, 2,
-                        time10_16_45, time10_17_00)
+        std::make_tuple(time03_16_10, time10_20_50, nullopt, weekly_profile_no_duration, time03_16_45, time10_16_00, 2,
+                        time10_16_45, time17_16_00)
 
             ));
+
+// TEST(ProfileTestsA, calculateProfileEntryRecurringWeeklyNoDuration) {
+
+//     const auto* entry = &res[0];
+
+//     EXPECT_EQ(entry->start, "2024-01-03T16:45:00Z");
+//     EXPECT_EQ(entry->end, "2024-01-10T16:00:00Z");
+//     EXPECT_EQ(entry->limit, profile.chargingSchedule.chargingSchedulePeriod[2].limit);
+//     EXPECT_FALSE(entry->number_phases);
+//     EXPECT_EQ(entry->stack_level, profile.stackLevel);
+
+//     entry = &res[1];
+
+//     EXPECT_EQ(entry->start, "2024-01-10T16:45:00Z");
+//     EXPECT_EQ(entry->end, "2024-01-17T16:00:00Z");
+//     EXPECT_EQ(entry->limit, profile.chargingSchedule.chargingSchedulePeriod[2].limit);
+//     EXPECT_FALSE(entry->number_phases);
+//     EXPECT_EQ(entry->stack_level, profile.stackLevel);
+// }
 
 TEST_P(CalculateProfileEntryType_Param_Test, CalculateProfileEntry_Positive) {
 
