@@ -57,6 +57,7 @@ const DateTime time03_09_00 = ocpp::DateTime("2024-01-03T09:00:00Z");
 const DateTime time03_16_00 = ocpp::DateTime("2024-01-03T16:00:00Z");
 const DateTime time03_16_10 = ocpp::DateTime("2024-01-03T16:10:00Z");
 const DateTime time03_16_30 = ocpp::DateTime("2024-01-03T16:30:00Z");
+const DateTime time03_16_45 = ocpp::DateTime("2024-01-03T16:45:00Z");
 const DateTime time03_20_50 = ocpp::DateTime("2024-01-03T20:50:00Z");
 const DateTime time03_23_10 = ocpp::DateTime("2024-01-03T23:10:00Z");
 const DateTime time04_08_00 = ocpp::DateTime("2024-01-04T08:00:00Z");
@@ -70,6 +71,7 @@ const DateTime time07_20_50 = ocpp::DateTime("2024-01-07T20:50:00Z");
 const DateTime time10_07_10 = ocpp::DateTime("2024-01-10T07:10:00Z");
 const DateTime time10_16_00 = ocpp::DateTime("2024-01-10T16:00:00Z");
 const DateTime time10_16_30 = ocpp::DateTime("2024-01-10T16:30:00Z");
+const DateTime time10_16_45 = ocpp::DateTime("2024-01-10T16:45:00Z");
 const DateTime time10_20_10 = ocpp::DateTime("2024-01-10T20:10:00Z");
 const DateTime time10_20_50 = ocpp::DateTime("2024-01-10T20:50:00Z");
 const DateTime time12_20_50 = ocpp::DateTime("2024-01-12T20:50:00Z");
@@ -231,13 +233,39 @@ INSTANTIATE_TEST_SUITE_P(
         std::make_tuple(time03_16_10, time10_20_50, nullopt, weekly_profile, time03_16_00, time03_16_30, 0,
                         time10_16_00, time10_16_30)
 
-        //                 ,
-        // std::make_tuple(time02_08_10, time04_08_00, nullopt, daily_profile_no_duration, time02_08_45, time03_08_00,
-        // 2,
-        //                 time03_08_45, time04_08_00)
+            ,
+        std::make_tuple(time03_16_10, time10_20_50, nullopt, weekly_profile, time03_16_30, time03_16_45, 1,
+                        time10_16_30, time10_16_45)
 
-        //
-        ));
+            ));
+
+// TEST(ProfileTestsA, calculateProfileEntryRecurringWeekly1) {
+//     // Wednesdays from 16:00
+//     auto profile{profileRecurring};
+//     profile.recurrencyKind = RecurrencyKindType::Weekly;
+//     profile.chargingSchedule.startSchedule = DateTime("2024-01-03T16:00:00Z");
+
+//     DateTime now("2024-01-03T16:10:00Z");
+//     DateTime end("2024-01-10T20:50:00Z");
+//     auto res = calculate_profile_entry(now, end, std::nullopt, profile, 1);
+//     ASSERT_EQ(res.size(), 2);
+
+//     const auto* entry = &res[0];
+
+//     EXPECT_EQ(entry->start, "2024-01-03T16:30:00Z");
+//     EXPECT_EQ(entry->end, "2024-01-03T16:45:00Z");
+//     EXPECT_EQ(entry->limit, profile.chargingSchedule.chargingSchedulePeriod[1].limit);
+//     EXPECT_FALSE(entry->number_phases);
+//     EXPECT_EQ(entry->stack_level, profile.stackLevel);
+
+//     entry = &res[1];
+
+//     EXPECT_EQ(entry->start, "2024-01-10T16:30:00Z");
+//     EXPECT_EQ(entry->end, "2024-01-10T16:45:00Z");
+//     EXPECT_EQ(entry->limit, profile.chargingSchedule.chargingSchedulePeriod[1].limit);
+//     EXPECT_FALSE(entry->number_phases);
+//     EXPECT_EQ(entry->stack_level, profile.stackLevel);
+// }
 
 TEST_P(CalculateProfileEntryType_Param_Test, CalculateProfileEntry_Positive) {
 
