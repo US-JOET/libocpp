@@ -18,92 +18,11 @@ using namespace ocpp;
 using std::nullopt;
 using std::chrono::minutes;
 
-const DateTime time08_00 = ocpp::DateTime("2024-01-01T08:00:00Z");
-const DateTime time08_10 = ocpp::DateTime("2024-01-01T08:10:00Z");
-const DateTime time11_50 = ocpp::DateTime("2024-01-01T11:50:00Z");
-const DateTime time11_55 = ocpp::DateTime("2024-01-01T11:55:00Z");
-const DateTime time11_58 = ocpp::DateTime("2024-01-01T11:58:00Z");
-const DateTime time12_00 = ocpp::DateTime("2024-01-01T12:00:00Z");
-const DateTime time12_01 = ocpp::DateTime("2024-01-01T12:01:00Z");
-const DateTime time12_02 = ocpp::DateTime("2024-01-01T12:02:00Z");
-const DateTime time12_05 = ocpp::DateTime("2024-01-01T12:02:00Z");
-const DateTime time12_10 = ocpp::DateTime("2024-01-01T12:10:00Z");
-const DateTime time12_15 = ocpp::DateTime("2024-01-01T12:15:00Z");
-const DateTime time12_20 = ocpp::DateTime("2024-01-01T12:20:00Z");
-const DateTime time12_28 = ocpp::DateTime("2024-01-01T12:28:00Z");
-const DateTime time12_32 = ocpp::DateTime("2024-01-01T12:32:00Z");
-const DateTime time12_40 = ocpp::DateTime("2024-01-01T12:40:00Z");
-const DateTime time12_43 = ocpp::DateTime("2024-01-01T12:43:00Z");
-const DateTime time12_45 = ocpp::DateTime("2024-01-01T12:45:00Z");
-const DateTime time12_47 = ocpp::DateTime("2024-01-01T12:47:00Z");
-const DateTime time12_50 = ocpp::DateTime("2024-01-01T12:50:00Z");
-const DateTime time12_55 = ocpp::DateTime("2024-01-01T12:55:00Z");
-const DateTime time13_00 = ocpp::DateTime("2024-01-01T13:00:00Z");
-const DateTime time13_02 = ocpp::DateTime("2024-01-01T13:02:00Z");
-const DateTime time13_05 = ocpp::DateTime("2024-01-01T13:05:00Z");
-const DateTime time13_15 = ocpp::DateTime("2024-01-01T13:15:00Z");
-const DateTime time13_20 = ocpp::DateTime("2024-01-01T13:20:00Z");
-const DateTime time14_00 = ocpp::DateTime("2024-01-01T14:00:00Z");
-const DateTime time14_01 = ocpp::DateTime("2024-01-01T14:00:01Z");
-const DateTime time14_10 = ocpp::DateTime("2024-01-01T14:10:00Z");
-const DateTime time14_15 = ocpp::DateTime("2024-01-01T14:15:00Z");
-const DateTime time18_00 = ocpp::DateTime("2024-01-01T18:00:00Z");
-const DateTime time20_50 = ocpp::DateTime("2024-01-01T20:50:00Z");
-const DateTime time02_07_10 = ocpp::DateTime("2024-01-02T07:10:00Z");
-const DateTime time02_08_00 = ocpp::DateTime("2024-01-02T08:00:00Z");
-const DateTime time02_08_10 = ocpp::DateTime("2024-01-02T08:10:00Z");
-const DateTime time02_08_30 = ocpp::DateTime("2024-01-02T08:30:00Z");
-const DateTime time02_08_45 = ocpp::DateTime("2024-01-02T08:45:00Z");
-const DateTime time02_09_00 = ocpp::DateTime("2024-01-02T09:00:00Z");
-const DateTime time02_20_50 = ocpp::DateTime("2024-01-02T20:50:00Z");
-const DateTime time02_23_10 = ocpp::DateTime("2024-01-02T23:10:00Z");
-const DateTime time03_07_10 = ocpp::DateTime("2024-01-03T07:10:00Z");
-const DateTime time03_08_00 = ocpp::DateTime("2024-01-03T08:00:00Z");
-const DateTime time03_08_30 = ocpp::DateTime("2024-01-03T08:30:00Z");
-const DateTime time03_08_45 = ocpp::DateTime("2024-01-03T08:45:00Z");
-const DateTime time03_09_00 = ocpp::DateTime("2024-01-03T09:00:00Z");
-const DateTime time03_16_00 = ocpp::DateTime("2024-01-03T16:00:00Z");
-const DateTime time03_16_10 = ocpp::DateTime("2024-01-03T16:10:00Z");
-const DateTime time03_16_30 = ocpp::DateTime("2024-01-03T16:30:00Z");
-const DateTime time03_16_45 = ocpp::DateTime("2024-01-03T16:45:00Z");
-const DateTime time03_17_00 = ocpp::DateTime("2024-01-03T17:00:00Z");
-const DateTime time03_20_50 = ocpp::DateTime("2024-01-03T20:50:00Z");
-const DateTime time03_23_10 = ocpp::DateTime("2024-01-03T23:10:00Z");
-const DateTime time04_08_00 = ocpp::DateTime("2024-01-04T08:00:00Z");
-const DateTime time04_23_10 = ocpp::DateTime("2024-01-04T23:10:00Z");
-const DateTime time05_08_00 = ocpp::DateTime("2024-01-05T08:00:00Z");
-const DateTime time05_11_50 = ocpp::DateTime("2024-01-05T11:50:00Z");
-const DateTime time05_12_10 = ocpp::DateTime("2024-01-05T12:10:00Z");
-const DateTime time06_08_00 = ocpp::DateTime("2024-01-06T08:00:00Z");
-const DateTime time06_20_50 = ocpp::DateTime("2024-01-06T20:50:00Z");
-const DateTime time07_20_50 = ocpp::DateTime("2024-01-07T20:50:00Z");
-const DateTime time10_07_10 = ocpp::DateTime("2024-01-10T07:10:00Z");
-const DateTime time10_16_00 = ocpp::DateTime("2024-01-10T16:00:00Z");
-const DateTime time10_16_30 = ocpp::DateTime("2024-01-10T16:30:00Z");
-const DateTime time10_16_45 = ocpp::DateTime("2024-01-10T16:45:00Z");
-const DateTime time10_17_00 = ocpp::DateTime("2024-01-10T17:00:00Z");
-const DateTime time10_20_10 = ocpp::DateTime("2024-01-10T20:10:00Z");
-const DateTime time10_20_50 = ocpp::DateTime("2024-01-10T20:50:00Z");
-const DateTime time12_20_50 = ocpp::DateTime("2024-01-12T20:50:00Z");
-const DateTime time17_16_00 = ocpp::DateTime("2024-01-17T16:00:00Z");
-const DateTime time17_20_50 = ocpp::DateTime("2024-01-17T20:50:00Z");
-const DateTime time31_16_00 = ocpp::DateTime("2024-01-31T16:00:00Z");
+auto dt = [](std::string dt_string) -> ocpp::DateTime { return SmartChargingTestUtils::dt(dt_string); };
 
-const DateTime time02_03_08_00 = ocpp::DateTime("2024-02-03T08:00:00Z");
-const DateTime time02_03_14_10 = ocpp::DateTime("2024-02-03T14:10:00Z");
-const DateTime time02_04_20_50 = ocpp::DateTime("2024-02-04T20:50:00Z");
-const DateTime time02_04_08_00 = ocpp::DateTime("2024-02-04T08:00:00Z");
-const DateTime time02_07_16_00 = ocpp::DateTime("2024-02-07T16:00:00Z");
-const DateTime time02_10_20_50 = ocpp::DateTime("2024-02-10T20:50:00Z");
-const DateTime time03_01_08_10 = ocpp::DateTime("2024-03-01T08:10:00Z");
-const DateTime time03_10_20_50 = ocpp::DateTime("2024-03-10T20:50:00Z");
-
-const DateTime time2023_12_27_08_05 = ocpp::DateTime("2023-12-27T08:05:00Z");
-const DateTime time2023_12_27_08_10 = ocpp::DateTime("2023-12-27T08:10:00Z");
-const DateTime time2023_12_27_16_00 = ocpp::DateTime("2023-12-27T16:00:00Z");
-const DateTime time2023_12_28_08_10 = ocpp::DateTime("2023-12-28T08:10:00Z");
-const DateTime time2023_12_30_08_10 = ocpp::DateTime("2023-12-30T08:10:00Z");
-const DateTime time2023_12_30_20_50 = ocpp::DateTime("2023-12-30T20:50:00Z");
+// 1. Optimizations?
+// 2. How much different than 1.6
+// 3. Add logging?
 
 ChargingProfile absolute_profile = SmartChargingTestUtils::get_charging_profile_from_file("singles/Absolute_301.json");
 const ChargingProfile absolute_profile_no_duration =
@@ -130,49 +49,51 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Values(
         // Absolute Profiles
         // not started, started, finished, session started
-        std::make_tuple(time11_50, time20_50, nullopt, absolute_profile, time12_02, nullopt),
-        std::make_tuple(time12_10, time20_50, nullopt, absolute_profile, time12_02, nullopt),
-        std::make_tuple(time14_10, time20_50, nullopt, absolute_profile, time12_02, nullopt),
-        std::make_tuple(time12_10, time20_50, time12_05, absolute_profile, time12_02, nullopt),
+        std::make_tuple(dt("11:50"), dt("20:50"), nullopt, absolute_profile, dt("12:02"), nullopt),
+        std::make_tuple(dt("12:10"), dt("20:50"), nullopt, absolute_profile, dt("12:02"), nullopt),
+        std::make_tuple(dt("14:10"), dt("20:50"), nullopt, absolute_profile, dt("12:02"), nullopt),
+        std::make_tuple(dt("12:10"), dt("20:50"), dt("12:05"), absolute_profile, dt("12:02"), nullopt),
 
         // Relative Profiles
         // not started, started, finished; session started: before, during & after profile
-        std::make_tuple(time11_50, time20_50, nullopt, relative_profile, time11_50, nullopt),
-        std::make_tuple(time12_10, time20_50, nullopt, relative_profile, time12_10, nullopt),
-        std::make_tuple(time14_10, time20_50, nullopt, relative_profile, time14_10, nullopt),
-        std::make_tuple(time12_10, time20_50, time11_50, relative_profile, time11_50, nullopt),
-        std::make_tuple(time12_55, time20_50, time12_50, relative_profile, time12_50, nullopt),
-        std::make_tuple(time14_15, time20_50, time12_10, relative_profile, time12_10, nullopt),
+        std::make_tuple(dt("11:50"), dt("20:50"), nullopt, relative_profile, dt("11:50"), nullopt),
+        std::make_tuple(dt("12:10"), dt("20:50"), nullopt, relative_profile, dt("12:10"), nullopt),
+        std::make_tuple(dt("14:10"), dt("20:50"), nullopt, relative_profile, dt("14:10"), nullopt),
+        std::make_tuple(dt("12:10"), dt("20:50"), dt("11:50"), relative_profile, dt("11:50"), nullopt),
+        std::make_tuple(dt("12:55"), dt("20:50"), dt("12:50"), relative_profile, dt("12:50"), nullopt),
+        std::make_tuple(dt("14:15"), dt("20:50"), dt("12:10"), relative_profile, dt("12:10"), nullopt),
 
         // Recurring Daily Profiles
         // profile not started yet - start time is before profile is valid
-        std::make_tuple(time11_50, time02_20_50, nullopt, daily_profile, time08_00, time02_08_00),
+        std::make_tuple(dt("11:50"), dt("2T20:50"), nullopt, daily_profile, dt("8:00"), dt("2T08:00")),
         // profile started - start time is before profile is valid
-        std::make_tuple(time12_10, time02_20_50, nullopt, daily_profile, time08_00, time02_08_00),
+        std::make_tuple(dt("12:10"), dt("2T20:50"), nullopt, daily_profile, dt("8:00"), dt("2T08:00")),
         // start time is before profile is valid (and the previous day)
-        std::make_tuple(time02_07_10, time02_20_50, nullopt, daily_profile, time08_00, time02_08_00),
-        std::make_tuple(time02_08_10, time03_20_50, nullopt, daily_profile, time02_08_00, time03_08_00),
-        std::make_tuple(time02_23_10, time03_20_50, nullopt, daily_profile, time02_08_00, time03_08_00),
-        std::make_tuple(time03_07_10, time03_20_50, nullopt, daily_profile, time02_08_00, time03_08_00),
+        std::make_tuple(dt("2T07:10"), dt("2T20:50"), nullopt, daily_profile, dt("8:00"), dt("2T08:00")),
+        std::make_tuple(dt("2T08:10"), dt("3T20:50"), nullopt, daily_profile, dt("2T08:00"), dt("3T08:00")),
+        std::make_tuple(dt("2T23:10"), dt("3T20:50"), nullopt, daily_profile, dt("2T08:00"), dt("3T08:00")),
+        std::make_tuple(dt("3T07:10"), dt("3T20:50"), nullopt, daily_profile, dt("2T08:00"), dt("3T08:00")),
         // profile finished
-        std::make_tuple(time02_03_14_10, time02_04_20_50, nullopt, daily_profile, time02_03_08_00, time02_04_08_00),
+        std::make_tuple(dt("02-03T14:10"), dt("02-04T20:50"), nullopt, daily_profile, dt("02-03T08:00"),
+                        dt("02-04T08:00")),
         // session started
-        std::make_tuple(time05_12_10, time06_20_50, time06_08_00, daily_profile, time05_08_00, time06_08_00),
+        std::make_tuple(dt("5T12:10"), dt("6T20:50"), dt("6T08:00"), daily_profile, dt("5T08:00"), dt("6T08:00")),
 
         // Recurring Weekly Profiles
         // profile not started yet - start time is before profile is valid
-        std::make_tuple(time11_50, time07_20_50, nullopt, weekly_profile, time2023_12_27_16_00, time03_16_00),
+        std::make_tuple(dt("11:50"), dt("7T20:50"), nullopt, weekly_profile, dt("2023-12-27T16:00"), dt("3T16:00")),
         // profile started
-        std::make_tuple(time12_10, time07_20_50, nullopt, weekly_profile, time2023_12_27_16_00, time03_16_00),
-        std::make_tuple(time03_07_10, time07_20_50, nullopt, weekly_profile, time2023_12_27_16_00, time03_16_00),
-        std::make_tuple(time03_23_10, time10_20_50, nullopt, weekly_profile, time03_16_00, time10_16_00),
-        std::make_tuple(time04_23_10, time10_20_50, nullopt, weekly_profile, time03_16_00, time10_16_00),
-        std::make_tuple(time10_07_10, time10_20_50, nullopt, weekly_profile, time03_16_00, time10_16_00),
-        std::make_tuple(time10_20_10, time17_20_50, nullopt, weekly_profile, time10_16_00, time17_16_00),
+        std::make_tuple(dt("12:10"), dt("7T20:50"), nullopt, weekly_profile, dt("2023-12-27T16:00"), dt("3T16:00")),
+        std::make_tuple(dt("3T07:10"), dt("7T20:50"), nullopt, weekly_profile, dt("2023-12-27T16:00"), dt("3T16:00")),
+        std::make_tuple(dt("3T23:10"), dt("10T20:50"), nullopt, weekly_profile, dt("3T16:00"), dt("10T16:00")),
+        std::make_tuple(dt("4T23:10"), dt("10T20:50"), nullopt, weekly_profile, dt("3T16:00"), dt("10T16:00")),
+        std::make_tuple(dt("10T07:10"), dt("10T20:50"), nullopt, weekly_profile, dt("3T16:00"), dt("10T16:00")),
+        std::make_tuple(dt("10T20:10"), dt("17T20:50"), nullopt, weekly_profile, dt("10T16:00"), dt("17T16:00")),
         // profile finished
-        std::make_tuple(time02_03_14_10, time02_10_20_50, nullopt, weekly_profile, time31_16_00, time02_07_16_00),
+        std::make_tuple(dt("02-03T14:10"), dt("02-10T20:50"), nullopt, weekly_profile, dt("31T16:00"),
+                        dt("02-07T16:00")),
         // session started
-        std::make_tuple(time04_23_10, time12_20_50, time05_11_50, weekly_profile, time03_16_00, time10_16_00)));
+        std::make_tuple(dt("4T23:10"), dt("12T20:50"), dt("5T11:50"), weekly_profile, dt("3T16:00"), dt("10T16:00"))));
 
 TEST_P(ChargingProfileType_Param_Test, CalculateSessionStart) {
     ocpp::DateTime now = std::get<0>(GetParam());
@@ -214,50 +135,59 @@ class CalculateProfileEntryType_Param_Test
           std::tuple<ocpp::DateTime, ocpp::DateTime, std::optional<ocpp::DateTime>, ChargingProfile, ocpp::DateTime,
                      ocpp::DateTime, int, std::optional<ocpp::DateTime>, std::optional<ocpp::DateTime>>> {};
 
-INSTANTIATE_TEST_SUITE_P(
-    CalculateProfileEntryType_Param_Test_Instantiate, CalculateProfileEntryType_Param_Test,
-    testing::Values(
-        // Absolute Profiles
-        // not started, started, finished, session started
-        std::make_tuple(time12_10, time20_50, nullopt, absolute_profile, time12_02, time12_32, 0, nullopt, nullopt),
-        std::make_tuple(time12_10, time20_50, nullopt, absolute_profile, time12_32, time12_47, 1, nullopt, nullopt),
-        std::make_tuple(time12_10, time20_50, nullopt, absolute_profile, time12_47, time13_02, 2, nullopt, nullopt),
-        std::make_tuple(time12_10, time20_50, nullopt, absolute_profile_no_duration, time12_47, time14_00, 2, nullopt,
-                        nullopt),
-        std::make_tuple(time12_20, time20_50, nullopt, relative_profile, time12_20, time12_50, 0, nullopt, nullopt),
-        std::make_tuple(time12_20, time20_50, time12_15, relative_profile, time12_15, time12_45, 0, nullopt, nullopt),
-        std::make_tuple(time12_20, time20_50, nullopt, relative_profile, time12_50, time13_05, 1, nullopt, nullopt),
-        std::make_tuple(time12_20, time20_50, time12_15, relative_profile, time12_45, time13_00, 1, nullopt, nullopt),
-        std::make_tuple(time12_20, time20_50, nullopt, relative_profile, time13_05, time13_20, 2, nullopt, nullopt),
-        std::make_tuple(time12_20, time20_50, time12_15, relative_profile, time13_00, time13_15, 2, nullopt, nullopt),
-        std::make_tuple(time12_20, time20_50, nullopt, relative_profile_no_duration, time13_05, time14_00, 2, nullopt,
-                        nullopt),
-        std::make_tuple(time12_20, time20_50, time12_15, relative_profile_no_duration, time13_00, time14_00, 2, nullopt,
-                        nullopt),
-        std::make_tuple(time02_08_10, time03_20_50, nullopt, daily_profile, time02_08_00, time02_08_30, 0, time03_08_00,
-                        time03_08_30),
-        std::make_tuple(time02_08_10, time03_20_50, nullopt, daily_profile, time02_08_30, time02_08_45, 1, time03_08_30,
-                        time03_08_45),
-        std::make_tuple(time02_08_10, time03_20_50, nullopt, daily_profile, time02_08_45, time02_09_00, 2, time03_08_45,
-                        time03_09_00),
-        std::make_tuple(time02_08_10, time04_08_00, nullopt, daily_profile_no_duration, time02_08_45, time03_08_00, 2,
-                        time03_08_45, time04_08_00),
-        std::make_tuple(time08_10, time02_20_50, nullopt, daily_profile, time02_08_45, time02_09_00, 2, nullopt,
-                        nullopt),
-        std::make_tuple(time08_10, time03_20_50, nullopt, daily_profile_no_duration, time12_00, time02_08_00, 2,
-                        time02_08_45, time03_08_00),
-        std::make_tuple(time03_16_10, time10_20_50, nullopt, weekly_profile, time03_16_00, time03_16_30, 0,
-                        time10_16_00, time10_16_30),
-        std::make_tuple(time03_16_10, time10_20_50, nullopt, weekly_profile, time03_16_30, time03_16_45, 1,
-                        time10_16_30, time10_16_45),
-        std::make_tuple(time03_16_10, time10_20_50, nullopt, weekly_profile_no_duration, time03_16_45, time10_16_00, 2,
-                        time10_16_45, time17_16_00),
-        std::make_tuple(time2023_12_30_08_10, time03_20_50, nullopt, weekly_profile, time03_16_45, time03_17_00, 2,
-                        nullopt, nullopt),
-        std::make_tuple(time2023_12_30_08_10, time10_20_50, nullopt, weekly_profile_no_duration, time12_00,
-                        time03_16_00, 2, time03_16_45, time10_16_00)
+INSTANTIATE_TEST_SUITE_P(CalculateProfileEntryType_Param_Test_Instantiate, CalculateProfileEntryType_Param_Test,
+                         testing::Values(
+                             // Absolute Profiles
+                             // not started, started, finished, session started
+                             std::make_tuple(dt("12:10"), dt("20:50"), nullopt, absolute_profile, dt("12:02"),
+                                             dt("12:32"), 0, nullopt, nullopt),
+                             std::make_tuple(dt("12:10"), dt("20:50"), nullopt, absolute_profile, dt("12:32"),
+                                             dt("12:47"), 1, nullopt, nullopt),
+                             std::make_tuple(dt("12:10"), dt("20:50"), nullopt, absolute_profile, dt("12:47"),
+                                             dt("13:02"), 2, nullopt, nullopt),
+                             std::make_tuple(dt("12:10"), dt("20:50"), nullopt, absolute_profile_no_duration,
+                                             dt("12:47"), dt("14:00"), 2, nullopt, nullopt),
+                             std::make_tuple(dt("12:20"), dt("20:50"), nullopt, relative_profile, dt("12:20"),
+                                             dt("12:50"), 0, nullopt, nullopt),
+                             std::make_tuple(dt("12:20"), dt("20:50"), dt("12:15"), relative_profile, dt("12:15"),
+                                             dt("12:45"), 0, nullopt, nullopt),
+                             std::make_tuple(dt("12:20"), dt("20:50"), nullopt, relative_profile, dt("12:50"),
+                                             dt("13:05"), 1, nullopt, nullopt),
+                             std::make_tuple(dt("12:20"), dt("20:50"), dt("12:15"), relative_profile, dt("12:45"),
+                                             dt("13:00"), 1, nullopt, nullopt),
+                             std::make_tuple(dt("12:20"), dt("20:50"), nullopt, relative_profile, dt("13:05"),
+                                             dt("13:20"), 2, nullopt, nullopt),
+                             std::make_tuple(dt("12:20"), dt("20:50"), dt("12:15"), relative_profile, dt("13:00"),
+                                             dt("13:15"), 2, nullopt, nullopt),
+                             std::make_tuple(dt("12:20"), dt("20:50"), nullopt, relative_profile_no_duration,
+                                             dt("13:05"), dt("14:00"), 2, nullopt, nullopt),
+                             std::make_tuple(dt("12:20"), dt("20:50"), dt("12:15"), relative_profile_no_duration,
+                                             dt("13:00"), dt("14:00"), 2, nullopt, nullopt),
+                             std::make_tuple(dt("2T08:10"), dt("3T20:50"), nullopt, daily_profile, dt("2T08:00"),
+                                             dt("2T08:30"), 0, dt("3T08:00"), dt("3T08:30")),
+                             std::make_tuple(dt("2T08:10"), dt("3T20:50"), nullopt, daily_profile, dt("2T08:30"),
+                                             dt("2T08:45"), 1, dt("3T08:30"), dt("3T08:45")),
+                             std::make_tuple(dt("2T08:10"), dt("3T20:50"), nullopt, daily_profile, dt("2T08:45"),
+                                             dt("2T09:00"), 2, dt("3T08:45"), dt("3T09:00")),
+                             std::make_tuple(dt("2T08:10"), dt("4T08:00"), nullopt, daily_profile_no_duration,
+                                             dt("2T08:45"), dt("3T08:00"), 2, dt("3T08:45"), dt("4T08:00")),
+                             std::make_tuple(dt("8:10"), dt("2T20:50"), nullopt, daily_profile, dt("2T08:45"),
+                                             dt("2T09:00"), 2, nullopt, nullopt),
+                             std::make_tuple(dt("8:10"), dt("3T20:50"), nullopt, daily_profile_no_duration, dt("12:00"),
+                                             dt("2T08:00"), 2, dt("2T08:45"), dt("3T08:00")),
+                             std::make_tuple(dt("3T16:10"), dt("10T20:50"), nullopt, weekly_profile, dt("3T16:00"),
+                                             dt("3T16:30"), 0, dt("10T16:00"), dt("10T16:30")),
+                             std::make_tuple(dt("3T16:10"), dt("10T20:50"), nullopt, weekly_profile, dt("3T16:30"),
+                                             dt("3T16:45"), 1, dt("10T16:30"), dt("10T16:45")),
+                             std::make_tuple(dt("3T16:10"), dt("10T20:50"), nullopt, weekly_profile_no_duration,
+                                             dt("3T16:45"), dt("10T16:00"), 2, dt("10T16:45"), dt("17T16:00")),
+                             std::make_tuple(dt("2023-12-30T08:10"), dt("3T20:50"), nullopt, weekly_profile,
+                                             dt("3T16:45"), dt("3T17:00"), 2, nullopt, nullopt),
+                             std::make_tuple(dt("2023-12-30T08:10"), dt("10T20:50"), nullopt,
+                                             weekly_profile_no_duration, dt("12:00"), dt("3T16:00"), 2, dt("3T16:45"),
+                                             dt("10T16:00"))
 
-            ));
+                                 ));
 
 TEST_P(CalculateProfileEntryType_Param_Test, CalculateProfileEntry_Positive) {
 
@@ -305,17 +235,17 @@ INSTANTIATE_TEST_SUITE_P(CalculateProfileEntryType_NegativeBoundary_Param_Test_I
                          testing::Values(
                              // Absolute Profiles
                              // not started, started, finished, session started
-                             std::make_tuple(time12_10, time20_50, nullopt, absolute_profile, 3),
-                             std::make_tuple(time18_00, time20_50, nullopt, absolute_profile, 1),
-                             std::make_tuple(time12_20, time20_50, nullopt, relative_profile, 3),
-                             std::make_tuple(time12_20, time20_50, time12_15, relative_profile, 3),
-                             std::make_tuple(time18_00, time20_50, nullopt, relative_profile_no_duration, 1),
-                             std::make_tuple(time18_00, time20_50, time12_15, relative_profile_no_duration, 1),
-                             std::make_tuple(time08_10, time20_50, nullopt, daily_profile, 3),
-                             std::make_tuple(time03_01_08_10, time20_50, nullopt, daily_profile_no_duration, 1),
-                             std::make_tuple(time03_16_10, time20_50, nullopt, weekly_profile_no_duration, 3),
-                             std::make_tuple(time03_01_08_10, time03_10_20_50, nullopt, weekly_profile, 1),
-                             std::make_tuple(time2023_12_27_08_10, time20_50, nullopt, weekly_profile, 2)));
+                             std::make_tuple(dt("12:10"), dt("20:50"), nullopt, absolute_profile, 3),
+                             std::make_tuple(dt("18:00"), dt("20:50"), nullopt, absolute_profile, 1),
+                             std::make_tuple(dt("12:20"), dt("20:50"), nullopt, relative_profile, 3),
+                             std::make_tuple(dt("12:20"), dt("20:50"), dt("12:15"), relative_profile, 3),
+                             std::make_tuple(dt("18:00"), dt("20:50"), nullopt, relative_profile_no_duration, 1),
+                             std::make_tuple(dt("18:00"), dt("20:50"), dt("12:15"), relative_profile_no_duration, 1),
+                             std::make_tuple(dt("8:10"), dt("20:50"), nullopt, daily_profile, 3),
+                             std::make_tuple(dt("03-01T08:10"), dt("20:50"), nullopt, daily_profile_no_duration, 1),
+                             std::make_tuple(dt("3T16:10"), dt("20:50"), nullopt, weekly_profile_no_duration, 3),
+                             std::make_tuple(dt("03-01T08:10"), dt("03-10T20:50"), nullopt, weekly_profile, 1),
+                             std::make_tuple(dt("2023-12-27T08:10"), dt("20:50"), nullopt, weekly_profile, 2)));
 
 TEST_P(CalculateProfileEntryType_NegativeBoundary_Param_Test, CalculateProfileEntry_Negative) {
     ocpp::DateTime now = std::get<0>(GetParam());
@@ -331,15 +261,15 @@ TEST_P(CalculateProfileEntryType_NegativeBoundary_Param_Test, CalculateProfileEn
 }
 
 TEST(OCPPTypesTest, PeriodEntry_Equality) {
-    period_entry_t actual_entry{.start = time02_08_45,
-                                .end = time03_08_00,
+    period_entry_t actual_entry{.start = dt("2T08:45"),
+                                .end = dt("3T08:00"),
                                 .limit = absolute_profile.chargingSchedule.front().chargingSchedulePeriod[0].limit,
                                 .stack_level = absolute_profile.stackLevel,
                                 .charging_rate_unit = absolute_profile.chargingSchedule.front().chargingRateUnit};
     period_entry_t same_entry = actual_entry;
 
-    period_entry_t different_entry{.start = time03_08_00,
-                                   .end = time03_08_00,
+    period_entry_t different_entry{.start = dt("3T08:00"),
+                                   .end = dt("3T08:00"),
                                    .limit = absolute_profile.chargingSchedule.front().chargingSchedulePeriod[0].limit,
                                    .stack_level = absolute_profile.stackLevel,
                                    .charging_rate_unit = absolute_profile.chargingSchedule.front().chargingRateUnit};
@@ -357,10 +287,10 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Values(
         // Absolute Profiles
         // not started, started, finished, session started
-        std::make_tuple(time08_10, time20_50, time2023_12_27_08_05, absolute_profile, std::nullopt),
-        std::make_tuple(time12_01, time20_50, time2023_12_27_08_05, absolute_profile, std::nullopt),
-        std::make_tuple(time12_40, time20_50, time2023_12_27_08_05, absolute_profile, 2),
-        std::make_tuple(time14_01, time20_50, time2023_12_27_08_05, absolute_profile, 0)));
+        std::make_tuple(dt("8:10"), dt("20:50"), dt("2023-12-27T08:05"), absolute_profile, std::nullopt),
+        std::make_tuple(dt("12:01"), dt("20:50"), dt("2023-12-27T08:05"), absolute_profile, std::nullopt),
+        std::make_tuple(dt("12:40"), dt("20:50"), dt("2023-12-27T08:05"), absolute_profile, 2),
+        std::make_tuple(dt("14:01"), dt("20:50"), dt("2023-12-27T08:05"), absolute_profile, 0)));
 
 TEST_P(CalculateProfileType_Param_Test, CalculateProfileDirect) {
     ocpp::DateTime now = std::get<0>(GetParam());
@@ -384,9 +314,9 @@ TEST_P(CalculateProfileType_Param_Test, CalculateProfileDirect) {
 TEST(OCPPTypesTest, CalculateProfile_Absolute) {
     // before start expecting all periods to be included
     std::vector<period_entry_t> period_entries_no_session =
-        calculate_profile(time08_10, time20_50, std::nullopt, absolute_profile);
+        calculate_profile(dt("8:10"), dt("20:50"), std::nullopt, absolute_profile);
     std::vector<period_entry_t> period_entries_before =
-        calculate_profile(time08_10, time20_50, time2023_12_27_08_05, absolute_profile);
+        calculate_profile(dt("8:10"), dt("20:50"), dt("2023-12-27T08:05"), absolute_profile);
 
     ASSERT_EQ(absolute_profile.chargingSchedule.front().chargingSchedulePeriod.size(),
               period_entries_no_session.size());
@@ -395,8 +325,8 @@ TEST(OCPPTypesTest, CalculateProfile_Absolute) {
     EXPECT_TRUE(SmartChargingTestUtils::validate_profile_result(period_entries_no_session));
 
     // just before start
-    period_entries_no_session = calculate_profile(time12_01, time20_50, std::nullopt, absolute_profile);
-    period_entries_before = calculate_profile(time12_01, time20_50, time2023_12_27_08_05, absolute_profile);
+    period_entries_no_session = calculate_profile(dt("12:01"), dt("20:50"), std::nullopt, absolute_profile);
+    period_entries_before = calculate_profile(dt("12:01"), dt("20:50"), dt("2023-12-27T08:05"), absolute_profile);
 
     ASSERT_EQ(absolute_profile.chargingSchedule.front().chargingSchedulePeriod.size(),
               period_entries_no_session.size());
@@ -405,8 +335,8 @@ TEST(OCPPTypesTest, CalculateProfile_Absolute) {
     EXPECT_TRUE(SmartChargingTestUtils::validate_profile_result(period_entries_no_session));
 
     // during
-    period_entries_no_session = calculate_profile(time12_40, time20_50, std::nullopt, absolute_profile);
-    period_entries_before = calculate_profile(time12_40, time20_50, time2023_12_27_08_05, absolute_profile);
+    period_entries_no_session = calculate_profile(dt("12:40"), dt("20:50"), std::nullopt, absolute_profile);
+    period_entries_before = calculate_profile(dt("12:40"), dt("20:50"), dt("2023-12-27T08:05"), absolute_profile);
 
     ASSERT_EQ(2, period_entries_no_session.size());
     ASSERT_EQ(2, period_entries_before.size());
@@ -414,8 +344,8 @@ TEST(OCPPTypesTest, CalculateProfile_Absolute) {
     EXPECT_TRUE(SmartChargingTestUtils::validate_profile_result(period_entries_no_session));
 
     // after
-    period_entries_no_session = calculate_profile(time14_01, time20_50, std::nullopt, absolute_profile);
-    period_entries_before = calculate_profile(time14_01, time20_50, time2023_12_27_08_05, absolute_profile);
+    period_entries_no_session = calculate_profile(dt("14:01"), dt("20:50"), std::nullopt, absolute_profile);
+    period_entries_before = calculate_profile(dt("14:01"), dt("20:50"), dt("2023-12-27T08:05"), absolute_profile);
 
     ASSERT_EQ(0, period_entries_no_session.size());
     ASSERT_EQ(0, period_entries_before.size());
@@ -425,40 +355,40 @@ TEST(OCPPTypesTest, CalculateProfile_Absolute) {
 
 TEST(OCPPTypesTest, CalculateProfile_AbsoluteLimited) {
     // Before start expecting no periods
-    ASSERT_EQ(0, calculate_profile(time08_10, DateTime(time08_10.to_time_point() + minutes(20)), std::nullopt,
+    ASSERT_EQ(0, calculate_profile(dt("8:10"), DateTime(dt("8:10").to_time_point() + minutes(20)), std::nullopt,
                                    absolute_profile)
                      .size());
 
     // Just before start expecting a single period
-    period_entry_t expected_entry{.start = time12_02,
-                                  .end = time12_32,
+    period_entry_t expected_entry{.start = dt("12:02"),
+                                  .end = dt("12:32"),
                                   .limit = absolute_profile.chargingSchedule.front().chargingSchedulePeriod[0].limit,
                                   .stack_level = absolute_profile.stackLevel,
                                   .charging_rate_unit = absolute_profile.chargingSchedule.front().chargingRateUnit};
 
-    std::vector<period_entry_t> period_entries_just_before_start =
-        calculate_profile(time12_01, DateTime(time12_01.to_time_point() + minutes(20)), std::nullopt, absolute_profile);
+    std::vector<period_entry_t> period_entries_just_before_start = calculate_profile(
+        dt("12:01"), DateTime(dt("12:01").to_time_point() + minutes(20)), std::nullopt, absolute_profile);
 
     ASSERT_EQ(1, period_entries_just_before_start.size());
     EXPECT_TRUE(SmartChargingTestUtils::validate_profile_result(period_entries_just_before_start));
     ASSERT_EQ(expected_entry, period_entries_just_before_start.front());
 
     // During start expecting 2 periods
-    period_entry_t expected_1st_entry{.start = time12_32,
-                                      .end = time12_47,
+    period_entry_t expected_1st_entry{.start = dt("12:32"),
+                                      .end = dt("12:47"),
                                       .limit =
                                           absolute_profile.chargingSchedule.front().chargingSchedulePeriod[1].limit,
                                       .stack_level = absolute_profile.stackLevel,
                                       .charging_rate_unit = absolute_profile.chargingSchedule.front().chargingRateUnit};
-    period_entry_t expected_2nd_entry{.start = time12_47,
-                                      .end = time13_02,
+    period_entry_t expected_2nd_entry{.start = dt("12:47"),
+                                      .end = dt("13:02"),
                                       .limit =
                                           absolute_profile.chargingSchedule.front().chargingSchedulePeriod[2].limit,
                                       .stack_level = absolute_profile.stackLevel,
                                       .charging_rate_unit = absolute_profile.chargingSchedule.front().chargingRateUnit};
 
-    std::vector<period_entry_t> period_entries_during_start =
-        calculate_profile(time12_40, DateTime(time12_40.to_time_point() + minutes(20)), std::nullopt, absolute_profile);
+    std::vector<period_entry_t> period_entries_during_start = calculate_profile(
+        dt("12:40"), DateTime(dt("12:40").to_time_point() + minutes(20)), std::nullopt, absolute_profile);
 
     ASSERT_EQ(2, period_entries_during_start.size());
     ASSERT_EQ(expected_1st_entry, period_entries_during_start.front());
@@ -466,22 +396,22 @@ TEST(OCPPTypesTest, CalculateProfile_AbsoluteLimited) {
     EXPECT_TRUE(SmartChargingTestUtils::validate_profile_result(period_entries_during_start));
 
     // After expecting no periods
-    ASSERT_EQ(0, calculate_profile(time14_01, DateTime(time14_01.to_time_point() + minutes(20)), std::nullopt,
+    ASSERT_EQ(0, calculate_profile(dt("14:01"), DateTime(dt("14:01").to_time_point() + minutes(20)), std::nullopt,
                                    absolute_profile)
                      .size());
 }
 
 TEST(OCPPTypesTest, CalculateProfile_Relative) {
     // Before start expecting no periods
-    ASSERT_EQ(0, calculate_profile(time08_10, time20_50, std::nullopt, relative_profile).size());
-    ASSERT_EQ(0, calculate_profile(time08_10, time20_50, time2023_12_27_08_05, relative_profile).size());
+    ASSERT_EQ(0, calculate_profile(dt("8:10"), dt("20:50"), std::nullopt, relative_profile).size());
+    ASSERT_EQ(0, calculate_profile(dt("8:10"), dt("20:50"), dt("2023-12-27T08:05"), relative_profile).size());
 
     // Just before start expecting all periods
 
     std::vector<period_entry_t> period_entries_before_no_session =
-        calculate_profile(time11_58, time20_50, std::nullopt, relative_profile);
+        calculate_profile(dt("11:58"), dt("20:50"), std::nullopt, relative_profile);
     std::vector<period_entry_t> period_entries_before =
-        calculate_profile(time11_58, time20_50, time11_55, relative_profile);
+        calculate_profile(dt("11:58"), dt("20:50"), dt("11:55"), relative_profile);
 
     for (period_entry_t pet : period_entries_before_no_session) {
         EVLOG_debug << ">>> " << pet;
@@ -498,8 +428,8 @@ TEST(OCPPTypesTest, CalculateProfile_Relative) {
 
     // Validate period entries with no session start
     period_entry_t expected_pe0_no_session{
-        .start = time12_00,
-        .end = time12_28,
+        .start = dt("12:00"),
+        .end = dt("12:28"),
         .limit = absolute_profile.chargingSchedule.front().chargingSchedulePeriod[0].limit,
         .stack_level = absolute_profile.stackLevel,
         .charging_rate_unit = absolute_profile.chargingSchedule.front().chargingRateUnit};
@@ -507,8 +437,8 @@ TEST(OCPPTypesTest, CalculateProfile_Relative) {
     ASSERT_EQ(expected_pe0_no_session, period_entries_before_no_session.at(0));
 
     period_entry_t expected_pe1_no_session{
-        .start = time12_28,
-        .end = time12_43,
+        .start = dt("12:28"),
+        .end = dt("12:43"),
         .limit = absolute_profile.chargingSchedule.front().chargingSchedulePeriod[1].limit,
         .stack_level = absolute_profile.stackLevel,
         .charging_rate_unit = absolute_profile.chargingSchedule.front().chargingRateUnit};

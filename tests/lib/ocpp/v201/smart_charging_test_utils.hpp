@@ -1,6 +1,7 @@
 #include "everest/logging.hpp"
 #include "ocpp/v201/ocpp_types.hpp"
 #include "ocpp/v201/utils.hpp"
+#include <chrono>
 #include <filesystem>
 #include <iomanip>
 #include <iostream>
@@ -16,6 +17,26 @@ static const std::string BASE_JSON_PATH = std::string(TEST_PROFILES_LOCATION_V20
 
 class SmartChargingTestUtils {
 public:
+    static ocpp::DateTime dt(std::string dt_string) {
+        ocpp::DateTime dt;
+
+        if (dt_string.length() == 4) {
+            dt = ocpp::DateTime("2024-01-01T0" + dt_string + ":00Z");
+        } else if (dt_string.length() == 5) {
+            dt = ocpp::DateTime("2024-01-01T" + dt_string + ":00Z");
+        } else if (dt_string.length() == 7) {
+            dt = ocpp::DateTime("2024-01-0" + dt_string + ":00Z");
+        } else if (dt_string.length() == 8) {
+            dt = ocpp::DateTime("2024-01-" + dt_string + ":00Z");
+        } else if (dt_string.length() == 11) {
+            dt = ocpp::DateTime("2024-" + dt_string + ":00Z");
+        } else if (dt_string.length() == 16) {
+            dt = ocpp::DateTime(dt_string + ":00Z");
+        }
+
+        return dt;
+    }
+
     static std::vector<ChargingProfile> get_charging_profiles_from_directory(const std::string& path) {
         EVLOG_debug << "get_charging_profiles_from_directory: " << path;
         std::vector<ChargingProfile> profiles;

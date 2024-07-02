@@ -2847,6 +2847,7 @@ std::vector<period_entry_t> calculate_profile_entry(const DateTime& in_now, cons
 
     return entries;
 }
+
 std::vector<period_entry_t> calculate_profile(const DateTime& now, const DateTime& end,
                                               const std::optional<DateTime>& session_start,
                                               const ChargingProfile& profile) {
