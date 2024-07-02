@@ -314,12 +314,8 @@ INSTANTIATE_TEST_SUITE_P(CalculateProfileEntryType_NegativeBoundary_Param_Test_I
                              std::make_tuple(time08_10, time20_50, nullopt, daily_profile, 3),
                              std::make_tuple(time03_01_08_10, time20_50, nullopt, daily_profile_no_duration, 1),
                              std::make_tuple(time03_16_10, time20_50, nullopt, weekly_profile_no_duration, 3),
-                             std::make_tuple(time03_01_08_10, time03_10_20_50, nullopt, weekly_profile, 1)
-
-                                 ,
-                             std::make_tuple(time2023_12_27_08_10, time20_50, nullopt, weekly_profile, 2)
-                             //
-                             ));
+                             std::make_tuple(time03_01_08_10, time03_10_20_50, nullopt, weekly_profile, 1),
+                             std::make_tuple(time2023_12_27_08_10, time20_50, nullopt, weekly_profile, 2)));
 
 TEST_P(CalculateProfileEntryType_NegativeBoundary_Param_Test, CalculateProfileEntry_Negative) {
     ocpp::DateTime now = std::get<0>(GetParam());
