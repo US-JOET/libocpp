@@ -16,10 +16,13 @@ namespace {
 using namespace ocpp::v201;
 using namespace ocpp;
 using std::nullopt;
+using std::chrono::minutes;
 
 const DateTime time08_00 = ocpp::DateTime("2024-01-01T08:00:00Z");
 const DateTime time08_10 = ocpp::DateTime("2024-01-01T08:10:00Z");
 const DateTime time11_50 = ocpp::DateTime("2024-01-01T11:50:00Z");
+const DateTime time11_55 = ocpp::DateTime("2024-01-01T11:55:00Z");
+const DateTime time11_58 = ocpp::DateTime("2024-01-01T11:58:00Z");
 const DateTime time12_00 = ocpp::DateTime("2024-01-01T12:00:00Z");
 const DateTime time12_01 = ocpp::DateTime("2024-01-01T12:01:00Z");
 const DateTime time12_02 = ocpp::DateTime("2024-01-01T12:02:00Z");
@@ -27,8 +30,10 @@ const DateTime time12_05 = ocpp::DateTime("2024-01-01T12:02:00Z");
 const DateTime time12_10 = ocpp::DateTime("2024-01-01T12:10:00Z");
 const DateTime time12_15 = ocpp::DateTime("2024-01-01T12:15:00Z");
 const DateTime time12_20 = ocpp::DateTime("2024-01-01T12:20:00Z");
+const DateTime time12_28 = ocpp::DateTime("2024-01-01T12:28:00Z");
 const DateTime time12_32 = ocpp::DateTime("2024-01-01T12:32:00Z");
 const DateTime time12_40 = ocpp::DateTime("2024-01-01T12:40:00Z");
+const DateTime time12_43 = ocpp::DateTime("2024-01-01T12:43:00Z");
 const DateTime time12_45 = ocpp::DateTime("2024-01-01T12:45:00Z");
 const DateTime time12_47 = ocpp::DateTime("2024-01-01T12:47:00Z");
 const DateTime time12_50 = ocpp::DateTime("2024-01-01T12:50:00Z");
@@ -359,10 +364,7 @@ INSTANTIATE_TEST_SUITE_P(
         std::make_tuple(time08_10, time20_50, time2023_12_27_08_05, absolute_profile, std::nullopt),
         std::make_tuple(time12_01, time20_50, time2023_12_27_08_05, absolute_profile, std::nullopt),
         std::make_tuple(time12_40, time20_50, time2023_12_27_08_05, absolute_profile, 2),
-        std::make_tuple(time14_01, time20_50, time2023_12_27_08_05, absolute_profile, 0)
-
-        //
-        ));
+        std::make_tuple(time14_01, time20_50, time2023_12_27_08_05, absolute_profile, 0)));
 
 TEST_P(CalculateProfileType_Param_Test, CalculateProfileDirect) {
     ocpp::DateTime now = std::get<0>(GetParam());
@@ -423,6 +425,99 @@ TEST(OCPPTypesTest, CalculateProfile_Absolute) {
     ASSERT_EQ(0, period_entries_before.size());
     EXPECT_EQ(period_entries_no_session, period_entries_before);
     EXPECT_TRUE(SmartChargingTestUtils::validate_profile_result(period_entries_no_session));
+}
+
+TEST(OCPPTypesTest, CalculateProfile_AbsoluteLimited) {
+    // Before start expecting no periods
+    ASSERT_EQ(0, calculate_profile(time08_10, DateTime(time08_10.to_time_point() + minutes(20)), std::nullopt,
+                                   absolute_profile)
+                     .size());
+
+    // Just before start expecting a single period
+    period_entry_t expected_entry{.start = time12_02,
+                                  .end = time12_32,
+                                  .limit = absolute_profile.chargingSchedule.front().chargingSchedulePeriod[0].limit,
+                                  .stack_level = absolute_profile.stackLevel,
+                                  .charging_rate_unit = absolute_profile.chargingSchedule.front().chargingRateUnit};
+
+    std::vector<period_entry_t> period_entries_just_before_start =
+        calculate_profile(time12_01, DateTime(time12_01.to_time_point() + minutes(20)), std::nullopt, absolute_profile);
+
+    ASSERT_EQ(1, period_entries_just_before_start.size());
+    EXPECT_TRUE(SmartChargingTestUtils::validate_profile_result(period_entries_just_before_start));
+    ASSERT_EQ(expected_entry, period_entries_just_before_start.front());
+
+    // During start expecting 2 periods
+    period_entry_t expected_1st_entry{.start = time12_32,
+                                      .end = time12_47,
+                                      .limit =
+                                          absolute_profile.chargingSchedule.front().chargingSchedulePeriod[1].limit,
+                                      .stack_level = absolute_profile.stackLevel,
+                                      .charging_rate_unit = absolute_profile.chargingSchedule.front().chargingRateUnit};
+    period_entry_t expected_2nd_entry{.start = time12_47,
+                                      .end = time13_02,
+                                      .limit =
+                                          absolute_profile.chargingSchedule.front().chargingSchedulePeriod[2].limit,
+                                      .stack_level = absolute_profile.stackLevel,
+                                      .charging_rate_unit = absolute_profile.chargingSchedule.front().chargingRateUnit};
+
+    std::vector<period_entry_t> period_entries_during_start =
+        calculate_profile(time12_40, DateTime(time12_40.to_time_point() + minutes(20)), std::nullopt, absolute_profile);
+
+    ASSERT_EQ(2, period_entries_during_start.size());
+    ASSERT_EQ(expected_1st_entry, period_entries_during_start.front());
+    ASSERT_EQ(expected_2nd_entry, period_entries_during_start.back());
+    EXPECT_TRUE(SmartChargingTestUtils::validate_profile_result(period_entries_during_start));
+
+    // After expecting no periods
+    ASSERT_EQ(0, calculate_profile(time14_01, DateTime(time14_01.to_time_point() + minutes(20)), std::nullopt,
+                                   absolute_profile)
+                     .size());
+}
+
+TEST(OCPPTypesTest, CalculateProfile_Relative) {
+    // Before start expecting no periods
+    ASSERT_EQ(0, calculate_profile(time08_10, time20_50, std::nullopt, relative_profile).size());
+    ASSERT_EQ(0, calculate_profile(time08_10, time20_50, time2023_12_27_08_05, relative_profile).size());
+
+    // Just before start expecting all periods
+
+    std::vector<period_entry_t> period_entries_before_no_session =
+        calculate_profile(time11_58, time20_50, std::nullopt, relative_profile);
+    std::vector<period_entry_t> period_entries_before =
+        calculate_profile(time11_58, time20_50, time11_55, relative_profile);
+
+    for (period_entry_t pet : period_entries_before_no_session) {
+        EVLOG_debug << ">>> " << pet;
+    }
+    for (period_entry_t pet : period_entries_before) {
+        EVLOG_debug << ">>> " << pet;
+    }
+
+    // While the period entries should have the same length, adding a session start should change the result
+    ASSERT_EQ(period_entries_before_no_session.size(),
+              relative_profile.chargingSchedule.front().chargingSchedulePeriod.size());
+    ASSERT_EQ(period_entries_before.size(), relative_profile.chargingSchedule.front().chargingSchedulePeriod.size());
+    EXPECT_NE(period_entries_before_no_session, period_entries_before);
+
+    // Validate period entries with no session start
+    period_entry_t expected_pe0_no_session{
+        .start = time12_00,
+        .end = time12_28,
+        .limit = absolute_profile.chargingSchedule.front().chargingSchedulePeriod[0].limit,
+        .stack_level = absolute_profile.stackLevel,
+        .charging_rate_unit = absolute_profile.chargingSchedule.front().chargingRateUnit};
+
+    ASSERT_EQ(expected_pe0_no_session, period_entries_before_no_session.at(0));
+
+    period_entry_t expected_pe1_no_session{
+        .start = time12_28,
+        .end = time12_43,
+        .limit = absolute_profile.chargingSchedule.front().chargingSchedulePeriod[1].limit,
+        .stack_level = absolute_profile.stackLevel,
+        .charging_rate_unit = absolute_profile.chargingSchedule.front().chargingRateUnit};
+
+    ASSERT_EQ(expected_pe1_no_session, period_entries_before_no_session.at(1));
 }
 
 } // namespace
