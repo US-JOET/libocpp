@@ -408,13 +408,13 @@ TEST(OCPPTypesTest, CalculateProfile_AbsoluteLimited) {
 
 TEST(OCPPTypesTest, CalculateProfile_Relative) {
     // Before start expecting no periods
-    ASSERT_EQ(0, calculate_profile(dt("8:10"), dt("20:50"), std::nullopt, relative_profile).size());
+    ASSERT_EQ(0, calculate_profile(dt("8:10"), dt("20:50"), nullopt, relative_profile).size());
     ASSERT_EQ(0, calculate_profile(dt("8:10"), dt("20:50"), dt("2023-12-27T08:05"), relative_profile).size());
 
     // JUST BEFORE START
     // Expecting all periods
     std::vector<period_entry_t> pe_before_no_session =
-        calculate_profile(dt("11:58"), dt("20:50"), std::nullopt, relative_profile);
+        calculate_profile(dt("11:58"), dt("20:50"), nullopt, relative_profile);
     std::vector<period_entry_t> pe_before = calculate_profile(dt("11:58"), dt("20:50"), dt("11:55"), relative_profile);
 
     // While the period entries should have the same length, adding a session start should change the result
@@ -423,14 +423,14 @@ TEST(OCPPTypesTest, CalculateProfile_Relative) {
     EXPECT_NE(pe_before_no_session, pe_before);
 
     // Validate period entries with no session
-    ASSERT_EQ(gen_pe(dt("12:00"), dt("12:28"), relative_profile, 0), pe_before_no_session.at(0));
+    ASSERT_EQ(gen_pe(dt("12:00"), dt("12:28"), relative_profile, 0), pe_before_no_session.front());
     ASSERT_EQ(gen_pe(dt("12:28"), dt("12:43"), relative_profile, 1), pe_before_no_session.at(1));
-    ASSERT_EQ(gen_pe(dt("12:43"), dt("12:58"), relative_profile, 2), pe_before_no_session.at(2));
+    ASSERT_EQ(gen_pe(dt("12:43"), dt("12:58"), relative_profile, 2), pe_before_no_session.back());
 
     // Validate period entries with session
-    ASSERT_EQ(gen_pe(dt("12:00"), dt("12:25"), relative_profile, 0), pe_before.at(0));
+    ASSERT_EQ(gen_pe(dt("12:00"), dt("12:25"), relative_profile, 0), pe_before.front());
     ASSERT_EQ(gen_pe(dt("12:25"), dt("12:40"), relative_profile, 1), pe_before.at(1));
-    ASSERT_EQ(gen_pe(dt("12:40"), dt("12:55"), relative_profile, 2), pe_before.at(2));
+    ASSERT_EQ(gen_pe(dt("12:40"), dt("12:55"), relative_profile, 2), pe_before.back());
 
     // During START
     // Expecting all periods for no session and 2 periods when there is an existing session
@@ -445,9 +445,9 @@ TEST(OCPPTypesTest, CalculateProfile_Relative) {
     EXPECT_TRUE(SmartChargingTestUtils::validate_profile_result(pe_during_no_session));
     EXPECT_TRUE(SmartChargingTestUtils::validate_profile_result(pe_during));
 
-    ASSERT_EQ(gen_pe(dt("12:38"), dt("13:08"), relative_profile, 0), pe_during.at(0));
+    ASSERT_EQ(gen_pe(dt("12:38"), dt("13:08"), relative_profile, 0), pe_during.front());
     ASSERT_EQ(gen_pe(dt("13:08"), dt("13:23"), relative_profile, 1), pe_during.at(1));
-    ASSERT_EQ(gen_pe(dt("13:23"), dt("13:38"), relative_profile, 2), pe_during.at(2));
+    ASSERT_EQ(gen_pe(dt("13:23"), dt("13:38"), relative_profile, 2), pe_during.back());
 
     // During, but a bit later now only creates 2 periods with an existing sesion
     std::vector<period_entry_t> pe_during_later_no_session =
@@ -461,16 +461,56 @@ TEST(OCPPTypesTest, CalculateProfile_Relative) {
     EXPECT_TRUE(SmartChargingTestUtils::validate_profile_result(pe_during_later_no_session));
     EXPECT_TRUE(SmartChargingTestUtils::validate_profile_result(pe_during_later));
 
-    for (period_entry_t pet : pe_during_later) {
-        EVLOG_debug << ">>> " << pet;
-    }
-
-    ASSERT_EQ(gen_pe(dt("13:08"), dt("13:23"), relative_profile, 1), pe_during_later.at(0));
-    ASSERT_EQ(gen_pe(dt("13:23"), dt("13:38"), relative_profile, 2), pe_during_later.at(1));
+    ASSERT_EQ(gen_pe(dt("13:08"), dt("13:23"), relative_profile, 1), pe_during_later.front());
+    ASSERT_EQ(gen_pe(dt("13:23"), dt("13:38"), relative_profile, 2), pe_during_later.back());
 
     // After
     ASSERT_EQ(0, calculate_profile(dt("14:02"), dt("14:01"), nullopt, relative_profile).size());
     ASSERT_EQ(0, calculate_profile(dt("14:02"), dt("14:01"), dt("14:01"), relative_profile).size());
 }
+
+TEST(OCPPTypesTest, CalculateProfile_RelativeLimited) {
+    // Before start expecting no periods
+    // Time window: starts 2" into session ends 22" into session
+    ASSERT_EQ(0, calculate_profile(dt("8:12"), dt("8:32"), dt("8:10"), relative_profile).size());
+
+    // Just before start, same time window expecting 1
+    std::vector<period_entry_t> periods = calculate_profile(dt("11:57"), dt("12:17"), dt("11:55"), relative_profile);
+    ASSERT_EQ(1, periods.size());
+    EXPECT_TRUE(SmartChargingTestUtils::validate_profile_result(periods));
+    ASSERT_EQ(gen_pe(dt("12:00"), dt("12:25"), relative_profile, 0), periods.front());
+
+    // During A - time window: starts 25" into session ends 45" into session
+    periods = calculate_profile(dt("12:20"), dt("12:40"), dt("11:55"), relative_profile);
+    ASSERT_EQ(3, periods.size());
+    EXPECT_TRUE(SmartChargingTestUtils::validate_profile_result(periods));
+    ASSERT_EQ(gen_pe(dt("12:00"), dt("12:25"), relative_profile, 0), periods.front());
+    ASSERT_EQ(gen_pe(dt("12:25"), dt("12:40"), relative_profile, 1), periods.at(1));
+    ASSERT_EQ(gen_pe(dt("12:40"), dt("12:55"), relative_profile, 2), periods.back());
+
+    // During B - time window: starts 35" into session ends 55" into session
+    periods = calculate_profile(dt("12:30"), dt("12:50"), dt("11:55"), relative_profile);
+    ASSERT_EQ(2, periods.size());
+    EXPECT_TRUE(SmartChargingTestUtils::validate_profile_result(periods));
+    ASSERT_EQ(gen_pe(dt("12:25"), dt("12:40"), relative_profile, 1), periods.front());
+    ASSERT_EQ(gen_pe(dt("12:40"), dt("12:55"), relative_profile, 2), periods.back());
+
+    // TODO Delete me
+    for (period_entry_t pet : periods) {
+        EVLOG_debug << ">>> " << pet;
+    }
+
+    // During C - session starts towards end of profiles duration. time window: starts 35" into session ends 55" into
+    periods = calculate_profile(dt("13:55"), dt("14:15"), dt("13:20"), relative_profile);
+    ASSERT_EQ(1, periods.size());
+    EXPECT_TRUE(SmartChargingTestUtils::validate_profile_result(periods));
+    ASSERT_EQ(gen_pe(dt("13:50"), dt("14:00"), relative_profile, 1), periods.front());
+
+    // After
+    periods = calculate_profile(dt("14:03"), dt("14:23"), dt("14:01"), relative_profile);
+    ASSERT_EQ(0, periods.size());
+}
+
+// Tests done up to calculateCompositeScheduleEmpty
 
 } // namespace
