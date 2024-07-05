@@ -59,17 +59,51 @@ bool Callbacks::all_callbacks_valid() const {
             this->transaction_event_response_callback.value() != nullptr);
 }
 
-ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_structure,
-                         const std::string& device_model_storage_address, const std::string& ocpp_main_path,
-                         const std::string& core_database_path, const std::string& sql_init_path,
-                         const std::string& message_log_path, const std::shared_ptr<EvseSecurity> evse_security,
-                         const Callbacks& callbacks) :
-    ChargePoint(evse_connector_structure, std::make_unique<DeviceModelStorageSqlite>(device_model_storage_address),
-                ocpp_main_path, core_database_path, sql_init_path, message_log_path, evse_security, callbacks) {
+ChargePoint::ChargePoint(std::shared_ptr<DeviceModel> device_model, std::shared_ptr<DatabaseHandler> database_handler, std::shared_ptr<MessageQueue<v201::MessageType>> message_queue, const std::shared_ptr<EvseSecurity> evse_security, const Callbacks& callbacks) :
+    ocpp::ChargingStationBase(evse_security),
+    message_queue(message_queue),
+    device_model(device_model),
+    database_handler(database_handler),
+    registration_status(RegistrationStatusEnum::Rejected),
+    network_configuration_priority(0),
+    disable_automatic_websocket_reconnects(false),
+    skip_invalid_csms_certificate_notifications(false),
+    reset_scheduled(false),
+    reset_scheduled_evseids{},
+    firmware_status(FirmwareStatusEnum::Idle),
+    upload_log_status(UploadLogStatusEnum::Idle),
+    bootreason(BootReasonEnum::PowerUp),
+    ocsp_updater(this->evse_security, this->send_callback<GetCertificateStatusRequest, GetCertificateStatusResponse>(
+                                          MessageType::GetCertificateStatusResponse)),
+    csr_attempt(1),
+    client_certificate_expiration_check_timer([this]() { this->scheduled_check_client_certificate_expiration(); }),
+    v2g_certificate_expiration_check_timer([this]() { this->scheduled_check_v2g_certificate_expiration(); }),
+    callbacks(callbacks) {
+
+    // Make sure the received callback struct is completely filled early before we actually start running
+    if (!this->callbacks.all_callbacks_valid()) {
+        EVLOG_AND_THROW(std::invalid_argument("All non-optional callbacks must be supplied"));
+    }
+
+    // TODO: Assume this has already happened?
+    // this->database_handler->open_connection();
+
+    // this->configure_message_logging_format(message_log_path);
+
+    std::cout << "GOT HERE!" << std::endl;
+    // this->auth_cache_cleanup_thread = std::thread(&ChargePoint::cache_cleanup_handler, this);
 }
 
 ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_structure,
-                         std::unique_ptr<DeviceModelStorage> device_model_storage, const std::string& ocpp_main_path,
+                         const std::string& device_model_storage_address, const std::string& core_database_path,
+                         const std::string& sql_init_path, const std::string& message_log_path,
+                         const std::shared_ptr<EvseSecurity> evse_security, const Callbacks& callbacks) :
+    ChargePoint(evse_connector_structure, std::make_unique<DeviceModelStorageSqlite>(device_model_storage_address),
+                core_database_path, sql_init_path, message_log_path, evse_security, callbacks) {
+}
+
+ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_structure,
+                         std::unique_ptr<DeviceModelStorage> device_model_storage,
                          const std::string& core_database_path, const std::string& sql_init_path,
                          const std::string& message_log_path, const std::shared_ptr<EvseSecurity> evse_security,
                          const Callbacks& callbacks) :

@@ -1,14 +1,99 @@
+#include "database_handler_mock.hpp"
+#include "evse_security_mock.hpp"
 #include "ocpp/v201/charge_point.hpp"
+#include "ocpp/v201/device_model_storage_sqlite.hpp"
 #include "gmock/gmock.h"
 #include <gmock/gmock.h>
 
 namespace ocpp::v201 {
+
+
+//TODO: Stolen from test_component_state_manager.cpp. Common mock header?
+class DatabaseHandlerMock : public DatabaseHandler {
+private:
+    std::map<std::pair<int32_t, int32_t>, OperationalStatusEnum> data;
+
+    void insert(int32_t evse_id, int32_t connector_id, OperationalStatusEnum status, bool replace) {
+        if (replace || this->data.count(std::make_pair(evse_id, connector_id)) == 0) {
+            this->data.insert_or_assign(std::make_pair(evse_id, connector_id), status);
+        }
+    }
+
+    OperationalStatusEnum get(int32_t evse_id, int32_t connector_id) {
+        if (this->data.count(std::make_pair(evse_id, connector_id)) == 0) {
+            throw std::logic_error("Get: no data available");
+        } else {
+            return this->data.at(std::make_pair(evse_id, connector_id));
+        }
+    }
+
+public:
+    DatabaseHandlerMock() : DatabaseHandler(std::unique_ptr<common::DatabaseConnectionInterface>(), "/dev/null") {
+    }
+
+    virtual void insert_cs_availability(OperationalStatusEnum operational_status, bool replace) override {
+        this->insert(0, 0, operational_status, replace);
+    }
+    virtual OperationalStatusEnum get_cs_availability() override {
+        return this->get(0, 0);
+    }
+
+    virtual void insert_evse_availability(int32_t evse_id, OperationalStatusEnum operational_status,
+                                          bool replace) override {
+
+        this->insert(evse_id, 0, operational_status, replace);
+    }
+    virtual OperationalStatusEnum get_evse_availability(int32_t evse_id) override {
+        return this->get(evse_id, 0);
+    }
+
+    virtual void insert_connector_availability(int32_t evse_id, int32_t connector_id,
+                                               OperationalStatusEnum operational_status, bool replace) override {
+        this->insert(evse_id, connector_id, operational_status, replace);
+    }
+    virtual OperationalStatusEnum get_connector_availability(int32_t evse_id, int32_t connector_id) override {
+        return this->get(evse_id, connector_id);
+    }
+};
+
 
 class ChargePointFixture : public testing::Test {
 public:
     ChargePointFixture() {
     }
     ~ChargePointFixture() {
+    }
+
+    //TODO: Device model helpers tolen from test_smart_charging_handler. Put into common helper file?
+    void create_device_model_db(const std::string& path) {
+        sqlite3* source_handle;
+        sqlite3_open(DEVICE_MODEL_DB_LOCATION_V201, &source_handle);
+        sqlite3_open(path.c_str(), &db_handle);
+
+        auto* backup = sqlite3_backup_init(db_handle, "main", source_handle, "main");
+        sqlite3_backup_step(backup, -1);
+        sqlite3_backup_finish(backup);
+
+        sqlite3_close(source_handle);
+    }
+
+    std::shared_ptr<DeviceModel>
+    create_device_model(const std::string& path = "file:device_model?mode=memory&cache=shared",
+                        const std::optional<std::string> ac_phase_switching_supported = "true") {
+        create_device_model_db(path);
+        auto device_model_storage = std::make_unique<DeviceModelStorageSqlite>(path);
+        auto device_model = std::make_shared<DeviceModel>(std::move(device_model_storage));
+
+        // Defaults
+        const auto& charging_rate_unit_cv = ControllerComponentVariables::ChargingScheduleChargingRateUnit;
+        device_model->set_value(charging_rate_unit_cv.component, charging_rate_unit_cv.variable.value(),
+                                AttributeEnum::Actual, "A,W", true);
+
+        const auto& ac_phase_switching_cv = ControllerComponentVariables::ACPhaseSwitchingSupported;
+        device_model->set_value(ac_phase_switching_cv.component, ac_phase_switching_cv.variable.value(),
+                                AttributeEnum::Actual, ac_phase_switching_supported.value_or(""), true);
+
+        return device_model;
     }
 
     void configure_callbacks_with_mocks() {
@@ -50,6 +135,8 @@ public:
         security_event_callback_mock;
     testing::MockFunction<void()> set_charging_profiles_callback_mock;
     ocpp::v201::Callbacks callbacks;
+    sqlite3* db_handle;
+    std::shared_ptr<DeviceModel> device_model;
 };
 
 /*
@@ -68,6 +155,33 @@ public:
  * consider its collection of callbacks valid if set_charging_profiles_callback
  * is provided.
  */
+
+TEST_F(ChargePointFixture, CreateChargePoint) {
+    device_model = create_device_model();
+    auto database_handler = 
+        std::make_shared<DatabaseHandlerMock>();
+    auto evse_security = std::make_shared<EvseSecurityMock>();
+    configure_callbacks_with_mocks();
+
+    const auto DEFAULT_MESSAGE_QUEUE_SIZE_THRESHOLD = 2E5;
+
+    //TODO: Look at init_message_queue and SetUp in test_message_queue.
+    // Currently something is wrong as it either hangs if I do nothing or crashes if I try to use auth_cache_cleanup_thread.
+    auto message_queue = std::make_shared<ocpp::MessageQueue<v201::MessageType>>(
+        [this](json message) -> bool { return false; },
+        MessageQueueConfig{
+            this->device_model->get_value<int>(ControllerComponentVariables::MessageAttempts),
+            this->device_model->get_value<int>(ControllerComponentVariables::MessageAttemptInterval),
+            this->device_model->get_optional_value<int>(ControllerComponentVariables::MessageQueueSizeThreshold)
+                .value_or(DEFAULT_MESSAGE_QUEUE_SIZE_THRESHOLD),
+            this->device_model->get_optional_value<bool>(ControllerComponentVariables::QueueAllMessages)
+                .value_or(false),
+            this->device_model->get_value<int>(ControllerComponentVariables::MessageTimeout)},
+        database_handler);
+
+    ocpp::v201::ChargePoint chargePoint(device_model, database_handler, message_queue, evse_security, callbacks);
+    EXPECT_TRUE(true);
+}
 
 TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfSetChargingProfilesCallbackExists) {
     configure_callbacks_with_mocks();
