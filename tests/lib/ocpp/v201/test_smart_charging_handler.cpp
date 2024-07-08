@@ -203,7 +203,7 @@ protected:
         auto existing_profile = create_charging_profile(
             profile_id, ChargingProfilePurposeEnum::TxDefaultProfile, create_charge_schedule(ChargingRateUnitEnum::A),
             {}, ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL, validFrom, validTo);
-        handler.add_profile(evse_id, existing_profile);
+        handler.add_profile(existing_profile, evse_id);
     }
 
     // Default values used within the tests
@@ -434,7 +434,7 @@ TEST_F(ChargepointTestFixtureV201,
     auto profile_2 = create_charging_profile(DEFAULT_PROFILE_ID + 1, ChargingProfilePurposeEnum::TxProfile,
                                              create_charge_schedule(ChargingRateUnitEnum::A), DEFAULT_TX_ID,
                                              ChargingProfileKindEnum::Absolute, same_stack_level);
-    handler.add_profile(DEFAULT_EVSE_ID, profile_2);
+    handler.add_profile(profile_2, DEFAULT_EVSE_ID);
     auto sut = handler.validate_tx_profile(profile_1, DEFAULT_EVSE_ID);
 
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::TxProfileConflictingStackLevel));
@@ -452,7 +452,7 @@ TEST_F(ChargepointTestFixtureV201,
     auto profile_2 = create_charging_profile(DEFAULT_PROFILE_ID + 1, ChargingProfilePurposeEnum::TxProfile,
                                              create_charge_schedule(ChargingRateUnitEnum::A), different_transaction_id,
                                              ChargingProfileKindEnum::Absolute, same_stack_level);
-    handler.add_profile(DEFAULT_EVSE_ID, profile_2);
+    handler.add_profile(profile_2, DEFAULT_EVSE_ID);
     auto sut = handler.validate_tx_profile(profile_1, DEFAULT_EVSE_ID);
 
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::Valid));
@@ -472,7 +472,7 @@ TEST_F(ChargepointTestFixtureV201,
                                              create_charge_schedule(ChargingRateUnitEnum::A), DEFAULT_TX_ID,
                                              ChargingProfileKindEnum::Absolute, stack_level_2);
 
-    handler.add_profile(DEFAULT_EVSE_ID, profile_2);
+    handler.add_profile(profile_2, DEFAULT_EVSE_ID);
     auto sut = handler.validate_tx_profile(profile_1, DEFAULT_EVSE_ID);
 
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::Valid));
@@ -929,7 +929,7 @@ TEST_F(ChargepointTestFixtureV201,
                                            create_charge_schedule(ChargingRateUnitEnum::A), uuid(),
                                            ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL);
 
-    auto sut = handler.add_profile(STATION_WIDE_ID, profile);
+    auto sut = handler.add_profile(profile, STATION_WIDE_ID);
 
     EXPECT_THAT(sut.status, testing::Eq(ChargingProfileStatusEnum::Accepted));
     EXPECT_THAT(handler.get_profiles(), testing::Contains(profile));
@@ -942,7 +942,7 @@ TEST_F(ChargepointTestFixtureV201,
                                            create_charge_schedule(ChargingRateUnitEnum::A), uuid(),
                                            ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL);
 
-    auto sut = handler.add_profile(DEFAULT_EVSE_ID, profile);
+    auto sut = handler.add_profile(profile, DEFAULT_EVSE_ID);
 
     EXPECT_THAT(sut.status, testing::Eq(ChargingProfileStatusEnum::Accepted));
     EXPECT_THAT(handler.get_profiles(), testing::Contains(profile));
@@ -958,8 +958,8 @@ TEST_F(ChargepointTestFixtureV201,
                                             create_charge_schedule(ChargingRateUnitEnum::A), uuid(),
                                             ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL);
 
-    auto sut1 = handler.add_profile(DEFAULT_EVSE_ID, profile1);
-    auto sut2 = handler.add_profile(DEFAULT_EVSE_ID, profile2);
+    auto sut1 = handler.add_profile(profile1, DEFAULT_EVSE_ID);
+    auto sut2 = handler.add_profile(profile2, DEFAULT_EVSE_ID);
 
     auto profiles = handler.get_profiles();
 
@@ -980,8 +980,8 @@ TEST_F(ChargepointTestFixtureV201,
                                             create_charge_schedule(ChargingRateUnitEnum::A), uuid(),
                                             ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL);
 
-    auto sut1 = handler.add_profile(DEFAULT_EVSE_ID, profile1);
-    auto sut2 = handler.add_profile(DEFAULT_EVSE_ID, profile2);
+    auto sut1 = handler.add_profile(profile1, DEFAULT_EVSE_ID);
+    auto sut2 = handler.add_profile(profile2, DEFAULT_EVSE_ID);
 
     auto profiles = handler.get_profiles();
 
