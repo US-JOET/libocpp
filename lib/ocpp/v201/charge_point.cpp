@@ -34,7 +34,8 @@ bool Callbacks::all_callbacks_valid() const {
            this->get_log_request_callback != nullptr and this->unlock_connector_callback != nullptr and
            this->remote_start_transaction_callback != nullptr and this->is_reservation_for_token_callback != nullptr and
            this->update_firmware_request_callback != nullptr and this->security_event_callback != nullptr and
-           (!this->signal_set_charging_profiles_callback.has_value() or this->signal_set_charging_profiles_callback.value() != nullptr) and
+           (!this->signal_set_charging_profiles_callback.has_value() or 
+           this->signal_set_charging_profiles_callback.value() != nullptr) and
            (!this->variable_changed_callback.has_value() or this->variable_changed_callback.value() != nullptr) and
            (!this->validate_network_profile_callback.has_value() or
             this->validate_network_profile_callback.value() != nullptr) and
@@ -1281,10 +1282,8 @@ void ChargePoint::handle_message(const EnhancedMessage<v201::MessageType>& messa
         this->handle_customer_information_req(json_message);
         break;
     case MessageType::SetChargingProfile:
-	{
         this->handle_set_charging_profile_req(json_message);
         break;
-	}
     default:
         if (message.messageTypeId == MessageTypeId::CALL) {
             const auto call_error = CallError(message.uniqueId, "NotImplemented", "", json({}));
@@ -3515,8 +3514,7 @@ std::map<int32_t, CompositeSchedule> ChargePoint::get_all_composite_charging_sch
         const auto duration = std::chrono::seconds(duration_s);
         const auto end_time = ocpp::DateTime(start_time.to_time_point() + duration);
 
-        const auto valid_profiles =
-            this->smart_charging_handler->get_valid_profiles(start_time, end_time, evse_id);
+        const auto valid_profiles = this->smart_charging_handler->get_valid_profiles(start_time, end_time, evse_id);
         const auto composite_schedule = this->smart_charging_handler->calculate_composite_schedule(
             valid_profiles, start_time, end_time, evse_id, ChargingRateUnitEnum::W);
         composite_schedules[evse_id] = composite_schedule;

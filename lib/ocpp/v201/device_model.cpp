@@ -336,7 +336,9 @@ void DeviceModel::check_integrity(const std::map<int32_t, int32_t>& evse_connect
         // check if number of EVSE in the device model matches the configured number
         if (nr_evse_components != evse_connector_structure.size()) {
             throw DeviceModelStorageError("Number of EVSE configured in device model is incompatible with number of "
-                                          "configured EVSEs of the ChargePoint: " + std::to_string(nr_evse_components) + ": " + std::to_string(evse_connector_structure.size()));
+                                          "configured EVSEs of the ChargePoint: " + 
+                                          std::to_string(nr_evse_components) + ": " + 
+                                          std::to_string(evse_connector_structure.size()));
         }
 
         for (const auto [evse_id, nr_of_connectors] : evse_connector_structure) {

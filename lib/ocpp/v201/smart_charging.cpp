@@ -491,21 +491,16 @@ bool overlap(const ocpp::DateTime& start_time, const ocpp::DateTime& end_time, c
     return delta.count() > 0;
 }
 
-std::vector<ChargingProfile> SmartChargingHandler::get_valid_profiles(
-    const ocpp::DateTime& start_time,
-    const ocpp::DateTime& end_time,
-    const int evse_id
+std::vector<ChargingProfile> SmartChargingHandler::get_valid_profiles(const ocpp::DateTime& start_time,
+                                                                      const ocpp::DateTime& end_time,
+                                                                      const int evse_id
 ) {
     std::vector<ChargingProfile> valid_profiles;
 
     auto all_profiles = station_wide_charging_profiles;
     for (auto evse_profile_pair : charging_profiles) {
         if (evse_profile_pair.first == evse_id) {
-            all_profiles.insert(
-                all_profiles.end(),
-                evse_profile_pair.second.begin(),
-                evse_profile_pair.second.end()
-            );
+            all_profiles.insert(all_profiles.end(), evse_profile_pair.second.begin(), evse_profile_pair.second.end());
         }
     }
 
