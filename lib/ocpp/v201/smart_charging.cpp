@@ -493,8 +493,7 @@ bool overlap(const ocpp::DateTime& start_time, const ocpp::DateTime& end_time, c
 
 std::vector<ChargingProfile> SmartChargingHandler::get_valid_profiles(const ocpp::DateTime& start_time,
                                                                       const ocpp::DateTime& end_time,
-                                                                      const int evse_id
-) {
+                                                                      const int evse_id) {
     std::vector<ChargingProfile> valid_profiles;
 
     auto all_profiles = station_wide_charging_profiles;
