@@ -691,6 +691,17 @@ enum class WebsocketCloseReason : uint8_t {
     ServiceRestart
 };
 
+template <typename A> bool optional_equal(const std::optional<A>& a, const std::optional<A>& b) {
+    bool bRes{true};
+    if ((a.has_value() && !b.has_value()) || (!a.has_value() && b.has_value())) {
+        bRes = false;
+    }
+    if (a.has_value() && b.has_value()) {
+        bRes = a.value() == b.value();
+    }
+    return bRes;
+}
+
 } // namespace ocpp
 
 #endif

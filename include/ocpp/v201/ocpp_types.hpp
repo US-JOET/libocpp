@@ -244,6 +244,9 @@ void to_json(json& j, const ChargingSchedulePeriod& k);
 /// \brief Conversion from a given json object \p j to a given ChargingSchedulePeriod \p k
 void from_json(const json& j, ChargingSchedulePeriod& k);
 
+bool operator==(const ChargingSchedulePeriod& a, const ChargingSchedulePeriod& b);
+bool operator!=(const ChargingSchedulePeriod& a, const ChargingSchedulePeriod& b);
+
 // \brief Writes the string representation of the given ChargingSchedulePeriod \p k to the given output stream \p os
 /// \returns an output stream with the ChargingSchedulePeriod written to
 std::ostream& operator<<(std::ostream& os, const ChargingSchedulePeriod& k);
@@ -540,6 +543,9 @@ void to_json(json& j, const ChargingSchedule& k);
 
 /// \brief Conversion from a given json object \p j to a given ChargingSchedule \p k
 void from_json(const json& j, ChargingSchedule& k);
+
+bool operator==(const ChargingSchedule& a, const ChargingSchedule& b);
+bool operator!=(const ChargingSchedule& a, const ChargingSchedule& b);
 
 // \brief Writes the string representation of the given ChargingSchedule \p k to the given output stream \p os
 /// \returns an output stream with the ChargingSchedule written to

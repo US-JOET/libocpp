@@ -648,6 +648,19 @@ void from_json(const json& j, ChargingSchedulePeriod& k) {
     }
 }
 
+bool operator==(const ChargingSchedulePeriod& a, const ChargingSchedulePeriod& b) {
+    auto diff = std::abs(a.startPeriod - b.startPeriod);
+    bool bRes = diff < 10; // allow for a small difference
+    bRes = bRes && (a.limit == b.limit);
+    bRes = bRes && optional_equal(a.numberPhases, b.numberPhases);
+    bRes = bRes && optional_equal(a.phaseToUse, b.phaseToUse);
+    return bRes;
+}
+
+bool operator!=(const ChargingSchedulePeriod& a, const ChargingSchedulePeriod& b) {
+    return (!(a == b));
+}
+
 // \brief Writes the string representation of the given ChargingSchedulePeriod \p k to the given output stream \p os
 /// \returns an output stream with the ChargingSchedulePeriod written to
 std::ostream& operator<<(std::ostream& os, const ChargingSchedulePeriod& k) {
@@ -1419,6 +1432,29 @@ void from_json(const json& j, ChargingSchedule& k) {
     if (j.contains("salesTariff")) {
         k.salesTariff.emplace(j.at("salesTariff"));
     }
+}
+
+bool operator==(const ChargingSchedule& a, const ChargingSchedule& b) {
+    bool bRes = true;
+
+    if (a.chargingSchedulePeriod.size() != b.chargingSchedulePeriod.size()) {
+        return false;
+    }
+
+    for (std::uint32_t i = 0; bRes && i < a.chargingSchedulePeriod.size(); i++) {
+        bRes = bRes && a.chargingSchedulePeriod[i] == b.chargingSchedulePeriod[i];
+    }
+
+    bRes = bRes && (a.chargingRateUnit == b.chargingRateUnit);
+    bRes = bRes && optional_equal(a.startSchedule, b.startSchedule);
+    bRes = bRes && optional_equal(a.duration, b.duration);
+    bRes = bRes && optional_equal(a.minChargingRate, b.minChargingRate);
+
+    return bRes;
+}
+
+bool operator!=(const ChargingSchedule& a, const ChargingSchedule& b) {
+    return !(a == b);
 }
 
 // \brief Writes the string representation of the given ChargingSchedule \p k to the given output stream \p os
@@ -2873,12 +2909,93 @@ std::vector<period_entry_t> calculate_profile(const DateTime& now, const DateTim
     return entries;
 }
 
-ChargingSchedule calculate_composite_schedule(std::vector<period_entry_t>& combined_schedules, const DateTime& now,
-                                              const DateTime& end,
-                                              std::optional<ChargingRateUnitEnum> charging_rate_unit);
+std::pair<float, std::int32_t> convert_limit(const period_entry_t* const entry,
+                                             const ChargingRateUnitEnum selected_unit) {
+    assert(entry != nullptr);
+    float limit = entry->limit;
+    std::int32_t number_phases = entry->number_phases.value_or(DEFAULT_AND_MAX_NUMBER_PHASES);
+
+    // if the units are the same - don't change the values
+    if (selected_unit != entry->charging_rate_unit) {
+        if (selected_unit == ChargingRateUnitEnum::A) {
+            limit = entry->limit / (LOW_VOLTAGE * number_phases);
+        } else {
+            limit = entry->limit * (LOW_VOLTAGE * number_phases);
+        }
+    }
+
+    return {limit, number_phases};
+}
+
+ChargingSchedule calculate_composite_schedule(std::vector<period_entry_t>& in_combined_schedules,
+                                              const DateTime& in_now, const DateTime& in_end,
+                                              std::optional<ChargingRateUnitEnum> charging_rate_unit) {
+    const ChargingRateUnitEnum selected_unit =
+        (charging_rate_unit) ? charging_rate_unit.value() : ChargingRateUnitEnum::A;
+    const auto now = floor_seconds(in_now);
+    const auto end = floor_seconds(in_end);
+    ChargingSchedule composite{.id = 0,
+                               .chargingRateUnit = selected_unit,
+                               .chargingSchedulePeriod = {},
+                               .startSchedule = now,
+                               .duration = elapsed_seconds(end, now)};
+
+    // sort the combined_schedules in stack priority order
+    struct {
+        bool operator()(const period_entry_t& a, const period_entry_t& b) const {
+            // highest stack level first
+            return a.stack_level > b.stack_level;
+        }
+    } less_than;
+    std::sort(in_combined_schedules.begin(), in_combined_schedules.end(), less_than);
+
+    DateTime current = now;
+
+    while (current < end) {
+        // find schedule to use for time: current
+        DateTime earliest = end;
+        DateTime next_earliest = end;
+        const period_entry_t* chosen{nullptr};
+
+        for (const auto& schedule : in_combined_schedules) {
+            if (schedule.start <= earliest) {
+                // ensure the earlier schedule is valid at the current time
+                if (schedule.end > current) {
+                    next_earliest = earliest;
+                    earliest = schedule.start;
+                    chosen = &schedule;
+                    if (earliest <= current) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (earliest > current) {
+            // there is a gap to fill
+            composite.chargingSchedulePeriod.push_back(
+                {elapsed_seconds(current, now), NO_LIMIT_SPECIFIED, std::nullopt, 0});
+            current = earliest;
+        } else {
+            // there is a schedule to use
+            const auto [limit, number_phases] = convert_limit(chosen, selected_unit);
+            composite.chargingSchedulePeriod.push_back(
+                {elapsed_seconds(current, now), limit, number_phases, chosen->stack_level});
+            if (chosen->end < next_earliest) {
+                current = chosen->end;
+            } else {
+                current = next_earliest;
+            }
+        }
+    }
+
+    return composite;
+}
 
 ChargingSchedule calculate_composite_schedule(const ChargingSchedule& charge_point_max,
-                                              const ChargingSchedule& tx_default, const ChargingSchedule& tx);
+                                              const ChargingSchedule& tx_default, const ChargingSchedule& tx) {
+    return {};
+}
 
 } // namespace v201
 } // namespace ocpp

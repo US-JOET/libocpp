@@ -13,4 +13,6 @@ constexpr float DEFAULT_LIMIT_WATTS = 33120.0;
 constexpr std::int32_t DEFAULT_AND_MAX_NUMBER_PHASES = 3;
 constexpr float LOW_VOLTAGE = 230;
 
+constexpr float NO_LIMIT_SPECIFIED = -1.0;
+
 } // namespace ocpp

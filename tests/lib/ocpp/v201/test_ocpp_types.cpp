@@ -6,7 +6,9 @@
 #include <optional>
 
 #include "everest/logging.hpp"
+#include "ocpp/common/constants.hpp"
 #include "ocpp/common/types.hpp"
+#include "ocpp/v201/enums.hpp"
 #include "ocpp/v201/ocpp_types.hpp"
 #include "ocpp/v201/utils.hpp"
 
@@ -38,6 +40,14 @@ static ocpp::DateTime dt(std::string dt_string) {
     }
 
     return dt;
+}
+
+static ocpp::DateTime dt(std::string dt_string, int plus_minutes) {
+    ocpp::DateTime orignal_dt = dt(dt_string);
+
+    std::chrono::time_point<date::utc_clock> time_point =
+        orignal_dt.to_time_point() + std::chrono::minutes(plus_minutes);
+    return ocpp::DateTime(time_point);
 }
 
 period_entry_t gen_pe(ocpp::DateTime start, ocpp::DateTime end, ChargingProfile profile, int period_at) {
@@ -379,13 +389,11 @@ TEST(OCPPTypesTest, CalculateProfile_Absolute) {
 
 TEST(OCPPTypesTest, CalculateProfile_AbsoluteLimited) {
     // Before start expecting no periods
-    ASSERT_EQ(
-        0, calculate_profile(dt("8:10"), DateTime(dt("8:10").to_time_point() + minutes(20)), nullopt, absolute_profile)
-               .size());
+    ASSERT_EQ(0, calculate_profile(dt("8:10"), dt("8:10", 20), nullopt, absolute_profile).size());
 
     // Just before start expecting a single period
     std::vector<period_entry_t> period_entries_just_before_start =
-        calculate_profile(dt("12:01"), DateTime(dt("12:01").to_time_point() + minutes(20)), nullopt, absolute_profile);
+        calculate_profile(dt("12:01"), dt("12:01", 20), nullopt, absolute_profile);
 
     ASSERT_EQ(1, period_entries_just_before_start.size());
     EXPECT_TRUE(SmartChargingTestUtils::validate_profile_result(period_entries_just_before_start));
@@ -393,7 +401,7 @@ TEST(OCPPTypesTest, CalculateProfile_AbsoluteLimited) {
 
     // During start expecting 2 periods
     std::vector<period_entry_t> period_entries_during_start =
-        calculate_profile(dt("12:40"), DateTime(dt("12:40").to_time_point() + minutes(20)), nullopt, absolute_profile);
+        calculate_profile(dt("12:40"), dt("12:40", 20), nullopt, absolute_profile);
 
     ASSERT_EQ(2, period_entries_during_start.size());
     ASSERT_EQ(gen_pe(dt("12:32"), dt("12:47"), absolute_profile, 1), period_entries_during_start.front());
@@ -401,9 +409,7 @@ TEST(OCPPTypesTest, CalculateProfile_AbsoluteLimited) {
     EXPECT_TRUE(SmartChargingTestUtils::validate_profile_result(period_entries_during_start));
 
     // After expecting no periods
-    ASSERT_EQ(0, calculate_profile(dt("14:01"), DateTime(dt("14:01").to_time_point() + minutes(20)), nullopt,
-                                   absolute_profile)
-                     .size());
+    ASSERT_EQ(0, calculate_profile(dt("14:01"), dt("14:01", 20), nullopt, absolute_profile).size());
 }
 
 TEST(OCPPTypesTest, CalculateProfile_Relative) {
@@ -511,6 +517,133 @@ TEST(OCPPTypesTest, CalculateProfile_RelativeLimited) {
     ASSERT_EQ(0, periods.size());
 }
 
-// Tests done up to calculateCompositeScheduleEmpty
+TEST(OCPPTypesTest, ChargingSchedulePeriod_Equality) {
+    ChargingSchedulePeriod period1 = ChargingSchedulePeriod{
+        .startPeriod = 0,
+        .limit = NO_LIMIT_SPECIFIED,
+    };
+    ChargingSchedulePeriod period2 = ChargingSchedulePeriod{
+        .startPeriod = 0,
+        .limit = NO_LIMIT_SPECIFIED,
+    };
+    ASSERT_EQ(period1, period1);
+    ASSERT_EQ(period1, period2);
+
+    // startPeriod not equal if a diff greater than 9
+    period2.startPeriod = 10;
+    ASSERT_NE(period1, period2);
+
+    // startPeriod equal if a diff within 9
+    period2.startPeriod = 9;
+    ASSERT_EQ(period1, period2);
+
+    period1.limit = 1;
+    ASSERT_NE(period1, period2);
+
+    period2 = ChargingSchedulePeriod{
+        .startPeriod = 0,
+        .limit = 1,
+    };
+    ASSERT_EQ(period1, period2);
+
+    // Optional phases
+    period1.numberPhases = 3;
+    ASSERT_NE(period1, period2);
+
+    period2.numberPhases = 3;
+    ASSERT_EQ(period1, period2);
+
+    // Optional phaseToUse
+    period1.phaseToUse = 1;
+    ASSERT_NE(period1, period2);
+
+    period2.phaseToUse = 1;
+    ASSERT_EQ(period1, period2);
+}
+
+TEST(OCPPTypesTest, ChargingSchedule_Equality) {
+    std::vector<ChargingSchedulePeriod> periods = {ChargingSchedulePeriod{
+                                                       .startPeriod = 0,
+                                                       .limit = 10,
+                                                   },
+                                                   ChargingSchedulePeriod{
+                                                       .startPeriod = 100,
+                                                       .limit = 20,
+                                                   }};
+    ChargingSchedule schedule1 = ChargingSchedule{
+        .id = 0,
+        .chargingSchedulePeriod = periods,
+        .duration = std::chrono::duration_cast<std::chrono::seconds>(minutes(10)).count(),
+    };
+    ChargingSchedule schedule2 = ChargingSchedule{
+        .id = 0,
+        .chargingSchedulePeriod = {periods.at(0)},
+        .duration = std::chrono::duration_cast<std::chrono::seconds>(minutes(10)).count(),
+    };
+    ASSERT_NE(schedule1, schedule2);
+
+    // Perios must match
+    schedule2.chargingSchedulePeriod = {periods.at(1), {periods.at(0)}};
+    ASSERT_NE(schedule1, schedule2);
+
+    schedule2.chargingSchedulePeriod = periods;
+    ASSERT_EQ(schedule1, schedule2);
+
+    // chargingRateUnit must match (defaults to W)
+    schedule1.chargingRateUnit = ChargingRateUnitEnum::A;
+    ASSERT_NE(schedule1, schedule2);
+
+    schedule1.chargingRateUnit = ChargingRateUnitEnum::W;
+    ASSERT_EQ(schedule1, schedule2);
+
+    // startSchedule must match
+    schedule1.startSchedule = dt("12:30");
+    ASSERT_NE(schedule1, schedule2);
+
+    schedule2.startSchedule = dt("12:31");
+    ASSERT_NE(schedule1, schedule2);
+
+    schedule2.startSchedule = dt("12:30");
+    ASSERT_EQ(schedule1, schedule2);
+
+    // duration must match
+    schedule1.duration = 3200;
+    ASSERT_NE(schedule1, schedule2);
+
+    schedule2.duration = 1600;
+    ASSERT_NE(schedule1, schedule2);
+
+    schedule2.duration = 3200;
+    ASSERT_EQ(schedule1, schedule2);
+
+    // minChargingRate must match
+    schedule1.minChargingRate = 1000.0;
+    ASSERT_NE(schedule1, schedule2);
+
+    schedule2.minChargingRate = 199.0;
+    ASSERT_NE(schedule1, schedule2);
+
+    schedule2.minChargingRate = 1000.0;
+    ASSERT_EQ(schedule1, schedule2);
+}
+
+TEST(OCPPTypesTest, CalculateCompositeSchedule_Empty) {
+    std::vector<period_entry_t> combined_schedules{};
+    ChargingSchedule actual = calculate_composite_schedule(combined_schedules, dt("12:00"), dt("12:10"), std::nullopt);
+
+    ChargingSchedule expected = ChargingSchedule{
+        .id = 0,
+        .chargingRateUnit = ChargingRateUnitEnum::A,
+        .chargingSchedulePeriod = {ChargingSchedulePeriod{
+            .startPeriod = 0,
+            .limit = NO_LIMIT_SPECIFIED,
+            .numberPhases = 0,
+        }},
+        .startSchedule = dt("12:00"),
+        .duration = std::chrono::duration_cast<std::chrono::seconds>(minutes(10)).count(),
+    };
+
+    ASSERT_EQ(expected, actual);
+}
 
 } // namespace
