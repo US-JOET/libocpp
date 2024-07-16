@@ -2927,13 +2927,17 @@ std::pair<float, std::int32_t> convert_limit(const period_entry_t* const entry,
     return {limit, number_phases};
 }
 
-ChargingSchedule calculate_composite_schedule(std::vector<period_entry_t>& in_combined_schedules,
-                                              const DateTime& in_now, const DateTime& in_end,
-                                              std::optional<ChargingRateUnitEnum> charging_rate_unit) {
+ChargingSchedule calculate_charging_schedule(std::vector<period_entry_t>& in_combined_schedules, const DateTime& in_now,
+                                             const DateTime& in_end,
+                                             std::optional<ChargingRateUnitEnum> charging_rate_unit) {
+
+    // Defaults to ChargingRateUnitEnum::A if not set.
     const ChargingRateUnitEnum selected_unit =
         (charging_rate_unit) ? charging_rate_unit.value() : ChargingRateUnitEnum::A;
+
     const auto now = floor_seconds(in_now);
     const auto end = floor_seconds(in_end);
+
     ChargingSchedule composite{.id = 0,
                                .chargingRateUnit = selected_unit,
                                .chargingSchedulePeriod = {},
@@ -2974,13 +2978,16 @@ ChargingSchedule calculate_composite_schedule(std::vector<period_entry_t>& in_co
         if (earliest > current) {
             // there is a gap to fill
             composite.chargingSchedulePeriod.push_back(
-                {elapsed_seconds(current, now), NO_LIMIT_SPECIFIED, std::nullopt, 0});
+                {elapsed_seconds(current, now), NO_LIMIT_SPECIFIED, std::nullopt, std::nullopt, std::nullopt});
             current = earliest;
         } else {
             // there is a schedule to use
+            // TODO: How does ChargingSchedulePeriod.phaseToUse fit in since it's new to 2.0.1
             const auto [limit, number_phases] = convert_limit(chosen, selected_unit);
-            composite.chargingSchedulePeriod.push_back(
-                {elapsed_seconds(current, now), limit, number_phases, chosen->stack_level});
+            composite.chargingSchedulePeriod.push_back({.startPeriod = elapsed_seconds(current, now),
+                                                        .limit = limit,
+                                                        .customData = std::nullopt,
+                                                        .numberPhases = number_phases});
             if (chosen->end < next_earliest) {
                 current = chosen->end;
             } else {
@@ -2992,8 +2999,8 @@ ChargingSchedule calculate_composite_schedule(std::vector<period_entry_t>& in_co
     return composite;
 }
 
-ChargingSchedule calculate_composite_schedule(const ChargingSchedule& charge_point_max,
-                                              const ChargingSchedule& tx_default, const ChargingSchedule& tx) {
+ChargingSchedule calculate_charging_schedule(const ChargingSchedule& charge_point_max,
+                                             const ChargingSchedule& tx_default, const ChargingSchedule& tx) {
     return {};
 }
 
