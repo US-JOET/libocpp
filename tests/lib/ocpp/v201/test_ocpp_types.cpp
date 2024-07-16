@@ -646,7 +646,8 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_Empty) {
 TEST(OCPPTypesTest, CalculateChargingSchedule_Exact) {
     DateTime now = dt("12:00");
     DateTime end = dt("12:10");
-    std::vector<period_entry_t> combined_schedules{{now, end, 24.0, 3, 1, ChargingRateUnitEnum::A, std::nullopt}};
+    std::vector<period_entry_t> combined_schedules{
+        {now, end, 24.0, 3, std::nullopt, 1, ChargingRateUnitEnum::A, std::nullopt}};
     ChargingSchedule expected = ChargingSchedule{
         .id = 0,
         .chargingRateUnit = ChargingRateUnitEnum::A,
@@ -667,8 +668,8 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_Exact) {
 TEST(OCPPTypesTest, CalculateChargingSchedule_ShortExact) {
     DateTime now = dt("12:00");
     DateTime end = dt("12:10");
-    std::vector<period_entry_t> combined_schedules{
-        {now, DateTime(end.to_time_point() - seconds(1)), 24.0, 3, 1, ChargingRateUnitEnum::A, std::nullopt}};
+    std::vector<period_entry_t> combined_schedules{{now, DateTime(end.to_time_point() - seconds(1)), 24.0, 3,
+                                                    std::nullopt, 1, ChargingRateUnitEnum::A, std::nullopt}};
     ChargingSchedule expected = ChargingSchedule{
         .id = 0,
         .chargingRateUnit = ChargingRateUnitEnum::A,
@@ -690,8 +691,8 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_ShortExact) {
 TEST(OCPPTypesTest, CalculateChargingSchedule_LongExact) {
     DateTime now = dt("12:00");
     DateTime end = dt("12:10");
-    std::vector<period_entry_t> combined_schedules{
-        {DateTime(now.to_time_point() - seconds(1)), end, 24.0, 3, 1, ChargingRateUnitEnum::A, std::nullopt}};
+    std::vector<period_entry_t> combined_schedules{{DateTime(now.to_time_point() - seconds(1)), end, 24.0, 3,
+                                                    std::nullopt, 1, ChargingRateUnitEnum::A, std::nullopt}};
     ChargingSchedule expected = ChargingSchedule{
         .id = 0,
         .chargingRateUnit = ChargingRateUnitEnum::A,
@@ -713,8 +714,8 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_AlmostExact) {
     DateTime now = dt("12:00");
     DateTime end = dt("12:10");
     std::vector<period_entry_t> combined_schedules{{DateTime(now.to_time_point() + seconds(1)),
-                                                    DateTime(end.to_time_point() - seconds(1)), 24.0, 3, 1,
-                                                    ChargingRateUnitEnum::A, std::nullopt}};
+                                                    DateTime(end.to_time_point() - seconds(1)), 24.0, 3, std::nullopt,
+                                                    1, ChargingRateUnitEnum::A, std::nullopt}};
     ChargingSchedule expected = ChargingSchedule{
         .id = 0,
         .chargingRateUnit = ChargingRateUnitEnum::A,
@@ -738,7 +739,7 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_SingleLong) {
     DateTime now = dt("12:00");
     DateTime end = dt("12:10");
     std::vector<period_entry_t> combined_schedules{
-        {dt("11:00"), dt("12:30"), 24.0, 3, 1, ChargingRateUnitEnum::A, std::nullopt}};
+        {dt("11:00"), dt("12:30"), 24.0, 3, std::nullopt, 1, ChargingRateUnitEnum::A, std::nullopt}};
     ChargingSchedule expected = ChargingSchedule{
         .id = 0,
         .chargingRateUnit = ChargingRateUnitEnum::A,
@@ -760,7 +761,7 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_SingleShort) {
     DateTime now = dt("12:00");
     DateTime end = dt("12:10");
     std::vector<period_entry_t> combined_schedules{
-        {dt("11:00"), dt("12:05"), 24.0, 3, 1, ChargingRateUnitEnum::A, std::nullopt}};
+        {dt("11:00"), dt("12:05"), 24.0, 3, std::nullopt, 1, ChargingRateUnitEnum::A, std::nullopt}};
     ChargingSchedule expected = ChargingSchedule{
         .id = 0,
         .chargingRateUnit = ChargingRateUnitEnum::A,
@@ -783,7 +784,7 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_SingleDelayedStartLong) {
     DateTime now = dt("12:00");
     DateTime end = dt("12:10");
     std::vector<period_entry_t> combined_schedules{
-        {dt("12:02"), dt("12:30"), 24.0, 3, 1, ChargingRateUnitEnum::A, std::nullopt}};
+        {dt("12:02"), dt("12:30"), 24.0, 3, std::nullopt, 1, ChargingRateUnitEnum::A, std::nullopt}};
     ChargingSchedule expected = ChargingSchedule{
         .id = 0,
         .chargingRateUnit = ChargingRateUnitEnum::A,
@@ -805,8 +806,8 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_OverlapStart) {
     DateTime now = dt("12:00");
     DateTime end = dt("12:10");
     std::vector<period_entry_t> combined_schedules{
-        {dt("12:05"), dt("13:00"), 32.0, 1, 21, ChargingRateUnitEnum::A, std::nullopt},
-        {dt("11:30"), dt("12:30"), 24.0, 3, 1, ChargingRateUnitEnum::A, std::nullopt}};
+        {dt("12:05"), dt("13:00"), 32.0, 1, std::nullopt, 21, ChargingRateUnitEnum::A, std::nullopt},
+        {dt("11:30"), dt("12:30"), 24.0, 3, std::nullopt, 1, ChargingRateUnitEnum::A, std::nullopt}};
     ChargingSchedule expected = ChargingSchedule{
         .id = 0,
         .chargingRateUnit = ChargingRateUnitEnum::A,
@@ -825,8 +826,8 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_OverlapEnd) {
     DateTime now = dt("12:00");
     DateTime end = dt("12:10");
     std::vector<period_entry_t> combined_schedules{
-        {dt("11:30"), dt("12:05"), 32.0, 1, 21, ChargingRateUnitEnum::A, std::nullopt},
-        {dt("11:30"), dt("12:30"), 24.0, 3, 1, ChargingRateUnitEnum::A, std::nullopt}};
+        {dt("11:30"), dt("12:05"), 32.0, 1, std::nullopt, 21, ChargingRateUnitEnum::A, std::nullopt},
+        {dt("11:30"), dt("12:30"), 24.0, 3, std::nullopt, 1, ChargingRateUnitEnum::A, std::nullopt}};
     ChargingSchedule expected = ChargingSchedule{
         .id = 0,
         .chargingRateUnit = ChargingRateUnitEnum::A,
@@ -845,8 +846,8 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_OverlapMiddle) {
     DateTime now = dt("12:00");
     DateTime end = dt("12:10");
     std::vector<period_entry_t> combined_schedules{
-        {dt("12:02"), dt("12:05"), 32.0, 1, 21, ChargingRateUnitEnum::A, std::nullopt},
-        {dt("11:30"), dt("12:30"), 24.0, 3, 1, ChargingRateUnitEnum::A, std::nullopt}};
+        {dt("12:02"), dt("12:05"), 32.0, 1, std::nullopt, 21, ChargingRateUnitEnum::A, std::nullopt},
+        {dt("11:30"), dt("12:30"), 24.0, 3, std::nullopt, 1, ChargingRateUnitEnum::A, std::nullopt}};
     ChargingSchedule expected = ChargingSchedule{
         .id = 0,
         .chargingRateUnit = ChargingRateUnitEnum::A,
@@ -866,8 +867,8 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_OverlapIgnore) {
     DateTime now = dt("12:00");
     DateTime end = dt("12:10");
     std::vector<period_entry_t> combined_schedules{
-        {dt("12:05"), dt("13:00"), 32.0, 1, 21, ChargingRateUnitEnum::A, std::nullopt},
-        {dt("11:30"), dt("12:30"), 24.0, 3, 31, ChargingRateUnitEnum::A, std::nullopt}};
+        {dt("12:05"), dt("13:00"), 32.0, 1, std::nullopt, 21, ChargingRateUnitEnum::A, std::nullopt},
+        {dt("11:30"), dt("12:30"), 24.0, 3, std::nullopt, 31, ChargingRateUnitEnum::A, std::nullopt}};
     ChargingSchedule expected = ChargingSchedule{
         .id = 0,
         .chargingRateUnit = ChargingRateUnitEnum::A,
@@ -885,8 +886,8 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_NoGapA) {
     DateTime now = dt("12:00");
     DateTime end = dt("12:10");
     std::vector<period_entry_t> combined_schedules{
-        {dt("11:50"), dt("12:05"), 32.0, 1, 21, ChargingRateUnitEnum::A, std::nullopt},
-        {dt("12:05"), dt("12:30"), 24.0, 3, 31, ChargingRateUnitEnum::A, std::nullopt}};
+        {dt("11:50"), dt("12:05"), 32.0, 1, std::nullopt, 21, ChargingRateUnitEnum::A, std::nullopt},
+        {dt("12:05"), dt("12:30"), 24.0, 3, std::nullopt, 31, ChargingRateUnitEnum::A, std::nullopt}};
     ChargingSchedule expected = ChargingSchedule{
         .id = 0,
         .chargingRateUnit = ChargingRateUnitEnum::A,
@@ -905,8 +906,8 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_NoGapB) {
     DateTime now = dt("12:00");
     DateTime end = dt("12:10");
     std::vector<period_entry_t> combined_schedules{
-        {dt("12:05"), dt("12:30"), 32.0, 1, 21, ChargingRateUnitEnum::A, std::nullopt},
-        {dt("11:50"), dt("12:05"), 24.0, 3, 31, ChargingRateUnitEnum::A, std::nullopt}};
+        {dt("12:05"), dt("12:30"), 32.0, 1, std::nullopt, 21, ChargingRateUnitEnum::A, std::nullopt},
+        {dt("11:50"), dt("12:05"), 24.0, 3, std::nullopt, 31, ChargingRateUnitEnum::A, std::nullopt}};
     ChargingSchedule expected = ChargingSchedule{
         .id = 0,
         .chargingRateUnit = ChargingRateUnitEnum::A,
@@ -925,8 +926,8 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_OverlapA) {
     DateTime now = dt("12:00");
     DateTime end = dt("12:10");
     std::vector<period_entry_t> combined_schedules{
-        {dt("11:50"), dt("12:05"), 32.0, 1, 21, ChargingRateUnitEnum::A, std::nullopt},
-        {dt("12:05"), dt("12:30"), 24.0, 3, 31, ChargingRateUnitEnum::A, std::nullopt}};
+        {dt("11:50"), dt("12:05"), 32.0, 1, std::nullopt, 21, ChargingRateUnitEnum::A, std::nullopt},
+        {dt("12:05"), dt("12:30"), 24.0, 3, std::nullopt, 31, ChargingRateUnitEnum::A, std::nullopt}};
     ChargingSchedule expected = ChargingSchedule{
         .id = 0,
         .chargingRateUnit = ChargingRateUnitEnum::A,
@@ -945,8 +946,8 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_OverlapB) {
     DateTime now = dt("12:00");
     DateTime end = dt("12:10");
     std::vector<period_entry_t> combined_schedules{
-        {dt("12:05"), dt("12:30"), 32.0, 1, 21, ChargingRateUnitEnum::A, std::nullopt},
-        {dt("11:50"), dt("12:05"), 24.0, 3, 31, ChargingRateUnitEnum::A, std::nullopt}};
+        {dt("12:05"), dt("12:30"), 32.0, 1, std::nullopt, 21, ChargingRateUnitEnum::A, std::nullopt},
+        {dt("11:50"), dt("12:05"), 24.0, 3, std::nullopt, 31, ChargingRateUnitEnum::A, std::nullopt}};
     ChargingSchedule expected = ChargingSchedule{
         .id = 0,
         .chargingRateUnit = ChargingRateUnitEnum::A,
@@ -965,12 +966,35 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_1SGap) {
     DateTime now = dt("12:00");
     DateTime end = dt("12:10");
     std::vector<period_entry_t> combined_schedules{
-        {dt("11:50"), DateTime{"2024-01-01T12:04:59Z"}, 32.0, 1, 21, ChargingRateUnitEnum::A, std::nullopt},
-        {dt("12:05"), dt("12:30"), 24.0, 3, 31, ChargingRateUnitEnum::A, std::nullopt}};
+        {dt("11:50"), DateTime{"2024-01-01T12:04:59Z"}, 32.0, 1, std::nullopt, 21, ChargingRateUnitEnum::A,
+         std::nullopt},
+        {dt("12:05"), dt("12:30"), 24.0, 3, std::nullopt, 31, ChargingRateUnitEnum::A, std::nullopt}};
     ChargingSchedule expected = ChargingSchedule{
         .id = 0,
         .chargingRateUnit = ChargingRateUnitEnum::A,
         .chargingSchedulePeriod = {ChargingSchedulePeriod{.startPeriod = 0, .limit = 32.0, .numberPhases = 1},
+                                   ChargingSchedulePeriod{.startPeriod = 299, .limit = NO_LIMIT_SPECIFIED},
+                                   ChargingSchedulePeriod{.startPeriod = 300, .limit = 24.0, .numberPhases = 3}},
+        .startSchedule = now,
+        .duration = std::chrono::duration_cast<std::chrono::seconds>(minutes(10)).count(),
+    };
+
+    ChargingSchedule actual = calculate_charging_schedule(combined_schedules, now, end, std::nullopt);
+
+    ASSERT_EQ(expected, actual);
+}
+
+TEST(OCPPTypesTest, CalculateChargingSchedule_WithPhaseToUse) {
+    DateTime now = dt("12:00");
+    DateTime end = dt("12:10");
+    std::vector<period_entry_t> combined_schedules{
+        {dt("11:50"), DateTime{"2024-01-01T12:04:59Z"}, 32.0, 1, 3, 21, ChargingRateUnitEnum::A, std::nullopt},
+        {dt("12:05"), dt("12:30"), 24.0, 3, std::nullopt, 31, ChargingRateUnitEnum::A, std::nullopt}};
+    ChargingSchedule expected = ChargingSchedule{
+        .id = 0,
+        .chargingRateUnit = ChargingRateUnitEnum::A,
+        .chargingSchedulePeriod = {ChargingSchedulePeriod{
+                                       .startPeriod = 0, .limit = 32.0, .numberPhases = 1, .phaseToUse = 3},
                                    ChargingSchedulePeriod{.startPeriod = 299, .limit = NO_LIMIT_SPECIFIED},
                                    ChargingSchedulePeriod{.startPeriod = 300, .limit = 24.0, .numberPhases = 3}},
         .startSchedule = now,

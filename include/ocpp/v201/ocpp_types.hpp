@@ -975,6 +975,7 @@ struct period_entry_t {
     ocpp::DateTime end;
     float limit;
     std::optional<std::int32_t> number_phases;
+    std::optional<std::int32_t> phase_to_use;
     std::int32_t stack_level;
     ChargingRateUnitEnum charging_rate_unit;
     std::optional<float> min_charging_rate;

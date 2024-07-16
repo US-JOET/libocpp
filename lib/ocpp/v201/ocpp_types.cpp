@@ -2982,12 +2982,18 @@ ChargingSchedule calculate_charging_schedule(std::vector<period_entry_t>& in_com
             current = earliest;
         } else {
             // there is a schedule to use
-            // TODO: How does ChargingSchedulePeriod.phaseToUse fit in since it's new to 2.0.1
             const auto [limit, number_phases] = convert_limit(chosen, selected_unit);
-            composite.chargingSchedulePeriod.push_back({.startPeriod = elapsed_seconds(current, now),
-                                                        .limit = limit,
-                                                        .customData = std::nullopt,
-                                                        .numberPhases = number_phases});
+
+            ChargingSchedulePeriod charging_schedule_period{elapsed_seconds(current, now), limit, std::nullopt,
+                                                            number_phases};
+
+            // If the new ChargingSchedulePeriod.phaseToUse field is set, pass it on
+            // Profile validation has already ensured that the values have been properly set.
+            if (chosen->phase_to_use.has_value()) {
+                charging_schedule_period.phaseToUse = chosen->phase_to_use.value();
+            }
+
+            composite.chargingSchedulePeriod.push_back(charging_schedule_period);
             if (chosen->end < next_earliest) {
                 current = chosen->end;
             } else {
