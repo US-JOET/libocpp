@@ -1007,7 +1007,7 @@ ChargingSchedule calculate_charging_schedule(std::vector<period_entry_t>& combin
                                              const DateTime& end,
                                              std::optional<ChargingRateUnitEnum> charging_rate_unit);
 
-ChargingSchedule calculate_charging_schedule(const ChargingSchedule& charge_point_max,
+ChargingSchedule calculate_charging_schedule(const ChargingSchedule& charging_station_max,
                                              const ChargingSchedule& tx_default, const ChargingSchedule& tx);
 
 } // namespace v201

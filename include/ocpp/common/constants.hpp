@@ -14,5 +14,6 @@ constexpr std::int32_t DEFAULT_AND_MAX_NUMBER_PHASES = 3;
 constexpr float LOW_VOLTAGE = 230;
 
 constexpr float NO_LIMIT_SPECIFIED = -1.0;
+constexpr int32_t NO_START_PERIOD = -1;
 
 } // namespace ocpp
