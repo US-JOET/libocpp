@@ -1,6 +1,6 @@
 {
-    "chargingProfileId": 2,
-    "chargingProfileKind": "Recurring",
+    "chargingProfileId": 3,
+    "chargingProfileKind": "Absolute",
     "chargingProfilePurpose": "TxProfile",
     "chargingSchedule": {
         "chargingRateUnit": "W",
