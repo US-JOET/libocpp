@@ -11,17 +11,17 @@
             "chargingSchedulePeriod": [
                 {
                     "limit": 11000.0,
-                    "numberPhases": 3,
+                    "numberPhases": 1,
                     "startPeriod": 0
                 },
                 {
                     "limit": 6000.0,
-                    "numberPhases": 3,
+                    "numberPhases": 1,
                     "startPeriod": 28800
                 },
                 {
                     "limit": 12000.0,
-                    "numberPhases": 3,
+                    "numberPhases": 1,
                     "startPeriod": 72000
                 }
             ],
@@ -30,5 +30,5 @@
             "startSchedule": "2023-01-17T17:00:00.000Z"
         }
     ],
-    "transactionId": "f1522902-1170-416f-8e43-9e3bce28fab8"
-}tests/lib/ocpp/v201/json //
+    "transactionId": "f1522902-1170-416f-8e43-9e3bce28fab7"
+}

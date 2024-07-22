@@ -1,6 +1,6 @@
 {
-    "id": 1,
-    "chargingProfileKind": "Absolute",
+    "id": 66,
+    "chargingProfileKind": "Relative",
     "chargingProfilePurpose": "TxProfile",
     "chargingSchedule": [
         {
@@ -13,11 +13,10 @@
                     "startPeriod": 0
                 }
             ],
-            "duration": 1080,
-            "minChargingRate": 0.0,
-            "startSchedule": "2024-01-17T18:00:00.000Z"
+            "duration": 3601,
+            "minChargingRate": 0.0
         }
     ],
     "stackLevel": 1,
-    "transactionId": "f1522902-1170-416f-8e43-9e3bce28fab7"
+    "transactionId": "f1522902-1170-416f-8e43-9e3bce28fde7"
 }

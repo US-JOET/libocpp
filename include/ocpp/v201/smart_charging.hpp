@@ -108,7 +108,7 @@ public:
     ///
     /// \brief Calculates the composite schedule for the given \p valid_profiles and the given \p connector_id
     ///
-    CompositeSchedule calculate_composite_schedule(std::vector<ChargingProfile> valid_profiles,
+    CompositeSchedule calculate_composite_schedule(std::vector<ChargingProfile>& valid_profiles,
                                                    const ocpp::DateTime& start_time, const ocpp::DateTime& end_time,
                                                    const int32_t evse_id, ChargingRateUnitEnum charging_rate_unit);
 
@@ -152,17 +152,6 @@ protected:
     /// absolute end time of the period that refers to the given absoulte \p time as a pair.
     ///
     PeriodDateTimePair find_period_at(const ocpp::DateTime& time, const ChargingProfile& profile, const int evse);
-
-    ///
-    /// \brief Gets the absolute start time of the given \p profile for the given \p connector_id for different profile
-    /// purposes
-    ///
-    std::optional<ocpp::DateTime> get_profile_start_time(const ChargingProfile& profile, const ocpp::DateTime& time,
-                                                         const int evse);
-
-    static int32_t determine_duration(const ocpp::DateTime& start_time, const ocpp::DateTime& end_time);
-
-    static bool within_time_window(const ocpp::DateTime& start_time, const ocpp::DateTime& end_time);
 
     ///
     /// \brief Iterates over the periods of the given \p valid_profiles and determines the earliest next absolute period
