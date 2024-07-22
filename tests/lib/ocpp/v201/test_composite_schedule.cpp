@@ -222,9 +222,6 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_GetPeriodEndTi
 }
 
 TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_FoundationTest_Grid) {
-    GTEST_SKIP();
-    // create_evse_with_id(DEFAULT_EVSE_ID);
-
     std::vector<ChargingProfile> profiles =
         SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/grid/");
 
@@ -240,8 +237,6 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_FoundationTest
 }
 
 TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredTest_SameStartTime) {
-    GTEST_SKIP();
-    // create_evse_with_id(DEFAULT_EVSE_ID);
     std::vector<ChargingProfile> profiles =
         SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/layered/");
 
@@ -330,10 +325,7 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredTest_Sa
     }
 }
 
-// TODO: Fix me
 TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredTest_FutureStartTime) {
-    GTEST_SKIP();
-    // create_evse_with_id(DEFAULT_EVSE_ID);
     std::vector<ChargingProfile> profiles =
         SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/layered_recurring/");
 
@@ -359,8 +351,6 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredTest_Fu
 }
 
 TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredTest_PreviousStartTime) {
-    GTEST_SKIP();
-    // create_evse_with_id(DEFAULT_EVSE_ID);
     std::vector<ChargingProfile> profiles =
         SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/null_start/");
     const DateTime start_time = ocpp::DateTime("2024-01-17T18:00:00");
@@ -390,8 +380,6 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredTest_Pr
 }
 
 TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredRecurringTest_PreviousStartTime) {
-    GTEST_SKIP();
-    // create_evse_with_id(DEFAULT_EVSE_ID);
     std::vector<ChargingProfile> profiles =
         SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/layered_recurring/");
     const DateTime start_time = ocpp::DateTime("2024-02-19T18:00:00");
@@ -434,7 +422,6 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredRecurri
  * Calculate Composite Schedule
  */
 TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_ValidateBaselineProfileVector) {
-    GTEST_SKIP();
     // create_evse_with_id(DEFAULT_EVSE_ID);
     const DateTime start_time = ocpp::DateTime("2024-01-17T18:01:00");
     const DateTime end_time = ocpp::DateTime("2024-01-18T06:00:00");
@@ -468,7 +455,6 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_ValidateBaseli
 }
 
 TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_RelativeProfile_minutia) {
-    GTEST_SKIP();
     const DateTime start_time = ocpp::DateTime("2024-05-17T05:00:00");
     const DateTime end_time = ocpp::DateTime("2024-05-17T06:00:00");
 
@@ -495,7 +481,6 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_RelativeProfil
 }
 
 TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_RelativeProfile_e2e) {
-    GTEST_SKIP();
     std::vector<ChargingProfile> profiles =
         SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/relative/");
     this->evse_manager->open_transaction(DEFAULT_EVSE_ID, profiles.at(0).transactionId.value());
@@ -526,7 +511,6 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_RelativeProfil
 }
 
 TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_DemoCaseOne_17th) {
-    // GTEST_SKIP();
     std::vector<ChargingProfile> profiles =
         SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/case_one/");
     ChargingProfile relative_profile = profiles.front();
