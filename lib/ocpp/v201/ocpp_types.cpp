@@ -702,6 +702,29 @@ void from_json(const json& j, CompositeSchedule& k) {
     }
 }
 
+bool operator==(const CompositeSchedule& a, const CompositeSchedule& b) {
+    bool bRes = true;
+
+    if (a.chargingSchedulePeriod.size() != b.chargingSchedulePeriod.size()) {
+        return false;
+    }
+
+    for (std::uint32_t i = 0; bRes && i < a.chargingSchedulePeriod.size(); i++) {
+        bRes = bRes && a.chargingSchedulePeriod[i] == b.chargingSchedulePeriod[i];
+    }
+
+    bRes = bRes && (a.evseId == b.evseId);
+    bRes = bRes && (a.duration == b.duration);
+    bRes = bRes && (a.scheduleStart == b.scheduleStart);
+    bRes = bRes && (a.chargingRateUnit == b.chargingRateUnit);
+
+    return bRes;
+}
+
+bool operator!=(const CompositeSchedule& a, const CompositeSchedule& b) {
+    return (!(a == b));
+}
+
 // \brief Writes the string representation of the given CompositeSchedule \p k to the given output stream \p os
 /// \returns an output stream with the CompositeSchedule written to
 std::ostream& operator<<(std::ostream& os, const CompositeSchedule& k) {
@@ -2927,9 +2950,9 @@ std::pair<float, std::int32_t> convert_limit(const period_entry_t* const entry,
     return {limit, number_phases};
 }
 
-ChargingSchedule calculate_charging_schedule(std::vector<period_entry_t>& in_combined_schedules, const DateTime& in_now,
-                                             const DateTime& in_end,
-                                             std::optional<ChargingRateUnitEnum> charging_rate_unit) {
+CompositeSchedule calculate_composite_schedule(std::vector<period_entry_t>& in_combined_schedules,
+                                               const DateTime& in_now, const DateTime& in_end,
+                                               std::optional<ChargingRateUnitEnum> charging_rate_unit) {
 
     // Defaults to ChargingRateUnitEnum::A if not set.
     const ChargingRateUnitEnum selected_unit =
@@ -2938,11 +2961,13 @@ ChargingSchedule calculate_charging_schedule(std::vector<period_entry_t>& in_com
     const auto now = floor_seconds(in_now);
     const auto end = floor_seconds(in_end);
 
-    ChargingSchedule composite{.id = 0,
-                               .chargingRateUnit = selected_unit,
-                               .chargingSchedulePeriod = {},
-                               .startSchedule = now,
-                               .duration = elapsed_seconds(end, now)};
+    CompositeSchedule composite{
+        .chargingSchedulePeriod = {},
+        .evseId = EVSEID_NOT_SET,
+        .duration = elapsed_seconds(end, now),
+        .scheduleStart = now,
+        .chargingRateUnit = selected_unit,
+    };
 
     // sort the combined_schedules in stack priority order
     struct {
@@ -3054,29 +3079,29 @@ void update_itt(const int schedule_duration, std::vector<ChargingSchedulePeriod>
     }
 }
 
-ChargingSchedule calculate_charging_schedule(const ChargingSchedule& charging_station_max,
-                                             const ChargingSchedule& tx_default, const ChargingSchedule& tx) {
+CompositeSchedule calculate_composite_schedule(const CompositeSchedule& charging_station_max,
+                                               const CompositeSchedule& tx_default, const CompositeSchedule& tx) {
 
-    ChargingSchedule combined{.id = 0,
-                              .chargingRateUnit = tx_default.chargingRateUnit,
-                              .chargingSchedulePeriod = {},
-                              .customData = std::nullopt,
-                              .startSchedule = tx_default.startSchedule,
-                              .duration = tx_default.duration,
-                              .minChargingRate = tx_default.minChargingRate,
-                              .salesTariff = std::nullopt};
+    CompositeSchedule combined{
+        .chargingSchedulePeriod = {},
+        .evseId = EVSEID_NOT_SET,
+        .duration = tx_default.duration,
+        .scheduleStart = tx_default.scheduleStart,
+        .chargingRateUnit = tx_default.chargingRateUnit,
 
-    if (tx.minChargingRate) {
-        combined.minChargingRate = tx.minChargingRate.value();
-    }
+    };
+
+    // TODO: What to do with minChargingRate since it isn't returned
+    // if (tx.minChargingRate) {
+    //     combined.minChargingRate = tx.minChargingRate.value();
+    // }
 
     const float default_limit =
         (tx_default.chargingRateUnit == ChargingRateUnitEnum::A) ? DEFAULT_LIMIT_AMPS : DEFAULT_LIMIT_WATTS;
 
     int current = 0;
 
-    const int end = std::max(std::max(charging_station_max.duration.value_or(0), tx_default.duration.value_or(0)),
-                             tx.duration.value_or(0));
+    const int end = std::max(std::max(charging_station_max.duration, tx_default.duration), tx.duration);
 
     auto charging_station_max_itt = charging_station_max.chargingSchedulePeriod.begin();
     auto tx_default_itt = tx_default.chargingSchedulePeriod.begin();

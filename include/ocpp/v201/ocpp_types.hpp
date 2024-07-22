@@ -265,6 +265,9 @@ void to_json(json& j, const CompositeSchedule& k);
 /// \brief Conversion from a given json object \p j to a given CompositeSchedule \p k
 void from_json(const json& j, CompositeSchedule& k);
 
+bool operator==(const CompositeSchedule& a, const CompositeSchedule& b);
+bool operator!=(const CompositeSchedule& a, const CompositeSchedule& b);
+
 // \brief Writes the string representation of the given CompositeSchedule \p k to the given output stream \p os
 /// \returns an output stream with the CompositeSchedule written to
 std::ostream& operator<<(std::ostream& os, const CompositeSchedule& k);
@@ -1003,12 +1006,12 @@ std::vector<period_entry_t> calculate_profile(const DateTime& now, const DateTim
                                               const std::optional<DateTime>& session_start,
                                               const ChargingProfile& profile);
 
-ChargingSchedule calculate_charging_schedule(std::vector<period_entry_t>& combined_schedules, const DateTime& now,
-                                             const DateTime& end,
-                                             std::optional<ChargingRateUnitEnum> charging_rate_unit);
+CompositeSchedule calculate_composite_schedule(std::vector<period_entry_t>& combined_schedules, const DateTime& now,
+                                               const DateTime& end,
+                                               std::optional<ChargingRateUnitEnum> charging_rate_unit);
 
-ChargingSchedule calculate_charging_schedule(const ChargingSchedule& charging_station_max,
-                                             const ChargingSchedule& tx_default, const ChargingSchedule& tx);
+CompositeSchedule calculate_composite_schedule(const CompositeSchedule& charging_station_max,
+                                               const CompositeSchedule& tx_default, const CompositeSchedule& tx);
 
 } // namespace v201
 } // namespace ocpp

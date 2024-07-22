@@ -75,13 +75,13 @@ const ChargingProfile weekly_profile =
 const ChargingProfile weekly_profile_no_duration =
     SmartChargingTestUtils::get_charging_profile_from_file("singles/Recurring_Weekly_NoDuration_301.json");
 
-const ChargingSchedule DEFAULT_SCHEDULE = {.id = 1,
-                                           .chargingRateUnit = ChargingRateUnitEnum::A,
-                                           .chargingSchedulePeriod = {},
-                                           .customData = nullopt,
-                                           .startSchedule = dt("12:00"),
-                                           .duration = 600,
-                                           .minChargingRate = 10.0};
+CompositeSchedule DEFAULT_SCHEDULE = {
+    .chargingSchedulePeriod = {},
+    .evseId = EVSEID_NOT_SET,
+    .duration = 600,
+    .scheduleStart = dt("12:00"),
+    .chargingRateUnit = ChargingRateUnitEnum::A,
+};
 
 class ChargingProfileType_Param_Test
     : public ::testing::TestWithParam<std::tuple<ocpp::DateTime, ocpp::DateTime, std::optional<ocpp::DateTime>,
@@ -638,15 +638,14 @@ TEST(OCPPTypesTest, ChargingSchedule_Equality) {
 
 TEST(OCPPTypesTest, CalculateChargingSchedule_Empty) {
     std::vector<period_entry_t> combined_schedules{};
-    ChargingSchedule expected = ChargingSchedule{
-        .id = 0,
-        .chargingRateUnit = ChargingRateUnitEnum::A,
+    CompositeSchedule expected = CompositeSchedule{
         .chargingSchedulePeriod = {ChargingSchedulePeriod{.startPeriod = 0, .limit = NO_LIMIT_SPECIFIED}},
-        .startSchedule = dt("12:00"),
+        .evseId = EVSEID_NOT_SET,
         .duration = std::chrono::duration_cast<std::chrono::seconds>(minutes(10)).count(),
-    };
+        .scheduleStart = dt("12:00"),
+        .chargingRateUnit = ChargingRateUnitEnum::A};
 
-    ChargingSchedule actual = calculate_charging_schedule(combined_schedules, dt("12:00"), dt("12:10"), std::nullopt);
+    CompositeSchedule actual = calculate_composite_schedule(combined_schedules, dt("12:00"), dt("12:10"), std::nullopt);
 
     ASSERT_EQ(expected, actual);
 }
@@ -656,19 +655,19 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_Exact) {
     DateTime end = dt("12:10");
     std::vector<period_entry_t> combined_schedules{
         {now, end, 24.0, 3, std::nullopt, 1, ChargingRateUnitEnum::A, std::nullopt}};
-    ChargingSchedule expected = ChargingSchedule{
-        .id = 0,
-        .chargingRateUnit = ChargingRateUnitEnum::A,
+    CompositeSchedule expected = CompositeSchedule{
         .chargingSchedulePeriod = {ChargingSchedulePeriod{
             .startPeriod = 0,
             .limit = 24.0,
             .numberPhases = 3,
         }},
-        .startSchedule = now,
+        .evseId = EVSEID_NOT_SET,
         .duration = std::chrono::duration_cast<std::chrono::seconds>(minutes(10)).count(),
+        .scheduleStart = now,
+        .chargingRateUnit = ChargingRateUnitEnum::A,
     };
 
-    ChargingSchedule actual = calculate_charging_schedule(combined_schedules, now, end, ChargingRateUnitEnum::A);
+    CompositeSchedule actual = calculate_composite_schedule(combined_schedules, now, end, ChargingRateUnitEnum::A);
 
     ASSERT_EQ(expected, actual);
 }
@@ -678,20 +677,21 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_ShortExact) {
     DateTime end = dt("12:10");
     std::vector<period_entry_t> combined_schedules{{now, DateTime(end.to_time_point() - seconds(1)), 24.0, 3,
                                                     std::nullopt, 1, ChargingRateUnitEnum::A, std::nullopt}};
-    ChargingSchedule expected = ChargingSchedule{
-        .id = 0,
-        .chargingRateUnit = ChargingRateUnitEnum::A,
+
+    CompositeSchedule expected = CompositeSchedule{
         .chargingSchedulePeriod = {ChargingSchedulePeriod{
                                        .startPeriod = 0,
                                        .limit = 24.0,
                                        .numberPhases = 3,
                                    },
                                    ChargingSchedulePeriod{.startPeriod = 599, .limit = NO_LIMIT_SPECIFIED}},
-        .startSchedule = now,
+        .evseId = EVSEID_NOT_SET,
         .duration = std::chrono::duration_cast<std::chrono::seconds>(minutes(10)).count(),
+        .scheduleStart = now,
+        .chargingRateUnit = ChargingRateUnitEnum::A,
     };
 
-    ChargingSchedule actual = calculate_charging_schedule(combined_schedules, now, end, ChargingRateUnitEnum::A);
+    CompositeSchedule actual = calculate_composite_schedule(combined_schedules, now, end, ChargingRateUnitEnum::A);
 
     ASSERT_EQ(expected, actual);
 }
@@ -701,19 +701,20 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_LongExact) {
     DateTime end = dt("12:10");
     std::vector<period_entry_t> combined_schedules{{DateTime(now.to_time_point() - seconds(1)), end, 24.0, 3,
                                                     std::nullopt, 1, ChargingRateUnitEnum::A, std::nullopt}};
-    ChargingSchedule expected = ChargingSchedule{
-        .id = 0,
-        .chargingRateUnit = ChargingRateUnitEnum::A,
+
+    CompositeSchedule expected = CompositeSchedule{
         .chargingSchedulePeriod = {ChargingSchedulePeriod{
             .startPeriod = 0,
             .limit = 24.0,
             .numberPhases = 3,
         }},
-        .startSchedule = now,
+        .evseId = EVSEID_NOT_SET,
         .duration = std::chrono::duration_cast<std::chrono::seconds>(minutes(10)).count(),
+        .scheduleStart = now,
+        .chargingRateUnit = ChargingRateUnitEnum::A,
     };
 
-    ChargingSchedule actual = calculate_charging_schedule(combined_schedules, now, end, ChargingRateUnitEnum::A);
+    CompositeSchedule actual = calculate_composite_schedule(combined_schedules, now, end, ChargingRateUnitEnum::A);
 
     ASSERT_EQ(expected, actual);
 }
@@ -724,9 +725,7 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_AlmostExact) {
     std::vector<period_entry_t> combined_schedules{{DateTime(now.to_time_point() + seconds(1)),
                                                     DateTime(end.to_time_point() - seconds(1)), 24.0, 3, std::nullopt,
                                                     1, ChargingRateUnitEnum::A, std::nullopt}};
-    ChargingSchedule expected = ChargingSchedule{
-        .id = 0,
-        .chargingRateUnit = ChargingRateUnitEnum::A,
+    CompositeSchedule expected = CompositeSchedule{
         .chargingSchedulePeriod = {ChargingSchedulePeriod{.startPeriod = 0, .limit = NO_LIMIT_SPECIFIED},
                                    ChargingSchedulePeriod{
                                        .startPeriod = 1,
@@ -734,11 +733,13 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_AlmostExact) {
                                        .numberPhases = 3,
                                    },
                                    ChargingSchedulePeriod{.startPeriod = 599, .limit = NO_LIMIT_SPECIFIED}},
-        .startSchedule = now,
+        .evseId = EVSEID_NOT_SET,
         .duration = std::chrono::duration_cast<std::chrono::seconds>(minutes(10)).count(),
+        .scheduleStart = now,
+        .chargingRateUnit = ChargingRateUnitEnum::A,
     };
 
-    ChargingSchedule actual = calculate_charging_schedule(combined_schedules, now, end, std::nullopt);
+    CompositeSchedule actual = calculate_composite_schedule(combined_schedules, now, end, std::nullopt);
 
     ASSERT_EQ(expected, actual);
 }
@@ -748,19 +749,19 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_SingleLong) {
     DateTime end = dt("12:10");
     std::vector<period_entry_t> combined_schedules{
         {dt("11:00"), dt("12:30"), 24.0, 3, std::nullopt, 1, ChargingRateUnitEnum::A, std::nullopt}};
-    ChargingSchedule expected = ChargingSchedule{
-        .id = 0,
-        .chargingRateUnit = ChargingRateUnitEnum::A,
+    CompositeSchedule expected = CompositeSchedule{
         .chargingSchedulePeriod = {ChargingSchedulePeriod{
             .startPeriod = 1,
             .limit = 24.0,
             .numberPhases = 3,
         }},
-        .startSchedule = now,
+        .evseId = EVSEID_NOT_SET,
         .duration = std::chrono::duration_cast<std::chrono::seconds>(minutes(10)).count(),
+        .scheduleStart = now,
+        .chargingRateUnit = ChargingRateUnitEnum::A,
     };
 
-    ChargingSchedule actual = calculate_charging_schedule(combined_schedules, now, end, std::nullopt);
+    CompositeSchedule actual = calculate_composite_schedule(combined_schedules, now, end, std::nullopt);
 
     ASSERT_EQ(expected, actual);
 }
@@ -770,20 +771,20 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_SingleShort) {
     DateTime end = dt("12:10");
     std::vector<period_entry_t> combined_schedules{
         {dt("11:00"), dt("12:05"), 24.0, 3, std::nullopt, 1, ChargingRateUnitEnum::A, std::nullopt}};
-    ChargingSchedule expected = ChargingSchedule{
-        .id = 0,
-        .chargingRateUnit = ChargingRateUnitEnum::A,
+    CompositeSchedule expected = CompositeSchedule{
         .chargingSchedulePeriod = {ChargingSchedulePeriod{
                                        .startPeriod = 0,
                                        .limit = 24.0,
                                        .numberPhases = 3,
                                    },
                                    ChargingSchedulePeriod{.startPeriod = 300, .limit = NO_LIMIT_SPECIFIED}},
-        .startSchedule = now,
+        .evseId = EVSEID_NOT_SET,
         .duration = std::chrono::duration_cast<std::chrono::seconds>(minutes(10)).count(),
+        .scheduleStart = now,
+        .chargingRateUnit = ChargingRateUnitEnum::A,
     };
 
-    ChargingSchedule actual = calculate_charging_schedule(combined_schedules, now, end, std::nullopt);
+    CompositeSchedule actual = calculate_composite_schedule(combined_schedules, now, end, std::nullopt);
 
     ASSERT_EQ(expected, actual);
 }
@@ -793,19 +794,19 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_SingleDelayedStartLong) {
     DateTime end = dt("12:10");
     std::vector<period_entry_t> combined_schedules{
         {dt("12:02"), dt("12:30"), 24.0, 3, std::nullopt, 1, ChargingRateUnitEnum::A, std::nullopt}};
-    ChargingSchedule expected = ChargingSchedule{
-        .id = 0,
-        .chargingRateUnit = ChargingRateUnitEnum::A,
+    CompositeSchedule expected = CompositeSchedule{
         .chargingSchedulePeriod = {ChargingSchedulePeriod{
                                        .startPeriod = 0,
                                        .limit = NO_LIMIT_SPECIFIED,
                                    },
                                    ChargingSchedulePeriod{.startPeriod = 120, .limit = 24.0, .numberPhases = 3}},
-        .startSchedule = now,
+        .evseId = EVSEID_NOT_SET,
         .duration = std::chrono::duration_cast<std::chrono::seconds>(minutes(10)).count(),
+        .scheduleStart = now,
+        .chargingRateUnit = ChargingRateUnitEnum::A,
     };
 
-    ChargingSchedule actual = calculate_charging_schedule(combined_schedules, now, end, std::nullopt);
+    CompositeSchedule actual = calculate_composite_schedule(combined_schedules, now, end, std::nullopt);
 
     ASSERT_EQ(expected, actual);
 }
@@ -816,16 +817,16 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_OverlapStart) {
     std::vector<period_entry_t> combined_schedules{
         {dt("12:05"), dt("13:00"), 32.0, 1, std::nullopt, 21, ChargingRateUnitEnum::A, std::nullopt},
         {dt("11:30"), dt("12:30"), 24.0, 3, std::nullopt, 1, ChargingRateUnitEnum::A, std::nullopt}};
-    ChargingSchedule expected = ChargingSchedule{
-        .id = 0,
-        .chargingRateUnit = ChargingRateUnitEnum::A,
+    CompositeSchedule expected = CompositeSchedule{
         .chargingSchedulePeriod = {ChargingSchedulePeriod{.startPeriod = 0, .limit = 24.0, .numberPhases = 3},
                                    ChargingSchedulePeriod{.startPeriod = 300, .limit = 32.0, .numberPhases = 1}},
-        .startSchedule = now,
+        .evseId = EVSEID_NOT_SET,
         .duration = std::chrono::duration_cast<std::chrono::seconds>(minutes(10)).count(),
+        .scheduleStart = now,
+        .chargingRateUnit = ChargingRateUnitEnum::A,
     };
 
-    ChargingSchedule actual = calculate_charging_schedule(combined_schedules, now, end, std::nullopt);
+    CompositeSchedule actual = calculate_composite_schedule(combined_schedules, now, end, std::nullopt);
 
     ASSERT_EQ(expected, actual);
 }
@@ -836,16 +837,16 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_OverlapEnd) {
     std::vector<period_entry_t> combined_schedules{
         {dt("11:30"), dt("12:05"), 32.0, 1, std::nullopt, 21, ChargingRateUnitEnum::A, std::nullopt},
         {dt("11:30"), dt("12:30"), 24.0, 3, std::nullopt, 1, ChargingRateUnitEnum::A, std::nullopt}};
-    ChargingSchedule expected = ChargingSchedule{
-        .id = 0,
-        .chargingRateUnit = ChargingRateUnitEnum::A,
+    CompositeSchedule expected = CompositeSchedule{
         .chargingSchedulePeriod = {ChargingSchedulePeriod{.startPeriod = 0, .limit = 32.0, .numberPhases = 1},
                                    ChargingSchedulePeriod{.startPeriod = 300, .limit = 24.0, .numberPhases = 3}},
-        .startSchedule = now,
+        .evseId = EVSEID_NOT_SET,
         .duration = std::chrono::duration_cast<std::chrono::seconds>(minutes(10)).count(),
+        .scheduleStart = now,
+        .chargingRateUnit = ChargingRateUnitEnum::A,
     };
 
-    ChargingSchedule actual = calculate_charging_schedule(combined_schedules, now, end, std::nullopt);
+    CompositeSchedule actual = calculate_composite_schedule(combined_schedules, now, end, std::nullopt);
 
     ASSERT_EQ(expected, actual);
 }
@@ -856,17 +857,17 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_OverlapMiddle) {
     std::vector<period_entry_t> combined_schedules{
         {dt("12:02"), dt("12:05"), 32.0, 1, std::nullopt, 21, ChargingRateUnitEnum::A, std::nullopt},
         {dt("11:30"), dt("12:30"), 24.0, 3, std::nullopt, 1, ChargingRateUnitEnum::A, std::nullopt}};
-    ChargingSchedule expected = ChargingSchedule{
-        .id = 0,
-        .chargingRateUnit = ChargingRateUnitEnum::A,
+    CompositeSchedule expected = CompositeSchedule{
         .chargingSchedulePeriod = {ChargingSchedulePeriod{.startPeriod = 0, .limit = 24.0, .numberPhases = 3},
                                    ChargingSchedulePeriod{.startPeriod = 120, .limit = 32.0, .numberPhases = 1},
                                    ChargingSchedulePeriod{.startPeriod = 300, .limit = 24.0, .numberPhases = 3}},
-        .startSchedule = now,
+        .evseId = EVSEID_NOT_SET,
         .duration = std::chrono::duration_cast<std::chrono::seconds>(minutes(10)).count(),
+        .scheduleStart = now,
+        .chargingRateUnit = ChargingRateUnitEnum::A,
     };
 
-    ChargingSchedule actual = calculate_charging_schedule(combined_schedules, now, end, std::nullopt);
+    CompositeSchedule actual = calculate_composite_schedule(combined_schedules, now, end, std::nullopt);
 
     ASSERT_EQ(expected, actual);
 }
@@ -877,15 +878,15 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_OverlapIgnore) {
     std::vector<period_entry_t> combined_schedules{
         {dt("12:05"), dt("13:00"), 32.0, 1, std::nullopt, 21, ChargingRateUnitEnum::A, std::nullopt},
         {dt("11:30"), dt("12:30"), 24.0, 3, std::nullopt, 31, ChargingRateUnitEnum::A, std::nullopt}};
-    ChargingSchedule expected = ChargingSchedule{
-        .id = 0,
-        .chargingRateUnit = ChargingRateUnitEnum::A,
+    CompositeSchedule expected = CompositeSchedule{
         .chargingSchedulePeriod = {ChargingSchedulePeriod{.startPeriod = 0, .limit = 24.0, .numberPhases = 3}},
-        .startSchedule = now,
+        .evseId = EVSEID_NOT_SET,
         .duration = std::chrono::duration_cast<std::chrono::seconds>(minutes(10)).count(),
+        .scheduleStart = now,
+        .chargingRateUnit = ChargingRateUnitEnum::A,
     };
 
-    ChargingSchedule actual = calculate_charging_schedule(combined_schedules, now, end, std::nullopt);
+    CompositeSchedule actual = calculate_composite_schedule(combined_schedules, now, end, std::nullopt);
 
     ASSERT_EQ(expected, actual);
 }
@@ -896,16 +897,16 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_NoGapA) {
     std::vector<period_entry_t> combined_schedules{
         {dt("11:50"), dt("12:05"), 32.0, 1, std::nullopt, 21, ChargingRateUnitEnum::A, std::nullopt},
         {dt("12:05"), dt("12:30"), 24.0, 3, std::nullopt, 31, ChargingRateUnitEnum::A, std::nullopt}};
-    ChargingSchedule expected = ChargingSchedule{
-        .id = 0,
-        .chargingRateUnit = ChargingRateUnitEnum::A,
+    CompositeSchedule expected = CompositeSchedule{
         .chargingSchedulePeriod = {ChargingSchedulePeriod{.startPeriod = 0, .limit = 32.0, .numberPhases = 1},
                                    ChargingSchedulePeriod{.startPeriod = 300, .limit = 24.0, .numberPhases = 3}},
-        .startSchedule = now,
+        .evseId = EVSEID_NOT_SET,
         .duration = std::chrono::duration_cast<std::chrono::seconds>(minutes(10)).count(),
+        .scheduleStart = now,
+        .chargingRateUnit = ChargingRateUnitEnum::A,
     };
 
-    ChargingSchedule actual = calculate_charging_schedule(combined_schedules, now, end, std::nullopt);
+    CompositeSchedule actual = calculate_composite_schedule(combined_schedules, now, end, std::nullopt);
 
     ASSERT_EQ(expected, actual);
 }
@@ -916,16 +917,16 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_NoGapB) {
     std::vector<period_entry_t> combined_schedules{
         {dt("12:05"), dt("12:30"), 32.0, 1, std::nullopt, 21, ChargingRateUnitEnum::A, std::nullopt},
         {dt("11:50"), dt("12:05"), 24.0, 3, std::nullopt, 31, ChargingRateUnitEnum::A, std::nullopt}};
-    ChargingSchedule expected = ChargingSchedule{
-        .id = 0,
-        .chargingRateUnit = ChargingRateUnitEnum::A,
+    CompositeSchedule expected = CompositeSchedule{
         .chargingSchedulePeriod = {ChargingSchedulePeriod{.startPeriod = 0, .limit = 24.0, .numberPhases = 3},
                                    ChargingSchedulePeriod{.startPeriod = 300, .limit = 32.0, .numberPhases = 1}},
-        .startSchedule = now,
+        .evseId = EVSEID_NOT_SET,
         .duration = std::chrono::duration_cast<std::chrono::seconds>(minutes(10)).count(),
+        .scheduleStart = now,
+        .chargingRateUnit = ChargingRateUnitEnum::A,
     };
 
-    ChargingSchedule actual = calculate_charging_schedule(combined_schedules, now, end, std::nullopt);
+    CompositeSchedule actual = calculate_composite_schedule(combined_schedules, now, end, std::nullopt);
 
     ASSERT_EQ(expected, actual);
 }
@@ -936,16 +937,16 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_OverlapA) {
     std::vector<period_entry_t> combined_schedules{
         {dt("11:50"), dt("12:05"), 32.0, 1, std::nullopt, 21, ChargingRateUnitEnum::A, std::nullopt},
         {dt("12:05"), dt("12:30"), 24.0, 3, std::nullopt, 31, ChargingRateUnitEnum::A, std::nullopt}};
-    ChargingSchedule expected = ChargingSchedule{
-        .id = 0,
-        .chargingRateUnit = ChargingRateUnitEnum::A,
+    CompositeSchedule expected = CompositeSchedule{
         .chargingSchedulePeriod = {ChargingSchedulePeriod{.startPeriod = 0, .limit = 32.0, .numberPhases = 1},
                                    ChargingSchedulePeriod{.startPeriod = 300, .limit = 24.0, .numberPhases = 3}},
-        .startSchedule = now,
+        .evseId = EVSEID_NOT_SET,
         .duration = std::chrono::duration_cast<std::chrono::seconds>(minutes(10)).count(),
+        .scheduleStart = now,
+        .chargingRateUnit = ChargingRateUnitEnum::A,
     };
 
-    ChargingSchedule actual = calculate_charging_schedule(combined_schedules, now, end, std::nullopt);
+    CompositeSchedule actual = calculate_composite_schedule(combined_schedules, now, end, std::nullopt);
 
     ASSERT_EQ(expected, actual);
 }
@@ -956,16 +957,16 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_OverlapB) {
     std::vector<period_entry_t> combined_schedules{
         {dt("12:05"), dt("12:30"), 32.0, 1, std::nullopt, 21, ChargingRateUnitEnum::A, std::nullopt},
         {dt("11:50"), dt("12:05"), 24.0, 3, std::nullopt, 31, ChargingRateUnitEnum::A, std::nullopt}};
-    ChargingSchedule expected = ChargingSchedule{
-        .id = 0,
-        .chargingRateUnit = ChargingRateUnitEnum::A,
+    CompositeSchedule expected = CompositeSchedule{
         .chargingSchedulePeriod = {ChargingSchedulePeriod{.startPeriod = 0, .limit = 24.0, .numberPhases = 3},
                                    ChargingSchedulePeriod{.startPeriod = 300, .limit = 32.0, .numberPhases = 1}},
-        .startSchedule = now,
+        .evseId = EVSEID_NOT_SET,
         .duration = std::chrono::duration_cast<std::chrono::seconds>(minutes(10)).count(),
+        .scheduleStart = now,
+        .chargingRateUnit = ChargingRateUnitEnum::A,
     };
 
-    ChargingSchedule actual = calculate_charging_schedule(combined_schedules, now, end, std::nullopt);
+    CompositeSchedule actual = calculate_composite_schedule(combined_schedules, now, end, std::nullopt);
 
     ASSERT_EQ(expected, actual);
 }
@@ -976,17 +977,17 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_1SecondGap) {
     std::vector<period_entry_t> combined_schedules{
         {dt("11:50"), DateTime{"2024-01-01T12:04:59Z"}, 32.0, 1, nullopt, 21, ChargingRateUnitEnum::A, std::nullopt},
         {dt("12:05"), dt("12:30"), 24.0, 3, nullopt, 31, ChargingRateUnitEnum::A, std::nullopt}};
-    ChargingSchedule expected = ChargingSchedule{
-        .id = 0,
-        .chargingRateUnit = ChargingRateUnitEnum::A,
+    CompositeSchedule expected = CompositeSchedule{
         .chargingSchedulePeriod = {ChargingSchedulePeriod{.startPeriod = 0, .limit = 32.0, .numberPhases = 1},
                                    ChargingSchedulePeriod{.startPeriod = 299, .limit = NO_LIMIT_SPECIFIED},
                                    ChargingSchedulePeriod{.startPeriod = 300, .limit = 24.0, .numberPhases = 3}},
-        .startSchedule = now,
+        .evseId = EVSEID_NOT_SET,
         .duration = std::chrono::duration_cast<std::chrono::seconds>(minutes(10)).count(),
+        .scheduleStart = now,
+        .chargingRateUnit = ChargingRateUnitEnum::A,
     };
 
-    ChargingSchedule actual = calculate_charging_schedule(combined_schedules, now, end, std::nullopt);
+    CompositeSchedule actual = calculate_composite_schedule(combined_schedules, now, end, std::nullopt);
 
     ASSERT_EQ(expected, actual);
 }
@@ -997,174 +998,181 @@ TEST(OCPPTypesTest, CalculateChargingSchedule_WithPhaseToUse) {
     std::vector<period_entry_t> combined_schedules{
         {dt("11:50"), DateTime{"2024-01-01T12:04:59Z"}, 32.0, 1, 3, 21, ChargingRateUnitEnum::A, std::nullopt},
         {dt("12:05"), dt("12:30"), 24.0, 3, std::nullopt, 31, ChargingRateUnitEnum::A, std::nullopt}};
-    ChargingSchedule expected = ChargingSchedule{
-        .id = 0,
-        .chargingRateUnit = ChargingRateUnitEnum::A,
+    CompositeSchedule expected = CompositeSchedule{
         .chargingSchedulePeriod = {ChargingSchedulePeriod{
                                        .startPeriod = 0, .limit = 32.0, .numberPhases = 1, .phaseToUse = 3},
                                    ChargingSchedulePeriod{.startPeriod = 299, .limit = NO_LIMIT_SPECIFIED},
                                    ChargingSchedulePeriod{.startPeriod = 300, .limit = 24.0, .numberPhases = 3}},
-        .startSchedule = now,
+        .evseId = EVSEID_NOT_SET,
         .duration = std::chrono::duration_cast<std::chrono::seconds>(minutes(10)).count(),
+        .scheduleStart = now,
+        .chargingRateUnit = ChargingRateUnitEnum::A,
     };
 
-    ChargingSchedule actual = calculate_charging_schedule(combined_schedules, now, end, std::nullopt);
+    CompositeSchedule actual = calculate_composite_schedule(combined_schedules, now, end, std::nullopt);
 
     ASSERT_EQ(expected, actual);
 }
 
 TEST(OCPPTypesTest, CalculateChargingScheduleCombined_Default) {
-    ChargingSchedule expected = ChargingSchedule{
-        .id = 0,
-        .chargingRateUnit = DEFAULT_SCHEDULE.chargingRateUnit,
+    CompositeSchedule expected = {
         .chargingSchedulePeriod = {ChargingSchedulePeriod{
             .startPeriod = 0, .limit = DEFAULT_LIMIT_AMPS, .numberPhases = DEFAULT_AND_MAX_NUMBER_PHASES}},
-        .startSchedule = DEFAULT_SCHEDULE.startSchedule,
+        .evseId = EVSEID_NOT_SET,
         .duration = DEFAULT_SCHEDULE.duration,
-        .minChargingRate = DEFAULT_SCHEDULE.minChargingRate};
+        .scheduleStart = DEFAULT_SCHEDULE.scheduleStart,
+        .chargingRateUnit = DEFAULT_SCHEDULE.chargingRateUnit,
 
-    const ChargingSchedule actual = calculate_charging_schedule(DEFAULT_SCHEDULE, DEFAULT_SCHEDULE, DEFAULT_SCHEDULE);
+    };
+
+    const CompositeSchedule actual = calculate_composite_schedule(DEFAULT_SCHEDULE, DEFAULT_SCHEDULE, DEFAULT_SCHEDULE);
 
     ASSERT_EQ(expected, actual);
 }
 
 TEST(OCPPTypesTest, CalculateChargingScheduleCombined_CombinedTxDefault) {
-    ChargingSchedule profile = DEFAULT_SCHEDULE;
-    profile.minChargingRate = 6.0; // Set it to a different value to make sure it gets picked up.
-    ChargingSchedule tx_default_schedule = {.id = 1,
-                                            .chargingRateUnit = ChargingRateUnitEnum::A,
-                                            .chargingSchedulePeriod = {{0, 10.0, std::nullopt}},
-                                            .customData = nullopt,
-                                            .startSchedule = dt("12:00"),
-                                            .duration = 600,
-                                            .minChargingRate = 10.0};
+    CompositeSchedule profile = DEFAULT_SCHEDULE;
+    CompositeSchedule tx_default_schedule = {
+        .chargingSchedulePeriod = {{0, 10.0, nullopt}},
+        .evseId = EVSEID_NOT_SET,
+        .duration = 600,
+        .scheduleStart = dt("12:00"),
+        .chargingRateUnit = ChargingRateUnitEnum::A,
+    };
+    CompositeSchedule expected = CompositeSchedule{
+        .chargingSchedulePeriod = {ChargingSchedulePeriod{
+            .startPeriod = 0, .limit = 10, .numberPhases = DEFAULT_AND_MAX_NUMBER_PHASES}},
+        .evseId = EVSEID_NOT_SET,
+        .duration = 600,
+        .scheduleStart = dt("12:00"),
+        .chargingRateUnit = ChargingRateUnitEnum::A,
+    };
 
-    ChargingSchedule expected =
-        ChargingSchedule{.id = 0,
-                         .chargingRateUnit = ChargingRateUnitEnum::A,
-                         .chargingSchedulePeriod = {ChargingSchedulePeriod{
-                             .startPeriod = 0, .limit = 10, .numberPhases = DEFAULT_AND_MAX_NUMBER_PHASES}},
-                         .startSchedule = dt("12:00"),
-                         .duration = 600,
-                         .minChargingRate = 6.0};
-
-    const ChargingSchedule actual = calculate_charging_schedule(profile, tx_default_schedule, profile);
+    const CompositeSchedule actual = calculate_composite_schedule(profile, tx_default_schedule, profile);
 
     ASSERT_EQ(expected, actual);
 }
 
 TEST(OCPPTypesTest, CalculateChargingScheduleCombined_CombinedTxDefaultTx) {
-    ChargingSchedule charging_station_max = DEFAULT_SCHEDULE;
-    charging_station_max.minChargingRate = 6.0;
-    ChargingSchedule tx_default_schedule = {.id = 1,
-                                            .chargingRateUnit = ChargingRateUnitEnum::A,
-                                            .chargingSchedulePeriod = {{0, 10.0, std::nullopt}},
-                                            .customData = nullopt,
-                                            .startSchedule = dt("12:00"),
-                                            .duration = 600,
-                                            .minChargingRate = 10.0};
-    ChargingSchedule tx_schedule = {.id = 1,
-                                    .chargingRateUnit = ChargingRateUnitEnum::A,
-                                    .chargingSchedulePeriod = {{0, 32.0, std::nullopt}},
-                                    .customData = nullopt,
-                                    .startSchedule = dt("12:00"),
-                                    .duration = 600,
-                                    .minChargingRate = 10.0};
+    CompositeSchedule charging_station_max = DEFAULT_SCHEDULE;
+    CompositeSchedule tx_default_schedule = {
+        .chargingSchedulePeriod = {{0, 10.0, nullopt}},
+        .evseId = EVSEID_NOT_SET,
+        .duration = 600,
+        .scheduleStart = dt("12:00"),
+        .chargingRateUnit = ChargingRateUnitEnum::A,
+    };
+    CompositeSchedule tx_schedule = {
+        .chargingSchedulePeriod = {{0, 32.0, nullopt}},
+        .evseId = EVSEID_NOT_SET,
+        .duration = 600,
+        .scheduleStart = dt("12:00"),
+        .chargingRateUnit = ChargingRateUnitEnum::A,
+    };
 
-    ChargingSchedule expected =
-        ChargingSchedule{.id = 0,
-                         .chargingRateUnit = ChargingRateUnitEnum::A,
-                         .chargingSchedulePeriod = {ChargingSchedulePeriod{
-                             .startPeriod = 0, .limit = 32, .numberPhases = DEFAULT_AND_MAX_NUMBER_PHASES}},
-                         .startSchedule = dt("12:00"),
-                         .duration = 600,
-                         .minChargingRate = 10.0};
+    CompositeSchedule expected = {
+        .chargingSchedulePeriod = {ChargingSchedulePeriod{
+            .startPeriod = 0, .limit = 32.0, .numberPhases = DEFAULT_AND_MAX_NUMBER_PHASES}},
+        .evseId = EVSEID_NOT_SET,
+        .duration = 600,
+        .scheduleStart = dt("12:00"),
+        .chargingRateUnit = ChargingRateUnitEnum::A,
+    };
 
-    const ChargingSchedule actual = calculate_charging_schedule(charging_station_max, tx_default_schedule, tx_schedule);
+    const CompositeSchedule actual =
+        calculate_composite_schedule(charging_station_max, tx_default_schedule, tx_schedule);
 
     ASSERT_EQ(expected, actual);
 }
 
 TEST(OCPPTypesTest, CalculateChargingScheduleCombined_CombinedOverlapA) {
-    ChargingSchedule tx_default_schedule = {
-        .id = 1,
-        .chargingRateUnit = ChargingRateUnitEnum::A,
-        .chargingSchedulePeriod = {{0, 10.0, std::nullopt}, {300, 24.0, std::nullopt}},
-        .customData = nullopt,
-        .startSchedule = dt("12:00"),
+    CompositeSchedule tx_default_schedule = {
+        .chargingSchedulePeriod = {{0, 10.0, std::nullopt}, {300, 24.0, nullopt}},
+        .evseId = EVSEID_NOT_SET,
         .duration = 600,
-        .minChargingRate = 10.0};
-    ChargingSchedule tx_schedule = {.id = 1,
-                                    .chargingRateUnit = ChargingRateUnitEnum::A,
-                                    .chargingSchedulePeriod = {{0, NO_LIMIT_SPECIFIED, std::nullopt},
-                                                               {150, 32.0, std::nullopt},
-                                                               {450, NO_LIMIT_SPECIFIED, std::nullopt}},
-                                    .customData = nullopt,
-                                    .startSchedule = dt("12:00"),
-                                    .duration = 600};
-    ChargingSchedule charging_station_max = {.id = 1,
-                                             .chargingRateUnit = ChargingRateUnitEnum::A,
-                                             .chargingSchedulePeriod = {{0, NO_LIMIT_SPECIFIED, std::nullopt}},
-                                             .customData = nullopt,
-                                             .startSchedule = dt("12:00"),
-                                             .duration = 600};
-
-    ChargingSchedule expected = ChargingSchedule{
-        .id = 0,
+        .scheduleStart = dt("12:00"),
         .chargingRateUnit = ChargingRateUnitEnum::A,
+    };
+
+    CompositeSchedule tx_schedule = {
+        .chargingSchedulePeriod = {{0, NO_LIMIT_SPECIFIED, nullopt},
+                                   {150, 32.0, std::nullopt},
+                                   {450, NO_LIMIT_SPECIFIED, nullopt}},
+        .evseId = EVSEID_NOT_SET,
+        .duration = 600,
+        .scheduleStart = dt("12:00"),
+        .chargingRateUnit = ChargingRateUnitEnum::A,
+    };
+
+    CompositeSchedule charging_station_max = {
+        .chargingSchedulePeriod = {{0, NO_LIMIT_SPECIFIED, nullopt}},
+        .evseId = EVSEID_NOT_SET,
+        .duration = 600,
+        .scheduleStart = dt("12:00"),
+        .chargingRateUnit = ChargingRateUnitEnum::A,
+    };
+
+    CompositeSchedule expected = {
         .chargingSchedulePeriod =
             {ChargingSchedulePeriod{.startPeriod = 0, .limit = 10.0, .numberPhases = DEFAULT_AND_MAX_NUMBER_PHASES},
              ChargingSchedulePeriod{.startPeriod = 150, .limit = 32.0, .numberPhases = DEFAULT_AND_MAX_NUMBER_PHASES},
              ChargingSchedulePeriod{.startPeriod = 450, .limit = 24.0, .numberPhases = DEFAULT_AND_MAX_NUMBER_PHASES}},
-        .startSchedule = dt("12:00"),
+        .evseId = EVSEID_NOT_SET,
         .duration = 600,
-        .minChargingRate = 10.0};
+        .scheduleStart = dt("12:00"),
+        .chargingRateUnit = ChargingRateUnitEnum::A,
+    };
 
-    const ChargingSchedule actual = calculate_charging_schedule(charging_station_max, tx_default_schedule, tx_schedule);
+    const CompositeSchedule actual =
+        calculate_composite_schedule(charging_station_max, tx_default_schedule, tx_schedule);
 
     ASSERT_EQ(expected, actual);
 }
 
 TEST(OCPPTypesTest, CalculateChargingScheduleCombined_CombinedOverlapB) {
-    ChargingSchedule tx_default_schedule = {
-        .id = 1,
-        .chargingRateUnit = ChargingRateUnitEnum::A,
+    CompositeSchedule tx_default_schedule = {
         .chargingSchedulePeriod = {{0, 10.0, std::nullopt}, {300, 24.0, std::nullopt}},
-        .customData = nullopt,
-        .startSchedule = dt("12:00"),
+        .evseId = EVSEID_NOT_SET,
         .duration = 600,
-        .minChargingRate = 10.0};
-    ChargingSchedule tx_schedule = {.id = 1,
-                                    .chargingRateUnit = ChargingRateUnitEnum::A,
-                                    .chargingSchedulePeriod = {{0, NO_LIMIT_SPECIFIED, std::nullopt},
-                                                               {150, 32.0, std::nullopt},
-                                                               {450, NO_LIMIT_SPECIFIED, std::nullopt}},
-                                    .customData = nullopt,
-                                    .startSchedule = dt("12:00"),
-                                    .duration = 600};
-    ChargingSchedule charging_station_max = {.id = 1,
-                                             .chargingRateUnit = ChargingRateUnitEnum::A,
-                                             .chargingSchedulePeriod = {{0, NO_LIMIT_SPECIFIED, std::nullopt},
-                                                                        {500, 15.0, std::nullopt},
-                                                                        {550, NO_LIMIT_SPECIFIED, std::nullopt}},
-                                             .customData = nullopt,
-                                             .startSchedule = dt("12:00"),
-                                             .duration = 600};
-
-    ChargingSchedule expected = ChargingSchedule{
-        .id = 0,
+        .scheduleStart = dt("12:00"),
         .chargingRateUnit = ChargingRateUnitEnum::A,
+    };
+
+    CompositeSchedule tx_schedule = {
+        .chargingSchedulePeriod = {{0, NO_LIMIT_SPECIFIED, std::nullopt},
+                                   {150, 32.0, std::nullopt},
+                                   {450, NO_LIMIT_SPECIFIED, std::nullopt}},
+        .evseId = EVSEID_NOT_SET,
+        .duration = 600,
+        .scheduleStart = dt("12:00"),
+        .chargingRateUnit = ChargingRateUnitEnum::A,
+    };
+
+    CompositeSchedule charging_station_max = {
+        .chargingSchedulePeriod = {{0, NO_LIMIT_SPECIFIED, std::nullopt},
+                                   {500, 15.0, std::nullopt},
+                                   {550, NO_LIMIT_SPECIFIED, std::nullopt}},
+        .evseId = EVSEID_NOT_SET,
+        .duration = 600,
+        .scheduleStart = dt("12:00"),
+        .chargingRateUnit = ChargingRateUnitEnum::A,
+    };
+
+    CompositeSchedule expected = {
         .chargingSchedulePeriod =
             {ChargingSchedulePeriod{.startPeriod = 0, .limit = 10.0, .numberPhases = DEFAULT_AND_MAX_NUMBER_PHASES},
              ChargingSchedulePeriod{.startPeriod = 150, .limit = 32.0, .numberPhases = DEFAULT_AND_MAX_NUMBER_PHASES},
              ChargingSchedulePeriod{.startPeriod = 450, .limit = 24.0, .numberPhases = DEFAULT_AND_MAX_NUMBER_PHASES},
              ChargingSchedulePeriod{.startPeriod = 500, .limit = 15.0, .numberPhases = DEFAULT_AND_MAX_NUMBER_PHASES},
              ChargingSchedulePeriod{.startPeriod = 550, .limit = 24.0, .numberPhases = DEFAULT_AND_MAX_NUMBER_PHASES}},
-        .startSchedule = dt("12:00"),
+        .evseId = EVSEID_NOT_SET,
         .duration = 600,
-        .minChargingRate = 10.0};
+        .scheduleStart = dt("12:00"),
+        .chargingRateUnit = ChargingRateUnitEnum::A,
+    };
 
-    const ChargingSchedule actual = calculate_charging_schedule(charging_station_max, tx_default_schedule, tx_schedule);
+    const CompositeSchedule actual =
+        calculate_composite_schedule(charging_station_max, tx_default_schedule, tx_schedule);
 
     ASSERT_EQ(expected, actual);
 }
