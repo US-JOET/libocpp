@@ -451,9 +451,9 @@ CompositeSchedule SmartChargingHandler::calculate_composite_schedule(std::vector
     //     }
     // }
 
-    std::vector<period_entry_t> charge_point_max{};
-    std::vector<period_entry_t> tx_default{};
-    std::vector<period_entry_t> tx{};
+    std::vector<period_entry_t> charge_point_max_periods{};
+    std::vector<period_entry_t> tx_default_periods{};
+    std::vector<period_entry_t> tx_periods{};
 
     for (const auto& profile : valid_profiles) {
         std::vector<period_entry_t> periods{};
@@ -461,13 +461,13 @@ CompositeSchedule SmartChargingHandler::calculate_composite_schedule(std::vector
 
         switch (profile.chargingProfilePurpose) {
         case ChargingProfilePurposeEnum::ChargingStationMaxProfile:
-            charge_point_max.insert(charge_point_max.end(), periods.begin(), periods.end());
+            charge_point_max_periods.insert(charge_point_max_periods.end(), periods.begin(), periods.end());
             break;
         case ChargingProfilePurposeEnum::TxDefaultProfile:
-            tx_default.insert(tx_default.end(), periods.begin(), periods.end());
+            tx_default_periods.insert(tx_default_periods.end(), periods.begin(), periods.end());
             break;
         case ChargingProfilePurposeEnum::TxProfile:
-            tx.insert(tx.end(), periods.begin(), periods.end());
+            tx_periods.insert(tx_periods.end(), periods.begin(), periods.end());
             break;
         default:
             break;
@@ -475,10 +475,10 @@ CompositeSchedule SmartChargingHandler::calculate_composite_schedule(std::vector
     }
 
     auto composite_charge_point_max =
-        ocpp::v201::calculate_composite_schedule(charge_point_max, start_time, end_time, charging_rate_unit);
+        ocpp::v201::calculate_composite_schedule(charge_point_max_periods, start_time, end_time, charging_rate_unit);
     auto composite_tx_default =
-        ocpp::v201::calculate_composite_schedule(tx_default, start_time, end_time, charging_rate_unit);
-    auto composite_tx = ocpp::v201::calculate_composite_schedule(tx, start_time, end_time, charging_rate_unit);
+        ocpp::v201::calculate_composite_schedule(tx_default_periods, start_time, end_time, charging_rate_unit);
+    auto composite_tx = ocpp::v201::calculate_composite_schedule(tx_periods, start_time, end_time, charging_rate_unit);
 
     CompositeSchedule composite_schedule =
         ocpp::v201::calculate_composite_schedule(composite_charge_point_max, composite_tx_default, composite_tx);
