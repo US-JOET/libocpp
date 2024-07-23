@@ -10,7 +10,7 @@
 #include "ocpp/v201/evse.hpp"
 #include "ocpp/v201/messages/SetChargingProfile.hpp"
 #include "ocpp/v201/ocpp_types.hpp"
-#include "ocpp/v201/transaction.hpp"
+#include "ocpp/v201/profile.hpp"
 #include "ocpp/v201/utils.hpp"
 #include <algorithm>
 #include <iterator>

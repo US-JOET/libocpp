@@ -10,6 +10,7 @@
 #include "ocpp/common/types.hpp"
 #include "ocpp/v201/enums.hpp"
 #include "ocpp/v201/ocpp_types.hpp"
+#include "ocpp/v201/profile.hpp"
 #include "ocpp/v201/utils.hpp"
 
 #include "smart_charging_test_utils.hpp"
@@ -30,7 +31,8 @@ period_entry_t gen_pe(ocpp::DateTime start, ocpp::DateTime end, ChargingProfile 
             .charging_rate_unit = profile.chargingSchedule.front().chargingRateUnit};
 }
 
-ChargingProfile absolute_profile = SmartChargingTestUtils::get_charging_profile_from_file("singles/Absolute_301.json");
+const ChargingProfile absolute_profile =
+    SmartChargingTestUtils::get_charging_profile_from_file("singles/Absolute_301.json");
 const ChargingProfile absolute_profile_no_duration =
     SmartChargingTestUtils::get_charging_profile_from_file("singles/Absolute_NoDuration_301.json");
 const ChargingProfile relative_profile =
