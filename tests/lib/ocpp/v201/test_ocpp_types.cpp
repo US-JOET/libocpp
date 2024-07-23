@@ -17,39 +17,10 @@
 namespace {
 using namespace ocpp::v201;
 using namespace ocpp;
+using ocpp::v201::dt;
 using std::nullopt;
 using std::chrono::minutes;
 using std::chrono::seconds;
-
-// auto dt = [](std::string dt_string) -> ocpp::DateTime { return SmartChargingTestUtils::dt(dt_string); };
-
-static ocpp::DateTime dt(std::string dt_string) {
-    ocpp::DateTime dt;
-
-    if (dt_string.length() == 4) {
-        dt = ocpp::DateTime("2024-01-01T0" + dt_string + ":00Z");
-    } else if (dt_string.length() == 5) {
-        dt = ocpp::DateTime("2024-01-01T" + dt_string + ":00Z");
-    } else if (dt_string.length() == 7) {
-        dt = ocpp::DateTime("2024-01-0" + dt_string + ":00Z");
-    } else if (dt_string.length() == 8) {
-        dt = ocpp::DateTime("2024-01-" + dt_string + ":00Z");
-    } else if (dt_string.length() == 11) {
-        dt = ocpp::DateTime("2024-" + dt_string + ":00Z");
-    } else if (dt_string.length() == 16) {
-        dt = ocpp::DateTime(dt_string + ":00Z");
-    }
-
-    return dt;
-}
-
-static ocpp::DateTime dt(std::string dt_string, int plus_minutes) {
-    ocpp::DateTime orignal_dt = dt(dt_string);
-
-    std::chrono::time_point<date::utc_clock> time_point =
-        orignal_dt.to_time_point() + std::chrono::minutes(plus_minutes);
-    return ocpp::DateTime(time_point);
-}
 
 period_entry_t gen_pe(ocpp::DateTime start, ocpp::DateTime end, ChargingProfile profile, int period_at) {
     return {.start = start,
@@ -398,11 +369,11 @@ TEST(OCPPTypesTest, CalculateProfile_Absolute) {
 
 TEST(OCPPTypesTest, CalculateProfile_AbsoluteLimited) {
     // Before start expecting no periods
-    ASSERT_EQ(0, calculate_profile(dt("8:10"), dt("8:10", 20), nullopt, absolute_profile).size());
+    ASSERT_EQ(0, calculate_profile(dt("8:10"), dt("8:30"), nullopt, absolute_profile).size());
 
     // Just before start expecting a single period
     std::vector<period_entry_t> period_entries_just_before_start =
-        calculate_profile(dt("12:01"), dt("12:01", 20), nullopt, absolute_profile);
+        calculate_profile(dt("12:01"), dt("12:21"), nullopt, absolute_profile);
 
     ASSERT_EQ(1, period_entries_just_before_start.size());
     EXPECT_TRUE(SmartChargingTestUtils::validate_profile_result(period_entries_just_before_start));
@@ -410,7 +381,7 @@ TEST(OCPPTypesTest, CalculateProfile_AbsoluteLimited) {
 
     // During start expecting 2 periods
     std::vector<period_entry_t> period_entries_during_start =
-        calculate_profile(dt("12:40"), dt("12:40", 20), nullopt, absolute_profile);
+        calculate_profile(dt("12:40"), dt("13:00"), nullopt, absolute_profile);
 
     ASSERT_EQ(2, period_entries_during_start.size());
     ASSERT_EQ(gen_pe(dt("12:32"), dt("12:47"), absolute_profile, 1), period_entries_during_start.front());
@@ -418,7 +389,7 @@ TEST(OCPPTypesTest, CalculateProfile_AbsoluteLimited) {
     EXPECT_TRUE(SmartChargingTestUtils::validate_profile_result(period_entries_during_start));
 
     // After expecting no periods
-    ASSERT_EQ(0, calculate_profile(dt("14:01"), dt("14:01", 20), nullopt, absolute_profile).size());
+    ASSERT_EQ(0, calculate_profile(dt("14:01"), dt("14:21"), nullopt, absolute_profile).size());
 }
 
 TEST(OCPPTypesTest, CalculateProfile_Relative) {
