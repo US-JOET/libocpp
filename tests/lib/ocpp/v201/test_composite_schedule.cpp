@@ -190,21 +190,6 @@ protected:
         return TestSmartChargingHandler(*this->evse_manager, device_model);
     }
 
-    std::string uuid() {
-        std::stringstream s;
-        s << uuid_generator();
-        return s.str();
-    }
-
-    void install_profile_on_evse(int evse_id, int profile_id,
-                                 std::optional<ocpp::DateTime> validFrom = ocpp::DateTime("2024-01-01T17:00:00"),
-                                 std::optional<ocpp::DateTime> validTo = ocpp::DateTime("2024-02-01T17:00:00")) {
-        auto existing_profile = create_charging_profile(
-            profile_id, ChargingProfilePurposeEnum::TxDefaultProfile, create_charge_schedule(ChargingRateUnitEnum::A),
-            {}, ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL, validFrom, validTo);
-        handler.add_profile(evse_id, existing_profile);
-    }
-
     // Default values used within the tests
     std::unique_ptr<EvseManagerFake> evse_manager = std::make_unique<EvseManagerFake>(NR_OF_EVSES);
 
@@ -417,7 +402,6 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredRecurri
  * Calculate Composite Schedule
  */
 TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_ValidateBaselineProfileVector) {
-    // create_evse_with_id(DEFAULT_EVSE_ID);
     const DateTime start_time = ocpp::DateTime("2024-01-17T18:01:00");
     const DateTime end_time = ocpp::DateTime("2024-01-18T06:00:00");
     std::vector<ChargingProfile> profiles = SmartChargingTestUtils::get_baseline_profile_vector();
