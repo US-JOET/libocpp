@@ -431,6 +431,7 @@ CompositeSchedule SmartChargingHandler::calculate_composite_schedule(std::vector
 
     std::optional<ocpp::DateTime> session_start{};
 
+    // TODO: This is code that needs to be completed to finish the transition to v2.0.1
     // 1.6 Connector->Transaction->StampedEnergyWh
     // if (const auto& itt = connectors.find(connector_id); itt != connectors.end()) {
     //     // connector exists!
@@ -457,10 +458,6 @@ CompositeSchedule SmartChargingHandler::calculate_composite_schedule(std::vector
     for (const auto& profile : valid_profiles) {
         std::vector<period_entry_t> periods{};
         periods = ocpp::v201::calculate_profile(start_time, end_time, session_start, profile);
-
-        for (auto period : periods) {
-            EVLOG_info << "period> " << period;
-        }
 
         switch (profile.chargingProfilePurpose) {
         case ChargingProfilePurposeEnum::ChargingStationMaxProfile:
