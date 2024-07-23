@@ -216,11 +216,6 @@ protected:
     boost::uuids::random_generator uuid_generator = boost::uuids::random_generator();
 };
 
-// Based upon K01.FR11 K01.FR38
-TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_GetPeriodEndTime_PAIN) {
-    GTEST_SKIP();
-}
-
 TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_FoundationTest_Grid) {
     std::vector<ChargingProfile> profiles =
         SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/grid/");
