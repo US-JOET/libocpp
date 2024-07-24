@@ -7,6 +7,7 @@
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/enums.hpp>
+
 #include <ocpp/v201/ocpp_types.hpp>
 
 namespace ocpp {
