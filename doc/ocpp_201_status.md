@@ -12,7 +12,6 @@ This document contains the status of which OCPP 2.0.1 numbered functional requir
 | ❓     | Actor responsible for or status of requirement is unknown                      |
 | 🤓     | Catch-all for FRs that are satisfied for other reasons (see the Remark column) |
 
-
 ## General - General
 
 | ID    | Status | Remark |
@@ -1225,7 +1224,6 @@ This document contains the status of which OCPP 2.0.1 numbered functional requir
 |-----------|--------|--------|
 | J03.FR.04 |        |        |
 
-
 ## SmartCharging - SetChargingProfile
 
 | ID        | Status | Remark                                                                                          |
@@ -1233,50 +1231,50 @@ This document contains the status of which OCPP 2.0.1 numbered functional requir
 | K01.FR.01 | 🌐     | `TxProfile`s are supported.                                                                     |
 | K01.FR.02 | 🌐     |                                                                                                 |
 | K01.FR.03 | 🌐 💂  | `TxProfile`s without `transactionId`s are rejected.                                             |
-| K01.FR.04 | ✅     |                                                                                                 |
+| K01.FR.04 | 🌐     |                                                                                                 |
 | K01.FR.05 | ✅     |                                                                                                 |
-| K01.FR.06 | 🌐     |                                                                                                 |
-| K01.FR.07 | ⛽️     | Notified through the `signal_set_charging_profiles` callback.                                   |
+| K01.FR.06 | ✅     |                                                                                                 |
+| K01.FR.07 | ⛽️K08  | Notified through the `signal_set_charging_profiles` callback.                                   |
 | K01.FR.08 | 🌐     | `TxDefaultProfile`s are supported.                                                              |
 | K01.FR.09 | ✅     |                                                                                                 |
-| K01.FR.10 | ✅     |                                                                                                 |
-| K01.FR.11 |        |                                                                                                 |
-| K01.FR.12 |        |                                                                                                 |
-| K01.FR.13 |        |                                                                                                 |
+| K01.FR.10 | ⛽️K08  | During validation `validFrom` and `validTo` are sets if they are blank to support this          |
+| K01.FR.11 | ⛽️K08  |                                                                                                 |
+| K01.FR.12 | ⛽️K08  |                                                                                                 |
+| K01.FR.13 | ⛽️K08  |                                                                                                 |
 | K01.FR.14 | ✅     |                                                                                                 |
 | K01.FR.15 | ✅     |                                                                                                 |
 | K01.FR.16 | ✅     |                                                                                                 |
-| K01.FR.17 |        |                                                                                                 |
-| K01.FR.19 |        |                                                                                                 |
+| K01.FR.17 | ⛽️K08  |                                                                                                 |
+| K01.FR.19 | ✅     |                                                                                                 |
 | K01.FR.20 | ✅     | Suggests `ACPhaseSwitchingSupported` should be per EVSE, conflicting with the rest of the spec. |
-| K01.FR.21 |        |                                                                                                 |
+| K01.FR.21 |        | There is an active community discussion on this topic.                                          |
 | K01.FR.22 |        |                                                                                                 |
 | K01.FR.26 | ✅     |                                                                                                 |
 | K01.FR.27 | ✅     |                                                                                                 |
 | K01.FR.28 | ✅     |                                                                                                 |
 | K01.FR.29 |        |                                                                                                 |
-| K01.FR.30 |        |                                                                                                 |
-| K01.FR.31 |        |                                                                                                 |
-| K01.FR.32 | ✅     |                                                                                                 |
+| K01.FR.30 | ⛽️K08  |                                                                                                 |
+| K01.FR.31 | ✅     |                                                                                                 |
+| K01.FR.32 | ⛽️K08  |                                                                                                 |
 | K01.FR.33 | ✅     |                                                                                                 |
-| K01.FR.34 | ✅     |                                                                                                 |
+| K01.FR.34 |        | Defer to K15 - K17 work                                                                          |
 | K01.FR.35 | ✅     |                                                                                                 |
-| K01.FR.36 | ✅     |                                                                                                 |
-| K01.FR.37 |        |                                                                                                 |
-| K01.FR.38 | 🌐 💂  | `ChargingStationMaxProfile`s with `Relative` for `chargingProfileKind` are rejected.            |
-| K01.FR.39 | 🌐 💂  | New `TxProfile`s matching existing `(stackLevel, transactionId)` are rejected.                  |
-| K01.FR.40 | 🌐 💂  | `Absolute`/`Recurring` profiles without `startSchedule` fields are rejected.                    |
-| K01.FR.41 | 🌐 💂  | `Relative` profiles with `startSchedule` fields are rejected.                                   |
-| K01.FR.42 |        |                                                                                                 |
-| K01.FR.43 |        |                                                                                                 |
+| K01.FR.36 | ⛽️K08  |                                                                                                 |
+| K01.FR.37 | ⛽️K08  |                                                                                                 |
+| K01.FR.38 | ✅     | `ChargingStationMaxProfile`s with `Relative` for `chargingProfileKind` are rejected.            |
+| K01.FR.39 | ✅     | New `TxProfile`s matching existing `(stackLevel, transactionId)` are rejected.                  |
+| K01.FR.40 | ✅     | `Absolute`/`Recurring` profiles without `startSchedule` fields are rejected.                    |
+| K01.FR.41 | ✅     | `Relative` profiles with `startSchedule` fields are rejected.                                   |
+| K01.FR.42 | ⛽️K08  |                                                                                                 |
+| K01.FR.43 |       |                                                                                                 |
 | K01.FR.44 | ✅     | We reject invalid profiles instead of modifying and accepting them.                             |
 | K01.FR.45 | ✅     | We reject invalid profiles instead of modifying and accepting them.                             |
-| K01.FR.46 |        |                                                                                                 |
-| K01.FR.47 |        |                                                                                                 |
+| K01.FR.46 | ⛽️K08  |                                                                                                 |
+| K01.FR.47 | ⛽️K08  |                                                                                                 |
 | K01.FR.48 |        |                                                                                                 |
 | K01.FR.49 | ✅     |                                                                                                 |
-| K01.FR.50 |        |                                                                                                 |
-| K01.FR.51 |        |                                                                                                 |
+| K01.FR.50 | ⛽️K08  |                                                                                                 |
+| K01.FR.51 | ⛽️K08  |                                                                                                 |
 | K01.FR.52 | ✅     |                                                                                                 |
 | K01.FR.53 | ✅     |                                                                                                 |
 
