@@ -3161,6 +3161,19 @@ void ChargePoint::handle_set_charging_profile_req(Call<SetChargingProfileRequest
     SetChargingProfileResponse response;
     response.status = ChargingProfileStatusEnum::Rejected;
 
+    if (msg.chargingProfile.chargingProfilePurpose == ChargingProfilePurposeEnum::ChargingStationExternalConstraints) {
+        response.statusInfo = StatusInfo();
+        response.statusInfo->reasonCode = "InvalidValue";
+        response.statusInfo->additionalInfo = "ChargingStationExternalConstraintsInSetChargingProfileRequest";
+        EVLOG_debug << "Rejecting SetChargingProfileRequest:\n reasonCode: " << response.statusInfo->reasonCode.get()
+                    << "\nadditionalInfo: " << response.statusInfo->additionalInfo->get();
+
+        ocpp::CallResult<SetChargingProfileResponse> call_result(response, call.uniqueId);
+        this->send<SetChargingProfileResponse>(call_result);
+
+        return;
+    }
+
     auto res = this->smart_charging_handler->validate_profile(msg.chargingProfile, msg.evseId);
     if (res == ProfileValidationResultEnum::Valid) {
         EVLOG_debug << "Accepting SetChargingProfileRequest";
