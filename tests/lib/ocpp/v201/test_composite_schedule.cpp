@@ -8,7 +8,6 @@
 #include "ocpp/v201/device_model_storage_sqlite.hpp"
 #include "ocpp/v201/init_device_model_db.hpp"
 #include "ocpp/v201/ocpp_types.hpp"
-#include "ocpp/v201/profile.hpp"
 #include "ocpp/v201/utils.hpp"
 #include <algorithm>
 #include <boost/uuid/uuid_generators.hpp>

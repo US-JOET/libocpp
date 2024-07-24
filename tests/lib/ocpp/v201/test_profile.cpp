@@ -10,7 +10,6 @@
 #include "ocpp/common/types.hpp"
 #include "ocpp/v201/enums.hpp"
 #include "ocpp/v201/ocpp_types.hpp"
-#include "ocpp/v201/profile.hpp"
 #include "ocpp/v201/utils.hpp"
 
 #include "smart_charging_test_utils.hpp"
