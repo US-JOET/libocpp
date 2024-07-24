@@ -31,7 +31,6 @@ struct period_entry_t {
         return (start == other.end) && (end == other.end) && (limit == other.limit) &&
                (number_phases == other.number_phases) && (stack_level == other.stack_level) &&
                (charging_rate_unit == other.charging_rate_unit) && (min_charging_rate == other.min_charging_rate);
-        // Add comparisons for other fields as necessary
     }
 };
 
