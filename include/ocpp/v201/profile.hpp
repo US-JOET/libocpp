@@ -9,7 +9,6 @@ bool operator!=(const ChargingSchedulePeriod& a, const ChargingSchedulePeriod& b
 bool operator==(const CompositeSchedule& a, const CompositeSchedule& b);
 bool operator!=(const CompositeSchedule& a, const CompositeSchedule& b);
 
-/// \brief
 bool operator==(const ChargingSchedule& a, const ChargingSchedule& b);
 bool operator!=(const ChargingSchedule& a, const ChargingSchedule& b);
 
