@@ -50,7 +50,7 @@ std::ostream& operator<<(std::ostream& os, const period_entry_t& entry);
 std::vector<DateTime> calculate_start(const DateTime& now, const DateTime& end,
                                       const std::optional<DateTime>& session_start, const ChargingProfile& profile);
 
-/// \brief calculate the start times for the schedule period
+/// \brief Calculates the period entries based upon the indicated time window for every profile passed in.
 /// \param now the current date and time
 /// \param end the end of the composite schedule
 /// \param session_start optional when the charging session started
