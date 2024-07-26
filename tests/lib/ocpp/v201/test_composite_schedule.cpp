@@ -305,7 +305,7 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredTest_Sa
     }
 }
 
-TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredTest_FutureStartTime) {
+TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredRecurringTest_FutureStartTime) {
     std::vector<ChargingProfile> profiles =
         SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/layered_recurring/");
 
@@ -332,7 +332,7 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredTest_Fu
 
 TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredTest_PreviousStartTime) {
     std::vector<ChargingProfile> profiles =
-        SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/null_start/");
+        SmartChargingTestUtils::get_charging_profiles_from_file("singles/TXProfile_Absolute_Start18-04.json");
     const DateTime start_time = ocpp::DateTime("2024-01-17T18:00:00");
     const DateTime end_time = ocpp::DateTime("2024-01-17T18:05:00");
     CompositeSchedule expected = {
@@ -527,7 +527,6 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_DemoCaseOne_17
 }
 
 TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_DemoCaseOne_19th) {
-    GTEST_SKIP();
     std::vector<ChargingProfile> profiles =
         SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/case_one/");
     ChargingProfile first_profile = profiles.front();
@@ -539,11 +538,6 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_DemoCaseOne_19
     CompositeSchedule expected = {
         .chargingSchedulePeriod = {{
                                        .startPeriod = 0,
-                                       .limit = 2000.0,
-                                       .numberPhases = 1,
-                                   },
-                                   {
-                                       .startPeriod = 1080,
                                        .limit = 11000.0,
                                        .numberPhases = 1,
                                    },

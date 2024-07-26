@@ -1,7 +1,8 @@
 {
     "id": 1,
-    "chargingProfileKind": "Absolute",
     "chargingProfilePurpose": "TxProfile",
+    "chargingProfileKind": "Recurring",
+    "recurrencyKind": "Daily",
     "chargingSchedule": [
         {
             "id": 0,
