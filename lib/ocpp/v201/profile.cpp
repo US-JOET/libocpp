@@ -267,13 +267,6 @@ std::vector<DateTime> calculate_start(const DateTime& in_now, const DateTime& in
     return start_times;
 }
 
-/// \brief calculate the start times for the schedule period
-/// \param in_now the current date and time
-/// \param in_end the end of the composite schedule
-/// \param in_session_start optional when the charging session started
-/// \param in_profile the charging profile
-/// \param in_period_index the schedule period index
-/// \return the list of start times
 std::vector<period_entry_t> calculate_profile_entry(const DateTime& in_now, const DateTime& in_end,
                                                     const std::optional<DateTime>& in_session_start,
                                                     const ChargingProfile& in_profile, std::uint8_t in_period_index) {
