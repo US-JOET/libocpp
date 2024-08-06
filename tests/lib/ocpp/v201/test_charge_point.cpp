@@ -780,7 +780,7 @@ TEST_F(ChargePointFixture, DISABLED_K01FR22_SetChargingProfileRequest_RejectsCha
     charge_point->handle_message(set_charging_profile_req);
 }
 
-TEST_F(ChargePointFixture, DISABLED_K01FR29_SmartChargingCtlrlNotAvailable_ReturnsCallError) {
+TEST_F(ChargePointFixture, K01FR29_SmartChargingCtlrlNotAvailable_ReturnsCallError) {
     device_model->set_value(ControllerComponentVariables::SmartChargingCtrlrAvailable.component,
                             ControllerComponentVariables::SmartChargingCtrlrAvailable.variable.value(),
                             AttributeEnum::Actual, std::to_string(false), "test", true);

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
+#include "everest/logging.hpp"
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/charge_point.hpp>
 #include <ocpp/v201/ctrlr_component_variables.hpp>
@@ -3294,6 +3295,8 @@ void ChargePoint::handle_set_charging_profile_req(Call<SetChargingProfileRequest
         EVLOG_debug << "Rejecting SetChargingProfileRequest:\n reasonCode: " << response.statusInfo->reasonCode.get()
                     << "\nadditionalInfo: " << response.statusInfo->additionalInfo->get();
     }
+
+    EVLOG_debug << "handle_set_charging_profile_req> " << response;
 
     ocpp::CallResult<SetChargingProfileResponse> call_result(response, call.uniqueId);
     this->send<SetChargingProfileResponse>(call_result);
