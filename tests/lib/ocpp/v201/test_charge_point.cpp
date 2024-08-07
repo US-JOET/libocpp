@@ -797,6 +797,8 @@ TEST_F(ChargePointFixture, K01FR29_SmartChargingCtlrlNotAvailable_ReturnsCallErr
     auto set_charging_profile_req =
         request_to_enhanced_message<SetChargingProfileRequest, MessageType::SetChargingProfile>(req);
 
+    charge_point->handle_message(set_charging_profile_req);
+
     // EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::ChargingSchedulePeriodExtraneousPhaseValues));
 }
 

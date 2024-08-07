@@ -3270,6 +3270,14 @@ void ChargePoint::handle_set_charging_profile_req(Call<SetChargingProfileRequest
     SetChargingProfileResponse response;
     response.status = ChargingProfileStatusEnum::Rejected;
 
+    // Check to see of SmartCharging is enabled
+    bool is_charging_station_enable = false; // Call to device model
+    if (is_charging_station_enable) {
+        EVLOG_debug << "!is_charging_station_enable";
+        // Send message saying NOPE
+        return;
+    }
+
     if (msg.chargingProfile.chargingProfilePurpose == ChargingProfilePurposeEnum::ChargingStationExternalConstraints) {
         response.statusInfo = StatusInfo();
         response.statusInfo->reasonCode = "InvalidValue";
