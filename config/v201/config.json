@@ -16,7 +16,6 @@
             }
         }
     },
-
     {
         "name": "Connector",
         "evse_id": 1,
@@ -774,6 +773,12 @@
                 "variable_name": "RateUnit",
                 "attributes": {
                     "Actual": ""
+                }
+            },
+            "SmartChargingCtrlrAvailable": {
+                "variable_name": "Available",
+                "attributes": {
+                    "Actual": true
                 }
             },
             "SmartChargingCtrlrAvailableEnabled": {
