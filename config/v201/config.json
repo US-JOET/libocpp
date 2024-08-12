@@ -784,7 +784,7 @@
             "SmartChargingCtrlrAvailableEnabled": {
                 "variable_name": "Enabled",
                 "attributes": {
-                    "Actual": false
+                    "Actual": true
                 }
             }
         }
