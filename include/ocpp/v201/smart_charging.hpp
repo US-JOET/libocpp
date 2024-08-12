@@ -67,12 +67,6 @@ std::string profile_validation_result_to_reason_code(ProfileValidationResultEnum
 std::ostream& operator<<(std::ostream& os, const ProfileValidationResultEnum validation_result);
 
 /// \brief Helper struct to calculate Composite Schedule
-struct LimitStackLevelPair {
-    int limit;
-    int stack_level;
-};
-
-/// \brief Helper struct to calculate Composite Schedule
 struct PeriodDateTimePair {
     std::optional<ChargingSchedulePeriod> period;
     ocpp::DateTime end_time;
@@ -199,7 +193,6 @@ private:
     CurrentPhaseType get_current_phase_type(const std::optional<EvseInterface*> evse_opt) const;
     CompositeSchedule initialize_composite_schedule(const ocpp::DateTime& start_time, const ocpp::DateTime& end_time,
                                                     const int32_t evse_id, ChargingRateUnitEnum charging_rate_unit);
-    std::map<ChargingProfilePurposeEnum, LimitStackLevelPair> get_initial_purpose_and_stack_limits();
 
     std::optional<ocpp::DateTime> get_absolute_profile_start_time(const std::optional<ocpp::DateTime> startSchedule);
     std::optional<ocpp::DateTime>
