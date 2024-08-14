@@ -1319,6 +1319,9 @@ void ChargePoint::handle_message(const EnhancedMessage<v201::MessageType>& messa
     case MessageType::SetChargingProfile:
         this->handle_set_charging_profile_req(json_message);
         break;
+    case MessageType::GetCompositeSchedule:
+        this->handle_get_composite_schedule_req(json_message);
+        break;
     case MessageType::SetMonitoringBase:
         this->handle_set_monitoring_base_req(json_message);
         break;
@@ -3186,6 +3189,42 @@ void ChargePoint::handle_set_charging_profile_req(Call<SetChargingProfileRequest
 
     ocpp::CallResult<SetChargingProfileResponse> call_result(response, call.uniqueId);
     this->send<SetChargingProfileResponse>(call_result);
+}
+
+void ChargePoint::handle_get_composite_schedule_req(Call<GetCompositeScheduleRequest> call) {
+    EVLOG_debug << "Received GetCompositeScheduleRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
+    auto msg = call.msg;
+    GetCompositeScheduleResponse response;
+    response.status = GenericStatusEnum::Rejected;
+
+    auto supported_charging_rate_units =
+        this->device_model->get_value<std::string>(ControllerComponentVariables::ChargingScheduleChargingRateUnit);
+    auto unit_supported = supported_charging_rate_units.find(conversions::charging_rate_unit_enum_to_string(
+                              msg.chargingRateUnit.value())) != supported_charging_rate_units.npos;
+
+    // K01.FR.05 & K01.FR.07
+    if (this->evse_manager->does_evse_exist(msg.evseId) && unit_supported) {
+        auto start_time = ocpp::DateTime();
+        auto end_time = ocpp::DateTime(start_time.to_time_point() + std::chrono::seconds(msg.duration));
+
+        std::vector<ChargingProfile> valid_profiles = this->smart_charging_handler->get_valid_profiles(msg.evseId);
+        auto schedule = this->smart_charging_handler->calculate_composite_schedule(valid_profiles, start_time, end_time,
+                                                                                   msg.evseId, msg.chargingRateUnit);
+
+        response.status = GenericStatusEnum::Accepted;
+        response.schedule = schedule;
+    } else {
+        auto reason = unit_supported ? ProfileValidationResultEnum::EvseDoesNotExist
+                                     : ProfileValidationResultEnum::ChargingScheduleChargingRateUnitUnsupported;
+        response.statusInfo = StatusInfo();
+        response.statusInfo->reasonCode = conversions::profile_validation_result_to_reason_code(reason);
+        response.statusInfo->additionalInfo = conversions::profile_validation_result_to_string(reason);
+        EVLOG_debug << "Rejecting SetChargingProfileRequest:\n reasonCode: " << response.statusInfo->reasonCode.get()
+                    << "\nadditionalInfo: " << response.statusInfo->additionalInfo->get();
+    }
+
+    ocpp::CallResult<GetCompositeScheduleResponse> call_result(response, call.uniqueId);
+    this->send<GetCompositeScheduleResponse>(call_result);
 }
 
 void ChargePoint::handle_firmware_update_req(Call<UpdateFirmwareRequest> call) {
