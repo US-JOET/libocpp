@@ -81,6 +81,13 @@ public:
     virtual ProfileValidationResultEnum validate_profile(ChargingProfile& profile, int32_t evse_id) = 0;
 
     virtual SetChargingProfileResponse add_profile(ChargingProfile& profile, int32_t evse_id) = 0;
+
+    virtual std::vector<ChargingProfile> get_valid_profiles(int32_t evse_id) = 0;
+
+    virtual CompositeSchedule calculate_composite_schedule(std::vector<ChargingProfile>& valid_profiles,
+                                                           const ocpp::DateTime& start_time,
+                                                           const ocpp::DateTime& end_time, const int32_t evse_id,
+                                                           ChargingRateUnitEnum charging_rate_unit) = 0;
 };
 
 /// \brief This class handles and maintains incoming ChargingProfiles and contains the logic
@@ -124,14 +131,15 @@ public:
     ///
     /// \brief Retrieves all profiles that should be considered for calculating the composite schedule.
     ///
-    std::vector<ChargingProfile> get_valid_profiles(int32_t evse_id);
+    std::vector<ChargingProfile> get_valid_profiles(int32_t evse_id) override;
 
     ///
     /// \brief Calculates the composite schedule for the given \p valid_profiles and the given \p connector_id
     ///
     CompositeSchedule calculate_composite_schedule(std::vector<ChargingProfile>& valid_profiles,
                                                    const ocpp::DateTime& start_time, const ocpp::DateTime& end_time,
-                                                   const int32_t evse_id, ChargingRateUnitEnum charging_rate_unit);
+                                                   const int32_t evse_id,
+                                                   ChargingRateUnitEnum charging_rate_unit) override;
 
 protected:
     ///
