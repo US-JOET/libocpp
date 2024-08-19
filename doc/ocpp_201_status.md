@@ -12,7 +12,6 @@ This document contains the status of which OCPP 2.0.1 numbered functional requir
 | ❓     | Actor responsible for or status of requirement is unknown                      |
 | 🤓     | Catch-all for FRs that are satisfied for other reasons (see the Remark column) |
 
-
 ## General - General
 
 | ID    | Status | Remark |
@@ -1225,7 +1224,6 @@ This document contains the status of which OCPP 2.0.1 numbered functional requir
 |-----------|--------|--------|
 | J03.FR.04 |        |        |
 
-
 ## SmartCharging - SetChargingProfile
 
 | ID        | Status | Remark                                                                                          |
@@ -1321,10 +1319,10 @@ This document contains the status of which OCPP 2.0.1 numbered functional requir
 | ID        | Status | Remark |
 |-----------|--------|--------|
 | K05.FR.01 | ❎     |        |
-| K05.FR.02 |        |        |
-| K05.FR.03 |        |        |
-| K05.FR.04 |        |        |
-| K05.FR.05 |        |        |
+| K05.FR.02 | ✅     |        |
+| K05.FR.03 | ✅     |        |
+| K05.FR.04 | ✅     |        |
+| K05.FR.05 | ✅     |        |
 
 ## SmartCharging - Offline Behavior Smart Charging During Transaction
 
