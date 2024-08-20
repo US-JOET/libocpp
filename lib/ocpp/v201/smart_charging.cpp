@@ -436,6 +436,14 @@ std::vector<ChargingProfile> SmartChargingHandler::get_profiles() const {
     return all_profiles;
 }
 
+std::vector<ChargingProfile> SmartChargingHandler::get_profiles_on_evse(int32_t evse_id) const {
+    std::vector<ChargingProfile> profiles;
+    if (charging_profiles.count(evse_id)) {
+        profiles = charging_profiles.at(evse_id);
+    }
+    return profiles;
+}
+
 std::vector<ChargingProfile> SmartChargingHandler::get_evse_specific_tx_default_profiles() const {
     std::vector<ChargingProfile> evse_specific_tx_default_profiles;
 

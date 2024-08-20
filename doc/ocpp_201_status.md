@@ -1310,7 +1310,7 @@ This document contains the status of which OCPP 2.0.1 numbered functional requir
 
 | ID        | Status | Remark                                           |
 |-----------|--------|--------------------------------------------------|
-| K04.FR.01 |        |                                                  |
+| K04.FR.01 | ✅     |                                                  |
 | K04.FR.02 |        |                                                  |
 | K04.FR.03 | ✅     |                                                  |
 | K04.FR.04 |        | The same as K01.FR.21                            |
