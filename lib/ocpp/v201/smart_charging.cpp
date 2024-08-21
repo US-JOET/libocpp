@@ -13,6 +13,7 @@
 #include "ocpp/v201/ocpp_types.hpp"
 #include "ocpp/v201/transaction.hpp"
 #include <algorithm>
+#include <cstring>
 #include <iterator>
 #include <ocpp/v201/smart_charging.hpp>
 #include <optional>
@@ -142,6 +143,20 @@ SmartChargingHandler::SmartChargingHandler(EvseManagerInterface& evse_manager,
                                            std::shared_ptr<DeviceModel>& device_model,
                                            std::shared_ptr<ocpp::v201::DatabaseHandler> database_handler) :
     evse_manager(evse_manager), device_model(device_model), database_handler(database_handler) {
+}
+
+void SmartChargingHandler::delete_transaction_tx_profiles(const std::string& transaction_id) {
+    for (auto& [evse_id, profiles] : charging_profiles) {
+        auto iter = profiles.begin();
+        while (iter != profiles.end()) {
+            if (transaction_id.compare(iter->transactionId.value()) == 0) {
+                this->database_handler->delete_charging_profile(iter->id);
+                iter = profiles.erase(iter);
+            } else {
+                ++iter;
+            }
+        }
+    }
 }
 
 SetChargingProfileResponse SmartChargingHandler::validate_and_add_profile(ChargingProfile& profile, int32_t evse_id,
