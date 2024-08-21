@@ -103,6 +103,8 @@ public:
     ///
     SetChargingProfileResponse add_profile(ChargingProfile& profile, int32_t evse_id) override;
 
+    void delete_profiles(const std::string& transaction_id, int32_t evse_id);
+
     ///
     /// \brief Retrieves existing profiles on system.
     ///

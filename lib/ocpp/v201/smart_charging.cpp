@@ -146,6 +146,9 @@ SmartChargingHandler::SmartChargingHandler(EvseManagerInterface& evse_manager,
 
 void SmartChargingHandler::delete_transaction_tx_profiles(const std::string& transaction_id) {
     EVLOG_debug << "BOOP!! " << transaction_id;
+    //  std::map<int32_t, std::vector<ChargingProfile>> charging_profiles;
+    for (auto profile : get_profiles()) {
+    }
 }
 
 SetChargingProfileResponse SmartChargingHandler::validate_and_add_profile(ChargingProfile& profile, int32_t evse_id) {
@@ -419,6 +422,16 @@ SetChargingProfileResponse SmartChargingHandler::add_profile(ChargingProfile& pr
     }
 
     return response;
+}
+
+void SmartChargingHandler::delete_profiles(const std::string& transaction_id, int32_t evse_id) {
+    try {
+        // K01.FR27 - add profiles to database when valid
+        // this->database_handler->delete_charging_profiles(evse_id, profile);
+
+    } catch (const QueryExecutionException& e) {
+        EVLOG_error << "Could not store ChargingProfile in the database: " << e.what();
+    }
 }
 
 std::vector<ChargingProfile> SmartChargingHandler::get_station_wide_profiles() const {
