@@ -144,6 +144,10 @@ SmartChargingHandler::SmartChargingHandler(EvseManagerInterface& evse_manager,
     evse_manager(evse_manager), device_model(device_model), database_handler(database_handler) {
 }
 
+void SmartChargingHandler::delete_transaction_tx_profiles(const std::string& transaction_id) {
+    EVLOG_debug << "BOOP!! " << transaction_id;
+}
+
 SetChargingProfileResponse SmartChargingHandler::validate_and_add_profile(ChargingProfile& profile, int32_t evse_id) {
     SetChargingProfileResponse response;
     response.status = ChargingProfileStatusEnum::Rejected;

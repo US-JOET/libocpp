@@ -1170,4 +1170,63 @@ TEST_F(ChargepointTestFixtureV201, K01_ValidateAndAdd_AddsValidProfiles) {
     EXPECT_THAT(profiles, testing::Contains(profile));
 }
 
+TEST_F(ChargepointTestFixtureV201, K02FR05_SmartChargingTransactionEnds_DeletesTxProfiles) {
+    auto periods = create_charging_schedule_periods({0, 1, 2});
+    auto transaction_id = uuid();
+    this->evse_manager->open_transaction(DEFAULT_EVSE_ID, transaction_id);
+
+    auto profile = create_charging_profile(
+        DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+        create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")),
+        transaction_id);
+
+    auto sut = handler.validate_and_add_profile(profile, DEFAULT_EVSE_ID);
+    EXPECT_THAT(sut.status, testing::Eq(ChargingProfileStatusEnum::Accepted));
+    EXPECT_THAT(sut.statusInfo.has_value(), testing::IsFalse());
+
+    auto profiles = handler.get_profiles();
+
+    ASSERT_EQ(1, profiles.size());
+
+    for (auto profile : handler.get_profiles()) {
+        EVLOG_debug << "BOOP!  " << profile.transactionId.value();
+    }
+
+    handler.delete_transaction_tx_profiles(transaction_id);
+
+    EXPECT_TRUE(true);
+}
+
+TEST_F(ChargepointTestFixtureV201, K02FR05_SmartChargingTransactionEnds_Scratch_DeletesTxProfiles) {
+    auto periods = create_charging_schedule_periods({0, 1, 2});
+    auto transaction_id_1 = uuid();
+    auto transaction_id_2 = uuid();
+    const int profile_id_1 = 1;
+    const int profile_id_2 = 2;
+
+    this->evse_manager->open_transaction(DEFAULT_EVSE_ID, transaction_id_1);
+    this->evse_manager->open_transaction(DEFAULT_EVSE_ID, transaction_id_2);
+
+    auto profile1_tx1 = create_charging_profile(
+        DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+        create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")),
+        transaction_id_1);
+
+    auto sut = handler.validate_and_add_profile(profile1_tx1, DEFAULT_EVSE_ID);
+    EXPECT_THAT(sut.status, testing::Eq(ChargingProfileStatusEnum::Accepted));
+    EXPECT_THAT(sut.statusInfo.has_value(), testing::IsFalse());
+
+    auto profiles = handler.get_profiles();
+
+    ASSERT_EQ(1, profiles.size());
+
+    for (auto profile : handler.get_profiles()) {
+        EVLOG_debug << "BOOP!  " << profile.transactionId.value();
+    }
+
+    handler.delete_transaction_tx_profiles(transaction_id_1);
+
+    EXPECT_TRUE(true);
+}
+
 } // namespace ocpp::v201

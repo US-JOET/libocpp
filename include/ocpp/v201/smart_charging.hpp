@@ -83,6 +83,8 @@ public:
     SmartChargingHandler(EvseManagerInterface& evse_manager, std::shared_ptr<DeviceModel>& device_model,
                          std::shared_ptr<ocpp::v201::DatabaseHandler> database_handler);
 
+    void delete_transaction_tx_profiles(const std::string& transaction_id);
+
     ///
     /// \brief validates the given \p profile according to the specification,
     /// adding it to our stored list of profiles if valid.
