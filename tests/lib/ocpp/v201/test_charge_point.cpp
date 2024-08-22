@@ -665,7 +665,8 @@ TEST_F(ChargePointFixture, K01_SetChargingProfileRequest_ValidatesAndAddsProfile
     auto set_charging_profile_req =
         request_to_enhanced_message<SetChargingProfileRequest, MessageType::SetChargingProfile>(req);
 
-    EXPECT_CALL(*smart_charging_handler, validate_and_add_profile(profile, DEFAULT_EVSE_ID));
+    EXPECT_CALL(*smart_charging_handler,
+                validate_and_add_profile(profile, DEFAULT_EVSE_ID, ChargingLimitSourceEnum::CSO));
 
     charge_point->handle_message(set_charging_profile_req);
 }
@@ -762,7 +763,7 @@ TEST_F(ChargePointFixture, K01FR29_SmartChargingCtrlrAvailableIsFalse_RespondsCa
     auto set_charging_profile_req =
         request_to_enhanced_message<SetChargingProfileRequest, MessageType::SetChargingProfile>(req);
 
-    EXPECT_CALL(*smart_charging_handler, validate_and_add_profile(testing::_, testing::_)).Times(0);
+    EXPECT_CALL(*smart_charging_handler, validate_and_add_profile(testing::_, testing::_, testing::_)).Times(0);
 
     charge_point->handle_message(set_charging_profile_req);
 }
@@ -788,7 +789,8 @@ TEST_F(ChargePointFixture, K01FR29_SmartChargingCtrlrAvailableIsTrue_CallsValida
     auto set_charging_profile_req =
         request_to_enhanced_message<SetChargingProfileRequest, MessageType::SetChargingProfile>(req);
 
-    EXPECT_CALL(*smart_charging_handler, validate_and_add_profile(profile, DEFAULT_EVSE_ID));
+    EXPECT_CALL(*smart_charging_handler,
+                validate_and_add_profile(profile, DEFAULT_EVSE_ID, ChargingLimitSourceEnum::CSO));
 
     charge_point->handle_message(set_charging_profile_req);
 }
