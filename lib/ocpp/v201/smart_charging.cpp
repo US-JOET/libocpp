@@ -213,13 +213,15 @@ SmartChargingHandler::SmartChargingHandler(EvseManagerInterface& evse_manager,
     evse_manager(evse_manager), device_model(device_model), database_handler(database_handler) {
 }
 
-SetChargingProfileResponse SmartChargingHandler::validate_and_add_profile(ChargingProfile& profile, int32_t evse_id) {
+SetChargingProfileResponse
+SmartChargingHandler::validate_and_add_profile(ChargingProfile& profile, int32_t evse_id,
+                                               ChargingLimitSourceEnum charging_limit_source) {
     SetChargingProfileResponse response;
     response.status = ChargingProfileStatusEnum::Rejected;
 
     auto result = this->validate_profile(profile, evse_id);
     if (result == ProfileValidationResultEnum::Valid) {
-        response = this->add_profile(profile, evse_id);
+        response = this->add_profile(profile, evse_id, charging_limit_source);
     } else {
         response.statusInfo = StatusInfo();
         response.statusInfo->reasonCode = conversions::profile_validation_result_to_reason_code(result);
@@ -451,14 +453,15 @@ SmartChargingHandler::validate_profile_schedules(ChargingProfile& profile,
     return ProfileValidationResultEnum::Valid;
 }
 
-SetChargingProfileResponse SmartChargingHandler::add_profile(ChargingProfile& profile, int32_t evse_id) {
+SetChargingProfileResponse SmartChargingHandler::add_profile(ChargingProfile& profile, int32_t evse_id,
+                                                             ChargingLimitSourceEnum charging_limit_source) {
     SetChargingProfileResponse response;
     response.status = ChargingProfileStatusEnum::Accepted;
 
     // K01.FR05 - replace non-ChargingStationExternalConstraints profiles if id exists.
     try {
         // K01.FR27 - add profiles to database when valid
-        this->database_handler->insert_or_update_charging_profile(evse_id, profile);
+        this->database_handler->insert_or_update_charging_profile(evse_id, profile, charging_limit_source);
 
         auto found_profile = false;
         for (auto& [existing_evse_id, evse_profiles] : charging_profiles) {
@@ -536,9 +539,8 @@ SmartChargingHandler::get_reported_profiles(const GetChargingProfilesRequest& re
     for (auto& [existing_evse_id, evse_profiles] : charging_profiles) {
         for (auto& profile : evse_profiles) {
             if (profile_matches_get_criteria(profile, request.chargingProfile, request.evseId, existing_evse_id)) {
-                profiles.push_back(
-                    ReportedChargingProfile(profile, existing_evse_id,
-                                            ChargingLimitSourceEnum::CSO)); // TODO: Add correct source when available
+                auto source = this->database_handler->get_charging_limit_source_for_profile(profile.id);
+                profiles.push_back(ReportedChargingProfile(profile, existing_evse_id, source));
             }
         }
     }
