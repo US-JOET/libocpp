@@ -76,11 +76,15 @@ class SmartChargingHandlerInterface {
 public:
     virtual ~SmartChargingHandlerInterface() = default;
 
-    virtual SetChargingProfileResponse validate_and_add_profile(ChargingProfile& profile, int32_t evse_id) = 0;
+    virtual SetChargingProfileResponse
+    validate_and_add_profile(ChargingProfile& profile, int32_t evse_id,
+                             ChargingLimitSourceEnum charging_limit_source = ChargingLimitSourceEnum::CSO) = 0;
 
     virtual ProfileValidationResultEnum validate_profile(ChargingProfile& profile, int32_t evse_id) = 0;
 
-    virtual SetChargingProfileResponse add_profile(ChargingProfile& profile, int32_t evse_id) = 0;
+    virtual SetChargingProfileResponse
+    add_profile(ChargingProfile& profile, int32_t evse_id,
+                ChargingLimitSourceEnum charging_limit_source = ChargingLimitSourceEnum::CSO) = 0;
 
     virtual ClearChargingProfileResponse clear_profiles(const ClearChargingProfileRequest& request) = 0;
 
@@ -107,7 +111,9 @@ public:
     /// \brief validates the given \p profile according to the specification,
     /// adding it to our stored list of profiles if valid.
     ///
-    SetChargingProfileResponse validate_and_add_profile(ChargingProfile& profile, int32_t evse_id) override;
+    SetChargingProfileResponse
+    validate_and_add_profile(ChargingProfile& profile, int32_t evse_id,
+                             ChargingLimitSourceEnum charging_limit_source = ChargingLimitSourceEnum::CSO) override;
 
     ///
     /// \brief validates the given \p profile according to the specification.
@@ -119,7 +125,9 @@ public:
     ///
     /// \brief Adds a given \p profile and associated \p evse_id to our stored list of profiles
     ///
-    SetChargingProfileResponse add_profile(ChargingProfile& profile, int32_t evse_id) override;
+    SetChargingProfileResponse
+    add_profile(ChargingProfile& profile, int32_t evse_id,
+                ChargingLimitSourceEnum charging_limit_source = ChargingLimitSourceEnum::CSO) override;
 
     ///
     /// \brief Retrieves existing profiles on system.

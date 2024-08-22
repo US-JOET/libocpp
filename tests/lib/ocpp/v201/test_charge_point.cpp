@@ -544,7 +544,8 @@ TEST_F(ChargePointFixture, K01_SetChargingProfileRequest_ValidatesAndAddsProfile
     auto set_charging_profile_req =
         request_to_enhanced_message<SetChargingProfileRequest, MessageType::SetChargingProfile>(req);
 
-    EXPECT_CALL(*smart_charging_handler, validate_and_add_profile(profile, DEFAULT_EVSE_ID));
+    EXPECT_CALL(*smart_charging_handler,
+                validate_and_add_profile(profile, DEFAULT_EVSE_ID, ChargingLimitSourceEnum::CSO));
 
     charge_point->handle_message(set_charging_profile_req);
 }
