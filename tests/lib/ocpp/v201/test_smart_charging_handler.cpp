@@ -1201,7 +1201,7 @@ TEST_F(ChargepointTestFixtureV201, K01_ValidateAndAdd_AddsValidProfiles) {
     EXPECT_THAT(profiles, testing::Contains(profile));
 }
 
-TEST_F(ChargepointTestFixtureV201, K02FR05_SmartChargingTransactionEnds_DeletesTxProfilesByTransactionId) {
+TEST_F(ChargepointTestFixtureV201, K02FR05_DeleteTransactionTxProfiles_DeletesTxProfilesByTransactionId) {
     auto transaction_id = uuid();
     this->evse_manager->open_transaction(DEFAULT_EVSE_ID, transaction_id);
     auto profile = create_charging_profile(DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
@@ -1219,7 +1219,7 @@ TEST_F(ChargepointTestFixtureV201, K02FR05_SmartChargingTransactionEnds_DeletesT
 }
 
 TEST_F(ChargepointTestFixtureV201,
-       K02FR05_SmartChargingTransactionEnds_DoesNotDeleteTxProfilesWithDifferentTransactionId) {
+       K02FR05_DeleteTransactionTxProfiles_DoesNotDeleteTxProfilesWithDifferentTransactionId) {
     auto transaction_id = uuid();
     this->evse_manager->open_transaction(DEFAULT_EVSE_ID, transaction_id);
     auto other_transaction_id = uuid();
