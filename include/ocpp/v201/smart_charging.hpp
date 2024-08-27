@@ -187,7 +187,6 @@ protected:
     ProfileValidationResultEnum verify_no_conflicting_external_constraints_id(const ChargingProfile& profile) const;
 
 private:
-    std::vector<ChargingProfile> get_station_wide_profiles() const;
     std::vector<ChargingProfile> get_evse_specific_tx_default_profiles() const;
     std::vector<ChargingProfile> get_station_wide_tx_default_profiles() const;
     void conform_validity_periods(ChargingProfile& profile) const;

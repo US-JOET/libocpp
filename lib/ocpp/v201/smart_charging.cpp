@@ -489,17 +489,6 @@ SetChargingProfileResponse SmartChargingHandler::add_profile(ChargingProfile& pr
     return response;
 }
 
-std::vector<ChargingProfile> SmartChargingHandler::get_station_wide_profiles() const {
-    std::vector<ChargingProfile> station_wide_profiles;
-    if (charging_profiles.count(STATION_WIDE_ID) > 0) {
-        station_wide_profiles = charging_profiles.at(STATION_WIDE_ID);
-    } else {
-        station_wide_profiles = {};
-    }
-
-    return station_wide_profiles;
-}
-
 std::vector<ChargingProfile> SmartChargingHandler::get_profiles() const {
     std::vector<ChargingProfile> all_profiles;
     for (auto evse_profile_pair : charging_profiles) {
@@ -566,7 +555,7 @@ std::vector<ChargingProfile> SmartChargingHandler::get_evse_specific_tx_default_
 
 std::vector<ChargingProfile> SmartChargingHandler::get_station_wide_tx_default_profiles() const {
     std::vector<ChargingProfile> station_wide_tx_default_profiles;
-    for (auto profile : this->get_station_wide_profiles()) {
+    for (auto profile : this->database_handler->get_charging_profiles_for_evse(STATION_WIDE_ID)) {
         if (profile.chargingProfilePurpose == ChargingProfilePurposeEnum::TxDefaultProfile) {
             station_wide_tx_default_profiles.push_back(profile);
         }
@@ -583,26 +572,18 @@ bool SmartChargingHandler::is_overlapping_validity_period(const ChargingProfile&
         return false;
     }
 
-    auto conflicts_with = [candidate_evse_id, &candidate_profile](
-                              const std::pair<int32_t, std::vector<ChargingProfile>>& existing_profiles) {
-        auto existing_evse_id = existing_profiles.first;
-        if (existing_evse_id == candidate_evse_id) {
-            return std::any_of(existing_profiles.second.begin(), existing_profiles.second.end(),
-                               [&candidate_profile](const ChargingProfile& existing_profile) {
-                                   if (existing_profile.stackLevel == candidate_profile.stackLevel &&
-                                       existing_profile.chargingProfileKind == candidate_profile.chargingProfileKind &&
-                                       existing_profile.id != candidate_profile.id) {
+    const std::vector<ChargingProfile> profiles =
+        this->database_handler->get_charging_profiles_for_evse(candidate_evse_id);
+    return std::any_of(profiles.begin(), profiles.end(), [&candidate_profile](const ChargingProfile& existing_profile) {
+        if (existing_profile.stackLevel == candidate_profile.stackLevel &&
+            existing_profile.chargingProfileKind == candidate_profile.chargingProfileKind &&
+            existing_profile.id != candidate_profile.id) {
 
-                                       return candidate_profile.validFrom <= existing_profile.validTo &&
-                                              candidate_profile.validTo >= existing_profile.validFrom; // reject
-                                   }
-                                   return false;
-                               });
+            return candidate_profile.validFrom <= existing_profile.validTo &&
+                   candidate_profile.validTo >= existing_profile.validFrom; // reject
         }
         return false;
-    };
-
-    return std::any_of(charging_profiles.begin(), charging_profiles.end(), conflicts_with);
+    });
 }
 
 void SmartChargingHandler::conform_validity_periods(ChargingProfile& profile) const {
