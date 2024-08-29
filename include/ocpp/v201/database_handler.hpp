@@ -186,6 +186,11 @@ public:
     bool clear_charging_profiles_matching_criteria(const std::optional<int32_t> profile_id,
                                                    const std::optional<ClearChargingProfile>& criteria);
 
+    /// \brief Get all profiles from table CHARGING_PROFILES matching \p profile_id or \p criteria
+    std::vector<std::tuple<int, v201::ChargingProfile, ChargingLimitSourceEnum>>
+    get_charging_profiles_matching_criteria(const std::optional<int32_t> evse_id,
+                                            const ChargingProfileCriterion& criteria);
+
     /// \brief Retrieves the charging profiles stored on \p evse_id
     std::vector<v201::ChargingProfile> get_charging_profiles_for_evse(const int evse_id);
 
