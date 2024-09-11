@@ -813,4 +813,27 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_ExternalOverri
     ASSERT_EQ(actual, expected);
 }
 
+TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_NoProfilesAppliesNoLimits) {
+    std::vector<ChargingProfile> profiles;
+
+    const DateTime start_time = ocpp::DateTime("2024-01-17T22:00:00");
+    const DateTime end_time = ocpp::DateTime("2024-01-18T00:00:00");
+
+    CompositeSchedule expected = {
+        .chargingSchedulePeriod = {{
+            .startPeriod = 0,
+            .limit = 33120.0,
+            .numberPhases = 3,
+        }},
+        .evseId = DEFAULT_EVSE_ID,
+        .duration = 7200,
+        .scheduleStart = start_time,
+        .chargingRateUnit = ChargingRateUnitEnum::W,
+    };
+
+    CompositeSchedule actual =
+        handler.calculate_composite_schedule(profiles, start_time, end_time, DEFAULT_EVSE_ID, ChargingRateUnitEnum::W);
+    ASSERT_EQ(actual, expected);
+}
+
 } // namespace ocpp::v201
