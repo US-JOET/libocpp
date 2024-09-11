@@ -1335,7 +1335,7 @@ This document contains the status of which OCPP 2.0.1 numbered functional requir
 
 | ID        | Status | Remark |
 |-----------|--------|--------|
-| K07.FR.01 |        |        |
+| K07.FR.01 | ✅     |        |
 
 ## SmartCharging - Get Composite Schedule
 
