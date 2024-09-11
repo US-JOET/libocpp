@@ -1328,8 +1328,8 @@ This document contains the status of which OCPP 2.0.1 numbered functional requir
 
 | ID        | Status | Remark |
 |-----------|--------|--------|
-| K06.FR.01 |        |        |
-| K06.FR.02 |        |        |
+| K06.FR.01 | ✅     |        |
+| K06.FR.02 | ✅     |        |
 
 ## SmartCharging - Offline Behavior Smart Charging at Start of Transaction
 
