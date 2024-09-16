@@ -468,28 +468,7 @@ TODO
 
 #### Smart Charging
 
-Work is currently ongoing for the `K08 SmartCharging` portion of the OCPP 2.0.1 standard.
-
-##### Works in Progress
-
-All of these portions of Smart Charging are works in progress:
-
-- General Smart Charging
-  - K02 Central Smart
-  - K03 Local Smart Charging
-  - K04 Internal Load Balancing
-  - K05 Remote Start Transaction with Charging Profile
-  - K06 Offline Behavior Smart Charging During Transaction
-  - K07 Offline Behavior Smart Charging at Start of Transaction
-- External Charging Limit based Smart Charging
-  - K11 Set / Update External Charging Limit With Ongoing Transaction
-  - K12 Set / Update External Charging Limit Without Ongoing Transaction
-  - K13 Reset / Release External Charging Limit
-  - K14 External Charging Limit with Local Controller
-- ISO 15118 based Smart Charging
-  - K15 Charging with load leveling based on High Level Communication
-  - K16 Renegotiation initiated by CSMS
-  - K17 Renegotiation initiated by EV
+Work to fully support OCPP 2.0.1 Smart Charging is ongoing. Most functional requirements for General Smart Charging use cases (that is, K01–K10) are now supported. For an up-to-date overview of which features are currently supported, please refer to the [OCPP 2.0.1 Status](doc/ocpp_201_status.md) document.
 
 ##### K01 SetChargingProfile
 
