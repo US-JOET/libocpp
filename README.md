@@ -187,7 +187,7 @@ In EVerest the OCPP module leverages several other modules to perform tasks that
 
 The following sections explain the steps you can follow to implement their functionality on your own and integrate the libocpp directly into your charging station software without relying on EVerest. However, in most cases it's much easier to write an EVerest driver using the *everest-core/interfaces/board_support_AC.yaml* interface.
 
-### Integrating this library with OCPP1.6
+### Usage for OCPP 1.6
 
 #### ChargePoint() constructor
 
