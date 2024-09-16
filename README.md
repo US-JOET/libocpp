@@ -462,7 +462,6 @@ To use libocpp as a auth token validator (e.g. before starting a transaction) yo
 
 ## Integrating this library with OCPP 2.0.1
 
-TODO
 
 ### Current Support
 
