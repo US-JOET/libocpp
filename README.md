@@ -460,7 +460,7 @@ In EVerest authorization is handled by the Auth module and various auth token pr
 
 To use libocpp as a auth token validator (e.g. before starting a transaction) you can call the "authorize_id_token" function of the ChargePoint object.
 
-## Integrating this library with OCPP 2.0.1
+## Usage for OCPP 2.0.1
 
 
 ### Current Support
