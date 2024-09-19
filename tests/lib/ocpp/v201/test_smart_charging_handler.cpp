@@ -222,23 +222,15 @@ protected:
         return s.str();
     }
 
-    // Default values used within the tests
-    std::unique_ptr<EvseManagerFake> evse_manager = std::make_unique<EvseManagerFake>(NR_OF_EVSES);
-    bool ignore_no_transaction = true;
-    boost::uuids::random_generator uuid_generator = boost::uuids::random_generator();
-};
-
-class SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201 : public SmartChargingHandlerCommonTestFixtureV201 {
-public:
-    TestSmartChargingHandler create_smart_charging_handler() {
+    TestSmartChargingHandler create_smart_charging_handler(DeviceModel & device_model) {
         std::unique_ptr<common::DatabaseConnection> database_connection =
             std::make_unique<common::DatabaseConnection>(fs::path("/tmp/ocpp201") / "cp.db");
         std::shared_ptr<DatabaseHandler> database_handler =
             std::make_shared<DatabaseHandler>(std::move(database_connection), MIGRATION_FILES_LOCATION_V201);
         database_handler->open_connection();
-        return TestSmartChargingHandler(*this->evse_manager, *device_model, database_handler);
+        return TestSmartChargingHandler(*this->evse_manager, device_model, database_handler);
     }
-    void install_profile_on_evse(int evse_id, int profile_id,
+    void install_profile_on_evse(SmartChargingHandlerInterface & handler, int evse_id, int profile_id,
                                  std::optional<ocpp::DateTime> validFrom = ocpp::DateTime("2024-01-01T17:00:00"),
                                  std::optional<ocpp::DateTime> validTo = ocpp::DateTime("2024-02-01T17:00:00")) {
         auto existing_profile = create_charging_profile(
@@ -247,7 +239,7 @@ public:
         handler.add_profile(existing_profile, evse_id);
     }
 
-    std::optional<ChargingProfile> add_valid_profile_to(int evse_id, int profile_id) {
+    std::optional<ChargingProfile> add_valid_profile_to(SmartChargingHandlerInterface & handler, int evse_id, int profile_id) {
         auto periods = create_charging_schedule_periods({0, 1, 2});
         auto profile = create_charging_profile(
             profile_id, ChargingProfilePurposeEnum::TxDefaultProfile,
@@ -260,8 +252,16 @@ public:
         }
     }
 
+    // Default values used within the tests
+    std::unique_ptr<EvseManagerFake> evse_manager = std::make_unique<EvseManagerFake>(NR_OF_EVSES);
+    bool ignore_no_transaction = true;
+    boost::uuids::random_generator uuid_generator = boost::uuids::random_generator();
+};
+
+class SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201 : public SmartChargingHandlerCommonTestFixtureV201 {
+public:
     std::shared_ptr<DeviceModel> device_model = create_device_model();
-    TestSmartChargingHandler handler = create_smart_charging_handler();
+    TestSmartChargingHandler handler = create_smart_charging_handler(*device_model);
 };
 
 TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
@@ -584,7 +584,7 @@ INSTANTIATE_TEST_SUITE_P(TxDefaultProfileValidationV201_Param_Test_Instantiate_F
 
 TEST_P(SmartChargingHandlerTestFixtureV201_FR52, K01FR52_TxDefaultProfileValidationV201Tests) {
     auto [added_profile_id, added_stack_level, expected] = GetParam();
-    install_profile_on_evse(DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID);
+    install_profile_on_evse(handler, DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID);
 
     auto profile = create_charging_profile(added_profile_id, ChargingProfilePurposeEnum::TxDefaultProfile,
                                            create_charge_schedule(ChargingRateUnitEnum::A), {},
@@ -609,7 +609,7 @@ INSTANTIATE_TEST_SUITE_P(TxDefaultProfileValidationV201_Param_Test_Instantiate_F
 
 TEST_P(SmartChargingHandlerTestFixtureV201_FR53, K01FR53_TxDefaultProfileValidationV201Tests) {
     auto [added_profile_id, added_stack_level, expected] = GetParam();
-    install_profile_on_evse(STATION_WIDE_ID, DEFAULT_PROFILE_ID);
+    install_profile_on_evse(handler, STATION_WIDE_ID, DEFAULT_PROFILE_ID);
 
     auto profile = create_charging_profile(added_profile_id, ChargingProfilePurposeEnum::TxDefaultProfile,
                                            create_charge_schedule(ChargingRateUnitEnum::A), {},
@@ -621,7 +621,7 @@ TEST_P(SmartChargingHandlerTestFixtureV201_FR53, K01FR53_TxDefaultProfileValidat
 
 TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
        K01FR52_TxDefaultProfileValidIfAppliedToWholeSystemAgain) {
-    install_profile_on_evse(STATION_WIDE_ID, DEFAULT_PROFILE_ID);
+    install_profile_on_evse(handler, STATION_WIDE_ID, DEFAULT_PROFILE_ID);
 
     auto profile = create_charging_profile(DEFAULT_PROFILE_ID + 1, ChargingProfilePurposeEnum::TxDefaultProfile,
                                            create_charge_schedule(ChargingRateUnitEnum::A), {},
@@ -633,7 +633,7 @@ TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
 
 TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
        K01FR53_TxDefaultProfileValidIfAppliedToExistingEvseAgain) {
-    install_profile_on_evse(DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID);
+    install_profile_on_evse(handler, DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID);
 
     auto profile = create_charging_profile(DEFAULT_PROFILE_ID + 1, ChargingProfilePurposeEnum::TxDefaultProfile,
                                            create_charge_schedule(ChargingRateUnitEnum::A), {},
@@ -645,7 +645,7 @@ TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
 
 TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
        K01FR53_TxDefaultProfileValidIfAppliedToDifferentEvse) {
-    install_profile_on_evse(DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID);
+    install_profile_on_evse(handler, DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID);
 
     auto profile = create_charging_profile(DEFAULT_PROFILE_ID + 1, ChargingProfilePurposeEnum::TxDefaultProfile,
                                            create_charge_schedule(ChargingRateUnitEnum::A), {},
@@ -789,7 +789,7 @@ TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
 }
 
 TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201, K01FR06_ExistingProfileLastsForever_RejectIncoming) {
-    install_profile_on_evse(DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID, ocpp::DateTime(date::utc_clock::time_point::min()),
+    install_profile_on_evse(handler, DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID, ocpp::DateTime(date::utc_clock::time_point::min()),
                             ocpp::DateTime(date::utc_clock::time_point::max()));
 
     auto periods = create_charging_schedule_periods(0);
@@ -806,7 +806,7 @@ TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201, K01FR06_Exist
 
 TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
        K01FR06_ExisitingProfileHasValidFromIncomingValidToOverlaps_RejectIncoming) {
-    install_profile_on_evse(DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID, ocpp::DateTime("2024-01-01T13:00:00"),
+    install_profile_on_evse(handler, DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID, ocpp::DateTime("2024-01-01T13:00:00"),
                             ocpp::DateTime(date::utc_clock::time_point::max()));
 
     auto periods = create_charging_schedule_periods(0);
@@ -822,7 +822,7 @@ TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
 
 TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
        K01FR06_ExisitingProfileHasValidToIncomingValidFromOverlaps_RejectIncoming) {
-    install_profile_on_evse(DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID, ocpp::DateTime("2024-02-01T13:00:00"),
+    install_profile_on_evse(handler, DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID, ocpp::DateTime("2024-02-01T13:00:00"),
                             ocpp::DateTime(date::utc_clock::time_point::max()));
 
     auto periods = create_charging_schedule_periods(0);
@@ -838,7 +838,7 @@ TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
 
 TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
        K01FR06_ExisitingProfileHasValidPeriodIncomingIsNowToMax_RejectIncoming) {
-    install_profile_on_evse(DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID,
+    install_profile_on_evse(handler, DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID,
                             ocpp::DateTime(date::utc_clock::now() - std::chrono::hours(5 * 24)),
                             ocpp::DateTime(date::utc_clock::now() + std::chrono::hours(5 * 24)));
 
@@ -855,7 +855,7 @@ TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
 
 TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
        K01FR06_ExisitingProfileHasValidPeriodIncomingOverlaps_RejectIncoming) {
-    install_profile_on_evse(DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID, ocpp::DateTime("2024-01-01T13:00:00"),
+    install_profile_on_evse(handler, DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID, ocpp::DateTime("2024-01-01T13:00:00"),
                             ocpp::DateTime("2024-02-01T13:00:00"));
 
     auto periods = create_charging_schedule_periods(0);
@@ -908,7 +908,7 @@ TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
 
 TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
        K01_ValidateProfile_IfDuplicateTxDefaultProfileFoundOnEVSE_IsInvalid_ThenProfileIsInvalid) {
-    install_profile_on_evse(DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID);
+    install_profile_on_evse(handler, DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID);
 
     auto periods = create_charging_schedule_periods(0);
 
@@ -923,7 +923,7 @@ TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
 
 TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
        K01_ValidateProfile_IfDuplicateTxDefaultProfileFoundOnChargingStation_IsInvalid_ThenProfileIsInvalid) {
-    install_profile_on_evse(STATION_WIDE_ID, DEFAULT_PROFILE_ID);
+    install_profile_on_evse(handler, STATION_WIDE_ID, DEFAULT_PROFILE_ID);
 
     auto periods = create_charging_schedule_periods(0);
 
@@ -1420,7 +1420,7 @@ TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201, K10_ClearChar
 
 TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
        K10_ClearChargingProfile_ClearsStackLevelPurposeCombination) {
-    install_profile_on_evse(DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID);
+    install_profile_on_evse(handler, DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID);
 
     auto profiles = handler.get_profiles();
     EXPECT_THAT(profiles, testing::Not(testing::IsEmpty()));
@@ -1436,7 +1436,7 @@ TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
 
 TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
        K10_ClearChargingProfile_UnknownStackLevelPurposeCombination) {
-    install_profile_on_evse(DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID);
+    install_profile_on_evse(handler, DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID);
 
     auto profiles = handler.get_profiles();
     EXPECT_THAT(profiles, testing::Not(testing::IsEmpty()));
@@ -1476,7 +1476,7 @@ TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
 
 TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
        K08_GetValidProfiles_IfEvseHasProfiles_ThenThoseProfilesReturned) {
-    auto profile = add_valid_profile_to(DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID);
+    auto profile = add_valid_profile_to(handler, DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID);
     ASSERT_TRUE(profile.has_value());
 
     auto profiles = handler.get_valid_profiles(DEFAULT_EVSE_ID);
@@ -1485,9 +1485,9 @@ TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
 
 TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
        K08_GetValidProfiles_IfOtherEvseHasProfiles_ThenThoseProfilesAreNotReturned) {
-    auto profile1 = add_valid_profile_to(DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID);
+    auto profile1 = add_valid_profile_to(handler, DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID);
     ASSERT_TRUE(profile1.has_value());
-    auto profile2 = add_valid_profile_to(DEFAULT_EVSE_ID + 1, DEFAULT_PROFILE_ID + 1);
+    auto profile2 = add_valid_profile_to(handler, DEFAULT_EVSE_ID + 1, DEFAULT_PROFILE_ID + 1);
     ASSERT_TRUE(profile2.has_value());
 
     auto profiles = handler.get_valid_profiles(DEFAULT_EVSE_ID);
@@ -1497,7 +1497,7 @@ TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
 
 TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
        K08_GetValidProfiles_IfStationWideProfilesExist_ThenThoseProfilesAreReturned) {
-    auto profile = add_valid_profile_to(STATION_WIDE_ID, DEFAULT_PROFILE_ID);
+    auto profile = add_valid_profile_to(handler, STATION_WIDE_ID, DEFAULT_PROFILE_ID);
     ASSERT_TRUE(profile.has_value());
 
     auto profiles = handler.get_valid_profiles(DEFAULT_EVSE_ID);
@@ -1506,7 +1506,7 @@ TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
 
 TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
        K08_GetValidProfiles_IfStationWideProfilesExist_ThenThoseProfilesAreReturnedOnce) {
-    auto profile = add_valid_profile_to(STATION_WIDE_ID, DEFAULT_PROFILE_ID);
+    auto profile = add_valid_profile_to(handler, STATION_WIDE_ID, DEFAULT_PROFILE_ID);
     ASSERT_TRUE(profile.has_value());
 
     auto profiles = handler.get_valid_profiles(STATION_WIDE_ID);
@@ -1586,38 +1586,8 @@ TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201, K05FR02_Reque
 
 class SmartChargingHandlerPhaseSwitchingUnsupportedTestFixtureV201 : public SmartChargingHandlerCommonTestFixtureV201 {
 public:
-    TestSmartChargingHandler create_smart_charging_handler() {
-        std::unique_ptr<common::DatabaseConnection> database_connection =
-            std::make_unique<common::DatabaseConnection>(fs::path("/tmp/ocpp201") / "cp.db");
-        std::shared_ptr<DatabaseHandler> database_handler =
-            std::make_shared<DatabaseHandler>(std::move(database_connection), MIGRATION_FILES_LOCATION_V201);
-        database_handler->open_connection();
-        return TestSmartChargingHandler(*this->evse_manager, *device_model, database_handler);
-    }
-    void install_profile_on_evse(int evse_id, int profile_id,
-                                 std::optional<ocpp::DateTime> validFrom = ocpp::DateTime("2024-01-01T17:00:00"),
-                                 std::optional<ocpp::DateTime> validTo = ocpp::DateTime("2024-02-01T17:00:00")) {
-        auto existing_profile = create_charging_profile(
-            profile_id, ChargingProfilePurposeEnum::TxDefaultProfile, create_charge_schedule(ChargingRateUnitEnum::A),
-            {}, ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL, validFrom, validTo);
-        handler.add_profile(existing_profile, evse_id);
-    }
-
-    std::optional<ChargingProfile> add_valid_profile_to(int evse_id, int profile_id) {
-        auto periods = create_charging_schedule_periods({0, 1, 2});
-        auto profile = create_charging_profile(
-            profile_id, ChargingProfilePurposeEnum::TxDefaultProfile,
-            create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")));
-        auto response = handler.validate_and_add_profile(profile, evse_id);
-        if (response.status == ChargingProfileStatusEnum::Accepted) {
-            return profile;
-        } else {
-            return {};
-        }
-    }
-
     std::shared_ptr<DeviceModel> device_model = create_device_model({});
-    TestSmartChargingHandler handler = create_smart_charging_handler();
+    TestSmartChargingHandler handler = create_smart_charging_handler(*device_model);
 };
 
 TEST_F(SmartChargingHandlerPhaseSwitchingUnsupportedTestFixtureV201,
