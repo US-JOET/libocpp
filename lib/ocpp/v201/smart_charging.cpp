@@ -203,7 +203,7 @@ CurrentPhaseType SmartChargingHandler::get_current_phase_type(const std::optiona
     }
 
     auto supply_phases =
-        this->device_model->get_value<int32_t>(ControllerComponentVariables::ChargingStationSupplyPhases);
+        this->device_model.get_value<int32_t>(ControllerComponentVariables::ChargingStationSupplyPhases);
     if (supply_phases == 1 || supply_phases == 3) {
         return CurrentPhaseType::AC;
     } else if (supply_phases == 0) {
@@ -213,8 +213,7 @@ CurrentPhaseType SmartChargingHandler::get_current_phase_type(const std::optiona
     return CurrentPhaseType::Unknown;
 }
 
-SmartChargingHandler::SmartChargingHandler(EvseManagerInterface& evse_manager,
-                                           std::shared_ptr<DeviceModel>& device_model,
+SmartChargingHandler::SmartChargingHandler(EvseManagerInterface& evse_manager, DeviceModel& device_model,
                                            std::shared_ptr<ocpp::v201::DatabaseHandler> database_handler) :
     evse_manager(evse_manager), device_model(device_model), database_handler(database_handler) {
 }
@@ -410,13 +409,13 @@ ProfileValidationResultEnum
 SmartChargingHandler::validate_profile_schedules(ChargingProfile& profile,
                                                  std::optional<EvseInterface*> evse_opt) const {
     auto charging_station_supply_phases =
-        this->device_model->get_value<int32_t>(ControllerComponentVariables::ChargingStationSupplyPhases);
+        this->device_model.get_value<int32_t>(ControllerComponentVariables::ChargingStationSupplyPhases);
 
     for (auto& schedule : profile.chargingSchedule) {
         // K01.FR.26; We currently need to do string conversions for this manually because our DeviceModel class
         // does not let us get a vector of ChargingScheduleChargingRateUnits.
         auto supported_charging_rate_units =
-            this->device_model->get_value<std::string>(ControllerComponentVariables::ChargingScheduleChargingRateUnit);
+            this->device_model.get_value<std::string>(ControllerComponentVariables::ChargingScheduleChargingRateUnit);
         if (supported_charging_rate_units.find(conversions::charging_rate_unit_enum_to_string(
                 schedule.chargingRateUnit)) == supported_charging_rate_units.npos) {
             return ProfileValidationResultEnum::ChargingScheduleChargingRateUnitUnsupported;
@@ -436,7 +435,7 @@ SmartChargingHandler::validate_profile_schedules(ChargingProfile& profile,
 
             // K01.FR.48 and K01.FR.20
             if (charging_schedule_period.phaseToUse.has_value() &&
-                !device_model->get_optional_value<bool>(ControllerComponentVariables::ACPhaseSwitchingSupported)
+                !device_model.get_optional_value<bool>(ControllerComponentVariables::ACPhaseSwitchingSupported)
                      .value_or(false)) {
                 return ProfileValidationResultEnum::ChargingSchedulePeriodPhaseToUseACPhaseSwitchingUnsupported;
             }
