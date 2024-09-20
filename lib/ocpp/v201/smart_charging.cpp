@@ -214,7 +214,7 @@ CurrentPhaseType SmartChargingHandler::get_current_phase_type(const std::optiona
 }
 
 SmartChargingHandler::SmartChargingHandler(EvseManagerInterface& evse_manager, DeviceModel& device_model,
-                                           std::shared_ptr<ocpp::v201::DatabaseHandler> database_handler) :
+                                           ocpp::v201::DatabaseHandler& database_handler) :
     evse_manager(evse_manager), device_model(device_model), database_handler(database_handler) {
 }
 
@@ -223,7 +223,7 @@ void SmartChargingHandler::delete_transaction_tx_profiles(const std::string& tra
         auto iter = profiles.begin();
         while (iter != profiles.end()) {
             if (transaction_id.compare(iter->transactionId.value()) == 0) {
-                this->database_handler->delete_charging_profile(iter->id);
+                this->database_handler.delete_charging_profile(iter->id);
                 iter = profiles.erase(iter);
             } else {
                 ++iter;
@@ -503,7 +503,7 @@ SetChargingProfileResponse SmartChargingHandler::add_profile(ChargingProfile& pr
     // K01.FR05 - replace non-ChargingStationExternalConstraints profiles if id exists.
     try {
         // K01.FR27 - add profiles to database when valid
-        this->database_handler->insert_or_update_charging_profile(evse_id, profile);
+        this->database_handler.insert_or_update_charging_profile(evse_id, profile);
 
         auto found_profile = false;
         for (auto& [existing_evse_id, evse_profiles] : charging_profiles) {
@@ -557,7 +557,7 @@ ClearChargingProfileResponse SmartChargingHandler::clear_profiles(const ClearCha
             if (profile_matches_clear_criteria(*it, profile_id, criteria, existing_evse_id)) {
                 response.status = ClearChargingProfileStatusEnum::Accepted;
                 it = evse_profiles.erase(it);
-                this->database_handler->delete_charging_profile(it->id);
+                this->database_handler.delete_charging_profile(it->id);
             } else {
                 // At least one of the filters did not match
                 ++it;

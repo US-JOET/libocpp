@@ -115,13 +115,13 @@ private:
     EvseManagerInterface& evse_manager;
     DeviceModel& device_model;
 
-    std::shared_ptr<ocpp::v201::DatabaseHandler> database_handler;
+    ocpp::v201::DatabaseHandler& database_handler;
     // cppcheck-suppress unusedStructMember
     std::map<int32_t, std::vector<ChargingProfile>> charging_profiles;
 
 public:
     SmartChargingHandler(EvseManagerInterface& evse_manager, DeviceModel& device_model,
-                         std::shared_ptr<ocpp::v201::DatabaseHandler> database_handler);
+                         ocpp::v201::DatabaseHandler& database_handler);
 
     ///
     /// \brief for the given \p transaction_id removes the associated charging profile.
