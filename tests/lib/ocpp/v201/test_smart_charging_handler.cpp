@@ -5,6 +5,7 @@
 #include "lib/ocpp/common/database_testing_utils.hpp"
 #include "ocpp/common/types.hpp"
 #include "ocpp/v201/ctrlr_component_variables.hpp"
+#include "ocpp/v201/database_handler.hpp"
 #include "ocpp/v201/device_model.hpp"
 #include "ocpp/v201/device_model_storage_sqlite.hpp"
 #include "ocpp/v201/init_device_model_db.hpp"
@@ -222,15 +223,21 @@ protected:
         return s.str();
     }
 
-    TestSmartChargingHandler create_smart_charging_handler(DeviceModel & device_model) {
+    std::shared_ptr<DatabaseHandler> create_database_handler() {
         std::unique_ptr<common::DatabaseConnection> database_connection =
             std::make_unique<common::DatabaseConnection>(fs::path("/tmp/ocpp201") / "cp.db");
         std::shared_ptr<DatabaseHandler> database_handler =
             std::make_shared<DatabaseHandler>(std::move(database_connection), MIGRATION_FILES_LOCATION_V201);
         database_handler->open_connection();
+        return database_handler;
+    }
+
+    TestSmartChargingHandler create_smart_charging_handler(DeviceModel& device_model,
+                                                           DatabaseHandler& database_handler) {
         return TestSmartChargingHandler(*this->evse_manager, device_model, database_handler);
     }
-    void install_profile_on_evse(SmartChargingHandlerInterface & handler, int evse_id, int profile_id,
+
+    void install_profile_on_evse(SmartChargingHandlerInterface& handler, int evse_id, int profile_id,
                                  std::optional<ocpp::DateTime> validFrom = ocpp::DateTime("2024-01-01T17:00:00"),
                                  std::optional<ocpp::DateTime> validTo = ocpp::DateTime("2024-02-01T17:00:00")) {
         auto existing_profile = create_charging_profile(
@@ -239,7 +246,8 @@ protected:
         handler.add_profile(existing_profile, evse_id);
     }
 
-    std::optional<ChargingProfile> add_valid_profile_to(SmartChargingHandlerInterface & handler, int evse_id, int profile_id) {
+    std::optional<ChargingProfile> add_valid_profile_to(SmartChargingHandlerInterface& handler, int evse_id,
+                                                        int profile_id) {
         auto periods = create_charging_schedule_periods({0, 1, 2});
         auto profile = create_charging_profile(
             profile_id, ChargingProfilePurposeEnum::TxDefaultProfile,
@@ -255,13 +263,14 @@ protected:
     // Default values used within the tests
     std::unique_ptr<EvseManagerFake> evse_manager = std::make_unique<EvseManagerFake>(NR_OF_EVSES);
     bool ignore_no_transaction = true;
+    std::shared_ptr<DatabaseHandler> database_handler = create_database_handler();
     boost::uuids::random_generator uuid_generator = boost::uuids::random_generator();
 };
 
 class SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201 : public SmartChargingHandlerCommonTestFixtureV201 {
 public:
     std::shared_ptr<DeviceModel> device_model = create_device_model();
-    TestSmartChargingHandler handler = create_smart_charging_handler(*device_model);
+    TestSmartChargingHandler handler = create_smart_charging_handler(*device_model, *database_handler);
 };
 
 TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
@@ -789,7 +798,8 @@ TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
 }
 
 TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201, K01FR06_ExistingProfileLastsForever_RejectIncoming) {
-    install_profile_on_evse(handler, DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID, ocpp::DateTime(date::utc_clock::time_point::min()),
+    install_profile_on_evse(handler, DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID,
+                            ocpp::DateTime(date::utc_clock::time_point::min()),
                             ocpp::DateTime(date::utc_clock::time_point::max()));
 
     auto periods = create_charging_schedule_periods(0);
@@ -1199,7 +1209,8 @@ TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201, K04FR01_AddPr
     EXPECT_THAT(sut2, testing::Not(testing::Contains(profile1)));
 }
 
-TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201, K01_ValidateAndAdd_RejectsInvalidProfilesWithReasonCode) {
+TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
+       K01_ValidateAndAdd_RejectsInvalidProfilesWithReasonCode) {
     auto periods = create_charging_schedule_periods(0);
     auto profile = create_charging_profile(
         DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
@@ -1535,7 +1546,8 @@ TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
     EXPECT_THAT(profiles, testing::Not(testing::Contains(invalid_station_wide_profile)));
 }
 
-TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201, K02FR05_SmartChargingTransactionEnds_DeletesTxProfilesByTransactionId) {
+TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
+       K02FR05_SmartChargingTransactionEnds_DeletesTxProfilesByTransactionId) {
     auto transaction_id = uuid();
     this->evse_manager->open_transaction(DEFAULT_EVSE_ID, transaction_id);
     auto profile = create_charging_profile(DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
@@ -1573,7 +1585,8 @@ TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
     EXPECT_THAT(handler.get_profiles().size(), testing::Eq(1));
 }
 
-TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201, K05FR02_RequestStartTransactionRequest_ChargingProfileMustBeTxProfile) {
+TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201,
+       K05FR02_RequestStartTransactionRequest_ChargingProfileMustBeTxProfile) {
     auto profile = create_charging_profile(DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::ChargingStationMaxProfile,
                                            create_charge_schedule(ChargingRateUnitEnum::A,
                                                                   create_charging_schedule_periods({0, 1, 2}),
@@ -1587,7 +1600,7 @@ TEST_F(SmartChargingHandlerPhaseSwitchingSupportedTestFixtureV201, K05FR02_Reque
 class SmartChargingHandlerPhaseSwitchingUnsupportedTestFixtureV201 : public SmartChargingHandlerCommonTestFixtureV201 {
 public:
     std::shared_ptr<DeviceModel> device_model = create_device_model({});
-    TestSmartChargingHandler handler = create_smart_charging_handler(*device_model);
+    TestSmartChargingHandler handler = create_smart_charging_handler(*device_model, *database_handler);
 };
 
 TEST_F(SmartChargingHandlerPhaseSwitchingUnsupportedTestFixtureV201,

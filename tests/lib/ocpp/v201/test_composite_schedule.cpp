@@ -187,13 +187,14 @@ protected:
         return device_model;
     }
 
-    TestSmartChargingHandler create_smart_charging_handler() {
+    std::shared_ptr<DatabaseHandler> create_database_handler() {
         std::unique_ptr<common::DatabaseConnection> database_connection =
             std::make_unique<common::DatabaseConnection>(fs::path("/tmp/ocpp201") / "cp.db");
         std::shared_ptr<DatabaseHandler> database_handler =
             std::make_shared<DatabaseHandler>(std::move(database_connection), MIGRATION_FILES_LOCATION_V201);
         database_handler->open_connection();
-        return TestSmartChargingHandler(*this->evse_manager, *device_model, database_handler);
+
+        return database_handler;
     }
 
     // Default values used within the tests
@@ -203,7 +204,8 @@ protected:
 
     bool ignore_no_transaction = true;
     std::shared_ptr<DeviceModel> device_model = create_device_model();
-    TestSmartChargingHandler handler = create_smart_charging_handler();
+    std::shared_ptr<DatabaseHandler> database_handler = create_database_handler();
+    TestSmartChargingHandler handler = TestSmartChargingHandler(*evse_manager, *device_model, *database_handler);
     boost::uuids::random_generator uuid_generator = boost::uuids::random_generator();
 };
 
