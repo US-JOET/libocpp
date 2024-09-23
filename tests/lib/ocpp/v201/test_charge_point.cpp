@@ -674,6 +674,10 @@ TEST_F(ChargepointTestFixtureV201, K01_SetChargingProfileRequest_ValidatesAndAdd
     auto set_charging_profile_req =
         request_to_enhanced_message<SetChargingProfileRequest, MessageType::SetChargingProfile>(req);
 
+    ON_CALL(*smart_charging_handler, conform_profile).WillByDefault(testing::Return(profile));
+
+    EXPECT_CALL(*smart_charging_handler, conform_profile);
+
     EXPECT_CALL(*smart_charging_handler,
                 validate_and_add_profile(profile, DEFAULT_EVSE_ID, DEFAULT_REQUEST_TO_ADD_PROFILE_SOURCE));
 
@@ -796,6 +800,9 @@ TEST_F(ChargepointTestFixtureV201,
     auto start_transaction_req =
         request_to_enhanced_message<RequestStartTransactionRequest, MessageType::RequestStartTransaction>(req);
 
+    ON_CALL(*smart_charging_handler, conform_profile).WillByDefault(testing::Return(profile));
+
+    EXPECT_CALL(*smart_charging_handler, conform_profile).Times(1);
     EXPECT_CALL(*smart_charging_handler, validate_and_add_profile).Times(1);
 
     charge_point->handle_message(start_transaction_req);

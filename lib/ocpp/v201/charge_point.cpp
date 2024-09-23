@@ -2985,11 +2985,12 @@ void ChargePoint::handle_remote_start_transaction_request(Call<RequestStartTrans
             if (msg.chargingProfile.has_value()) {
 
                 auto charging_profile = msg.chargingProfile.value();
+                auto conformed_profile = this->smart_charging_handler->conform_profile(charging_profile, &evse);
 
-                if (charging_profile.chargingProfilePurpose == ChargingProfilePurposeEnum::TxProfile) {
+                if (conformed_profile.chargingProfilePurpose == ChargingProfilePurposeEnum::TxProfile) {
 
                     const auto add_profile_response = this->smart_charging_handler->validate_and_add_profile(
-                        msg.chargingProfile.value(), evse_id, AddChargingProfileSource::RequestStartTransactionRequest);
+                        conformed_profile, evse_id, AddChargingProfileSource::RequestStartTransactionRequest);
                     if (add_profile_response.status == ChargingProfileStatusEnum::Accepted) {
                         EVLOG_debug << "Accepting SetChargingProfileRequest";
                     } else {
@@ -3161,7 +3162,10 @@ void ChargePoint::handle_set_charging_profile_req(Call<SetChargingProfileRequest
         return;
     }
 
-    response = this->smart_charging_handler->validate_and_add_profile(msg.chargingProfile, msg.evseId);
+    auto conformed_profile =
+        this->smart_charging_handler->conform_profile(msg.chargingProfile, &this->evse_manager->get_evse(msg.evseId));
+
+    response = this->smart_charging_handler->validate_and_add_profile(conformed_profile, msg.evseId);
     if (response.status == ChargingProfileStatusEnum::Accepted) {
         EVLOG_debug << "Accepting SetChargingProfileRequest";
         this->callbacks.set_charging_profiles_callback();
@@ -4074,6 +4078,7 @@ void ChargePoint::load_charging_profiles() {
         for (const auto& [evse_id, profiles] : evses) {
             for (auto profile : profiles) {
                 try {
+                    // TODO: Since these are loaded from the profile can we safely assume they are conformed?
                     if (this->smart_charging_handler->validate_profile(profile, evse_id) ==
                         ProfileValidationResultEnum::Valid) {
                         this->smart_charging_handler->add_profile(profile, evse_id);

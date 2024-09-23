@@ -233,7 +233,8 @@ void SmartChargingHandler::delete_transaction_tx_profiles(const std::string& tra
     }
 }
 
-SetChargingProfileResponse SmartChargingHandler::validate_and_add_profile(ChargingProfile& profile, int32_t evse_id,
+SetChargingProfileResponse SmartChargingHandler::validate_and_add_profile(const ChargingProfile& profile,
+                                                                          int32_t evse_id,
                                                                           AddChargingProfileSource source_of_request) {
     SetChargingProfileResponse response;
     response.status = ChargingProfileStatusEnum::Rejected;
@@ -261,7 +262,7 @@ ChargingProfile SmartChargingHandler::conform_profile(const ChargingProfile& pro
     return conformed_profile;
 }
 
-ProfileValidationResultEnum SmartChargingHandler::validate_profile(ChargingProfile& profile, int32_t evse_id,
+ProfileValidationResultEnum SmartChargingHandler::validate_profile(const ChargingProfile& profile, int32_t evse_id,
                                                                    AddChargingProfileSource source_of_request) {
 
     auto result = ProfileValidationResultEnum::Valid;
@@ -272,8 +273,6 @@ ProfileValidationResultEnum SmartChargingHandler::validate_profile(ChargingProfi
             return result;
         }
     }
-
-    conform_validity_periods(profile);
 
     if (evse_id != STATION_WIDE_ID) {
         result = this->validate_evse_exists(evse_id);
@@ -344,7 +343,7 @@ ProfileValidationResultEnum SmartChargingHandler::validate_charging_station_max_
     return ProfileValidationResultEnum::Valid;
 }
 
-ProfileValidationResultEnum SmartChargingHandler::validate_tx_default_profile(ChargingProfile& profile,
+ProfileValidationResultEnum SmartChargingHandler::validate_tx_default_profile(const ChargingProfile& profile,
                                                                               int32_t evse_id) const {
     auto profiles = evse_id == 0 ? get_evse_specific_tx_default_profiles() : get_station_wide_tx_default_profiles();
 
@@ -418,7 +417,7 @@ SmartChargingHandler::validate_tx_profile(const ChargingProfile& profile, int32_
  */
 
 ProfileValidationResultEnum
-SmartChargingHandler::validate_profile_schedules(ChargingProfile& profile,
+SmartChargingHandler::validate_profile_schedules(const ChargingProfile& profile,
                                                  std::optional<EvseInterface*> evse_opt) const {
     auto charging_station_supply_phases =
         this->device_model->get_value<int32_t>(ControllerComponentVariables::ChargingStationSupplyPhases);
@@ -479,11 +478,6 @@ SmartChargingHandler::validate_profile_schedules(ChargingProfile& profile,
                     charging_schedule_period.numberPhases > charging_station_supply_phases) {
                     return ProfileValidationResultEnum::ChargingSchedulePeriodUnsupportedNumberPhases;
                 }
-
-                // K01.FR.49
-                if (!charging_schedule_period.numberPhases.has_value()) {
-                    charging_schedule_period.numberPhases.emplace(DEFAULT_AND_MAX_NUMBER_PHASES);
-                }
             }
         }
 
@@ -508,7 +502,7 @@ SmartChargingHandler::validate_request_start_transaction_profile(const ChargingP
     return ProfileValidationResultEnum::Valid;
 }
 
-SetChargingProfileResponse SmartChargingHandler::add_profile(ChargingProfile& profile, int32_t evse_id) {
+SetChargingProfileResponse SmartChargingHandler::add_profile(const ChargingProfile& profile, int32_t evse_id) {
     SetChargingProfileResponse response;
     response.status = ChargingProfileStatusEnum::Accepted;
 
@@ -684,11 +678,6 @@ bool SmartChargingHandler::is_overlapping_validity_period(const ChargingProfile&
     };
 
     return std::any_of(charging_profiles.begin(), charging_profiles.end(), conflicts_with);
-}
-
-void SmartChargingHandler::conform_validity_periods(ChargingProfile& profile) const {
-    profile.validFrom = profile.validFrom.value_or(ocpp::DateTime());
-    profile.validTo = profile.validTo.value_or(ocpp::DateTime(date::utc_clock::time_point::max()));
 }
 
 ChargingProfile SmartChargingHandler::conform_profile_validity_periods(const ChargingProfile& profile) const {
