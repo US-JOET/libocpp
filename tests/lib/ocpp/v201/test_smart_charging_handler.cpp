@@ -9,6 +9,7 @@
 #include "ocpp/v201/device_model_storage_sqlite.hpp"
 #include "ocpp/v201/init_device_model_db.hpp"
 #include "ocpp/v201/ocpp_types.hpp"
+#include "gmock/gmock.h"
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <filesystem>
@@ -827,7 +828,7 @@ TEST_F(SmartChargingHandlerTestFixtureV201,
     EXPECT_THAT(numberPhases, testing::Eq(3));
 }
 
-TEST_F(SmartChargingHandlerTestFixtureV201, K01FR06_ExistingProfileLastsForever_RejectIncoming) {
+TEST_F(SmartChargingHandlerTestFixtureV201, 2_10_ChargingProfileType_validFrom_SetIfBlank) {
     install_profile_on_evse(DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID, ocpp::DateTime(date::utc_clock::time_point::min()),
                             ocpp::DateTime(date::utc_clock::time_point::max()));
 
@@ -835,28 +836,24 @@ TEST_F(SmartChargingHandlerTestFixtureV201, K01FR06_ExistingProfileLastsForever_
     auto profile = create_charging_profile(
         DEFAULT_PROFILE_ID + 1, ChargingProfilePurposeEnum::TxDefaultProfile,
         create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")), {},
-        ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL, ocpp::DateTime("2024-01-02T13:00:00"),
-        ocpp::DateTime("2024-03-01T13:00:00"));
+        ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL, {}, {});
 
-    auto sut = handler.validate_profile(profile, DEFAULT_EVSE_ID);
+    auto sut = handler.conform_profile(profile, std::nullopt);
 
-    EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::DuplicateProfileValidityPeriod));
-}
+    // Original profile is not modified.
+    EXPECT_THAT(profile.validFrom.has_value(), testing::IsFalse());
+    EXPECT_THAT(profile.validTo.has_value(), testing::IsFalse());
 
-TEST_F(SmartChargingHandlerTestFixtureV201,
-       K01FR06_ExisitingProfileHasValidFromIncomingValidToOverlaps_RejectIncoming) {
-    install_profile_on_evse(DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID, ocpp::DateTime("2024-01-01T13:00:00"),
-                            ocpp::DateTime(date::utc_clock::time_point::max()));
+    EXPECT_THAT(sut.validFrom.has_value(), testing::IsTrue());
 
-    auto periods = create_charging_schedule_periods(0);
-    auto profile = create_charging_profile(
-        DEFAULT_PROFILE_ID + 1, ChargingProfilePurposeEnum::TxDefaultProfile,
-        create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")), {},
-        ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL, {}, ocpp::DateTime("2024-01-01T13:00:00"));
+    // Check that up to minutes is corret to avoid flakyness
+    auto now = std::string(ocpp::DateTime()).substr(0, 15);
+    auto profile_valid_from = std::string(sut.validFrom.value()).substr(0, 15);
 
-    auto sut = handler.validate_profile(profile, DEFAULT_EVSE_ID);
+    EXPECT_THAT(profile_valid_from, testing::Eq(now));
 
-    EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::DuplicateProfileValidityPeriod));
+    EXPECT_THAT(sut.validTo.has_value(), testing::IsTrue());
+    EXPECT_THAT(sut.validTo.value(), testing::Eq(ocpp::DateTime(date::utc_clock::time_point::max())));
 }
 
 TEST_F(SmartChargingHandlerTestFixtureV201,

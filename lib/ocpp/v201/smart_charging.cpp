@@ -256,6 +256,7 @@ ChargingProfile SmartChargingHandler::conform_profile(const ChargingProfile& pro
     ChargingProfile conformed_profile = profile;
 
     conformed_profile = conform_schedule_number_phases(profile, evse_opt);
+    conformed_profile = conform_profile_validity_periods(conformed_profile);
 
     return conformed_profile;
 }
@@ -688,6 +689,23 @@ bool SmartChargingHandler::is_overlapping_validity_period(const ChargingProfile&
 void SmartChargingHandler::conform_validity_periods(ChargingProfile& profile) const {
     profile.validFrom = profile.validFrom.value_or(ocpp::DateTime());
     profile.validTo = profile.validTo.value_or(ocpp::DateTime(date::utc_clock::time_point::max()));
+}
+
+ChargingProfile SmartChargingHandler::conform_profile_validity_periods(const ChargingProfile& profile) const {
+    ChargingProfile conformed_profile = profile;
+    if (!conformed_profile.validFrom.has_value()) {
+        auto validFrom = ocpp::DateTime();
+        EVLOG_debug << "Conforming profile: " << profile.id << " added validFrom as " << validFrom;
+        conformed_profile.validFrom = validFrom;
+    }
+
+    if (!conformed_profile.validTo.has_value()) {
+        auto validTo = ocpp::DateTime(date::utc_clock::time_point::max());
+        EVLOG_debug << "Conforming profile: " << profile.id << " added validFrom as " << validTo;
+        conformed_profile.validTo = validTo;
+    }
+
+    return conformed_profile;
 }
 
 ChargingProfile SmartChargingHandler::conform_schedule_number_phases(const ChargingProfile& profile,

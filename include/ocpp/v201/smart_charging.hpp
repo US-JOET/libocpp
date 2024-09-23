@@ -4,6 +4,7 @@
 #ifndef OCPP_V201_SMART_CHARGING_HPP
 #define OCPP_V201_SMART_CHARGING_HPP
 
+#include "ocpp/common/types.hpp"
 #include <limits>
 #include <memory>
 
@@ -246,6 +247,7 @@ private:
     std::vector<ChargingProfile> get_station_wide_tx_default_profiles() const;
     std::vector<ChargingProfile> get_valid_profiles_for_evse(int32_t evse_id);
     void conform_validity_periods(ChargingProfile& profile) const;
+    ChargingProfile conform_profile_validity_periods(const ChargingProfile& profile) const;
     ChargingProfile conform_schedule_number_phases(const ChargingProfile& profile,
                                                    std::optional<EvseInterface*> evse_opt) const;
     CurrentPhaseType get_current_phase_type(const std::optional<EvseInterface*> evse_opt) const;
