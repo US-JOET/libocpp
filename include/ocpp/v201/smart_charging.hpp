@@ -90,6 +90,8 @@ public:
 
     virtual void delete_transaction_tx_profiles(const std::string& transaction_id) = 0;
 
+    virtual ChargingProfile conform_profile(const ChargingProfile&, std::optional<EvseInterface*> evse_opt) = 0;
+
     virtual ProfileValidationResultEnum
     validate_profile(ChargingProfile& profile, int32_t evse_id,
                      AddChargingProfileSource source_of_request = AddChargingProfileSource::SetChargingProfile) = 0;
@@ -135,6 +137,14 @@ public:
     SetChargingProfileResponse validate_and_add_profile(
         ChargingProfile& profile, int32_t evse_id,
         AddChargingProfileSource source_of_request = AddChargingProfileSource::SetChargingProfile) override;
+
+    ///
+    /// \brief sets attributes of the given \p profile according to the specification.
+    /// 2.10. ChargingProfileType validFrom if absetent set to current date
+    /// 2.10. ChargingProfileType validTo if absetent set to max date
+    /// 2.11. ChargingSchedulePeriodType if absetent numberPhases set to 3
+    ///
+    ChargingProfile conform_profile(const ChargingProfile& profile, std::optional<EvseInterface*> evse_opt) override;
 
     ///
     /// \brief validates the given \p profile according to the specification.
@@ -236,6 +246,8 @@ private:
     std::vector<ChargingProfile> get_station_wide_tx_default_profiles() const;
     std::vector<ChargingProfile> get_valid_profiles_for_evse(int32_t evse_id);
     void conform_validity_periods(ChargingProfile& profile) const;
+    ChargingProfile conform_schedule_number_phases(const ChargingProfile& profile,
+                                                   std::optional<EvseInterface*> evse_opt) const;
     CurrentPhaseType get_current_phase_type(const std::optional<EvseInterface*> evse_opt) const;
 };
 

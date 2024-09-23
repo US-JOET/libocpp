@@ -250,6 +250,16 @@ SetChargingProfileResponse SmartChargingHandler::validate_and_add_profile(Chargi
     return response;
 }
 
+ChargingProfile SmartChargingHandler::conform_profile(const ChargingProfile& profile,
+                                                      std::optional<EvseInterface*> evse_opt) {
+
+    ChargingProfile conformed_profile = profile;
+
+    conformed_profile = conform_schedule_number_phases(profile, evse_opt);
+
+    return conformed_profile;
+}
+
 ProfileValidationResultEnum SmartChargingHandler::validate_profile(ChargingProfile& profile, int32_t evse_id,
                                                                    AddChargingProfileSource source_of_request) {
 
@@ -365,8 +375,8 @@ SmartChargingHandler::validate_tx_profile(const ChargingProfile& profile, int32_
         return result;
     }
 
-    // we can return valid here since the following checks verify the transactionId which is not given if the source is
-    // RequestStartTransactionRequest
+    // we can return valid here since the following checks verify the transactionId which is not given if the source
+    // is RequestStartTransactionRequest
     if (source_of_request == AddChargingProfileSource::RequestStartTransactionRequest) {
         return ProfileValidationResultEnum::Valid;
     }
@@ -678,6 +688,33 @@ bool SmartChargingHandler::is_overlapping_validity_period(const ChargingProfile&
 void SmartChargingHandler::conform_validity_periods(ChargingProfile& profile) const {
     profile.validFrom = profile.validFrom.value_or(ocpp::DateTime());
     profile.validTo = profile.validTo.value_or(ocpp::DateTime(date::utc_clock::time_point::max()));
+}
+
+ChargingProfile SmartChargingHandler::conform_schedule_number_phases(const ChargingProfile& profile,
+                                                                     std::optional<EvseInterface*> evse_opt) const {
+
+    ChargingProfile conformed_profile = profile;
+
+    auto charging_station_supply_phases =
+        this->device_model->get_value<int32_t>(ControllerComponentVariables::ChargingStationSupplyPhases);
+
+    for (auto& schedule : conformed_profile.chargingSchedule) {
+        for (auto i = 0; i < schedule.chargingSchedulePeriod.size(); i++) {
+            auto& charging_schedule_period = schedule.chargingSchedulePeriod[i];
+
+            auto phase_type = this->get_current_phase_type(evse_opt);
+
+            if (phase_type == CurrentPhaseType::AC) {
+                // K01.FR.49
+                EVLOG_debug << "Conforming profile: " << profile.id << " added number phase as "
+                            << DEFAULT_AND_MAX_NUMBER_PHASES;
+                if (!charging_schedule_period.numberPhases.has_value()) {
+                    charging_schedule_period.numberPhases.emplace(DEFAULT_AND_MAX_NUMBER_PHASES);
+                }
+            }
+        }
+    }
+    return conformed_profile;
 }
 
 ProfileValidationResultEnum

@@ -802,11 +802,10 @@ TEST_F(SmartChargingHandlerTestFixtureV201, K01FR49_IfNumberPhasesMissingForACEV
         DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
         create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")), DEFAULT_TX_ID);
 
-    auto sut = handler.validate_profile_schedules(profile, &mock_evse);
+    auto sut = handler.conform_profile(profile, &mock_evse);
 
-    auto numberPhases = profile.chargingSchedule[0].chargingSchedulePeriod[0].numberPhases;
+    auto numberPhases = sut.chargingSchedule[0].chargingSchedulePeriod[0].numberPhases;
 
-    EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::Valid));
     EXPECT_THAT(numberPhases, testing::Eq(3));
 }
 
@@ -821,11 +820,10 @@ TEST_F(SmartChargingHandlerTestFixtureV201,
         DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
         create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")), DEFAULT_TX_ID);
 
-    auto sut = handler.validate_profile_schedules(profile, std::nullopt);
+    auto sut = handler.conform_profile(profile, std::nullopt);
 
-    auto numberPhases = profile.chargingSchedule[0].chargingSchedulePeriod[0].numberPhases;
+    auto numberPhases = sut.chargingSchedule[0].chargingSchedulePeriod[0].numberPhases;
 
-    EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::Valid));
     EXPECT_THAT(numberPhases, testing::Eq(3));
 }
 

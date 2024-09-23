@@ -13,6 +13,7 @@ class SmartChargingHandlerMock : public SmartChargingHandlerInterface {
 public:
     MOCK_METHOD(SetChargingProfileResponse, validate_and_add_profile,
                 (ChargingProfile & profile, int32_t evse_id, AddChargingProfileSource source_of_request));
+    MOCK_METHOD(ChargingProfile, conform_profile, (const ChargingProfile&, std::optional<EvseInterface*>));
     MOCK_METHOD(ProfileValidationResultEnum, validate_profile,
                 (ChargingProfile & profile, int32_t evse_id, AddChargingProfileSource source_of_request));
     MOCK_METHOD(void, delete_transaction_tx_profiles, (const std::string& transaction_id));
