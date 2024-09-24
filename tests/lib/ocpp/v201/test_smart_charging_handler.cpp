@@ -251,7 +251,7 @@ protected:
         auto profile = create_charging_profile(
             profile_id, ChargingProfilePurposeEnum::TxDefaultProfile,
             create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")));
-        auto response = handler.validate_and_add_profile(profile, evse_id);
+        auto response = handler.conform_validate_and_add_profile(profile, evse_id);
         if (response.status == ChargingProfileStatusEnum::Accepted) {
             return profile;
         } else {
@@ -840,7 +840,7 @@ TEST_F(SmartChargingHandlerTestFixtureV201, K01FR06_ExistingProfileLastsForever_
         ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL, ocpp::DateTime("2024-01-02T13:00:00"),
         ocpp::DateTime("2024-03-01T13:00:00"));
 
-    auto sut = handler.validate_profile(profile, DEFAULT_EVSE_ID);
+    auto sut = handler.conform_and_validate_profile(profile, DEFAULT_EVSE_ID);
 
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::DuplicateProfileValidityPeriod));
 }
@@ -856,7 +856,7 @@ TEST_F(SmartChargingHandlerTestFixtureV201,
         create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")), {},
         ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL, {}, ocpp::DateTime("2024-01-01T13:00:00"));
 
-    auto sut = handler.validate_profile(profile, DEFAULT_EVSE_ID);
+    auto sut = handler.conform_and_validate_profile(profile, DEFAULT_EVSE_ID);
 
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::DuplicateProfileValidityPeriod));
 }
@@ -872,7 +872,7 @@ TEST_F(SmartChargingHandlerTestFixtureV201,
         create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")), {},
         ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL, ocpp::DateTime("2024-01-31T13:00:00"), {});
 
-    auto sut = handler.validate_profile(profile, DEFAULT_EVSE_ID);
+    auto sut = handler.conform_and_validate_profile(profile, DEFAULT_EVSE_ID);
 
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::DuplicateProfileValidityPeriod));
 }
@@ -888,7 +888,7 @@ TEST_F(SmartChargingHandlerTestFixtureV201, K01FR06_ExisitingProfileHasValidPeri
         create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")), {},
         ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL, {}, {});
 
-    auto sut = handler.validate_profile(profile, DEFAULT_EVSE_ID);
+    auto sut = handler.conform_and_validate_profile(profile, DEFAULT_EVSE_ID);
 
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::DuplicateProfileValidityPeriod));
 }
@@ -904,7 +904,7 @@ TEST_F(SmartChargingHandlerTestFixtureV201, K01FR06_ExisitingProfileHasValidPeri
         ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL, ocpp::DateTime("2024-01-15T13:00:00"),
         ocpp::DateTime("2024-02-01T13:00:00"));
 
-    auto sut = handler.validate_profile(profile, DEFAULT_EVSE_ID);
+    auto sut = handler.conform_and_validate_profile(profile, DEFAULT_EVSE_ID);
 
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::DuplicateProfileValidityPeriod));
 }
@@ -913,7 +913,7 @@ TEST_F(SmartChargingHandlerTestFixtureV201, K01_ValidateProfile_IfEvseDoesNotExi
     auto profile = create_charging_profile(DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
                                            create_charge_schedule(ChargingRateUnitEnum::A), DEFAULT_TX_ID);
 
-    auto sut = handler.validate_profile(profile, NR_OF_EVSES + 1);
+    auto sut = handler.conform_and_validate_profile(profile, NR_OF_EVSES + 1);
 
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::EvseDoesNotExist));
 }
@@ -926,7 +926,7 @@ TEST_F(SmartChargingHandlerTestFixtureV201, K01_ValidateProfile_IfScheduleIsInva
                                 create_charge_schedule(ChargingRateUnitEnum::A, periods, extraneous_start_schedule),
                                 DEFAULT_TX_ID, ChargingProfileKindEnum::Relative, 1);
 
-    auto sut = handler.validate_profile(profile, DEFAULT_EVSE_ID);
+    auto sut = handler.conform_and_validate_profile(profile, DEFAULT_EVSE_ID);
 
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::ChargingProfileExtraneousStartSchedule));
 }
@@ -938,7 +938,7 @@ TEST_F(SmartChargingHandlerTestFixtureV201,
         DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::ChargingStationMaxProfile,
         create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")));
 
-    auto sut = handler.validate_profile(profile, DEFAULT_EVSE_ID);
+    auto sut = handler.conform_and_validate_profile(profile, DEFAULT_EVSE_ID);
 
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::ChargingStationMaxProfileEvseIdGreaterThanZero));
 }
@@ -953,7 +953,7 @@ TEST_F(SmartChargingHandlerTestFixtureV201,
                                            create_charge_schedule(ChargingRateUnitEnum::A, periods), {},
                                            ChargingProfileKindEnum::Relative, DEFAULT_STACK_LEVEL);
 
-    auto sut = handler.validate_profile(profile, STATION_WIDE_ID);
+    auto sut = handler.conform_and_validate_profile(profile, STATION_WIDE_ID);
 
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::DuplicateTxDefaultProfileFound));
 }
@@ -968,7 +968,7 @@ TEST_F(SmartChargingHandlerTestFixtureV201,
                                            create_charge_schedule(ChargingRateUnitEnum::A, periods), {},
                                            ChargingProfileKindEnum::Relative, DEFAULT_STACK_LEVEL);
 
-    auto sut = handler.validate_profile(profile, DEFAULT_EVSE_ID);
+    auto sut = handler.conform_and_validate_profile(profile, DEFAULT_EVSE_ID);
 
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::DuplicateTxDefaultProfileFound));
 }
@@ -978,7 +978,7 @@ TEST_F(SmartChargingHandlerTestFixtureV201, K01_ValidateProfile_IfTxProfileIsInv
     auto profile = create_charging_profile(
         DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
         create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")));
-    auto sut = handler.validate_profile(profile, DEFAULT_EVSE_ID);
+    auto sut = handler.conform_and_validate_profile(profile, DEFAULT_EVSE_ID);
 
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::TxProfileMissingTransactionId));
 }
@@ -991,7 +991,7 @@ TEST_F(SmartChargingHandlerTestFixtureV201, K01_ValidateProfile_IfTxProfileIsVal
     auto profile = create_charging_profile(
         DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
         create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")), DEFAULT_TX_ID);
-    auto sut = handler.validate_profile(profile, DEFAULT_EVSE_ID);
+    auto sut = handler.conform_and_validate_profile(profile, DEFAULT_EVSE_ID);
 
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::Valid));
 }
@@ -1002,7 +1002,7 @@ TEST_F(SmartChargingHandlerTestFixtureV201, K01_ValidateProfile_IfTxDefaultProfi
     auto profile = create_charging_profile(
         DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxDefaultProfile,
         create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")));
-    auto sut = handler.validate_profile(profile, DEFAULT_EVSE_ID);
+    auto sut = handler.conform_and_validate_profile(profile, DEFAULT_EVSE_ID);
 
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::Valid));
 }
@@ -1013,7 +1013,7 @@ TEST_F(SmartChargingHandlerTestFixtureV201, K01_ValidateProfile_IfChargeStationM
         DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::ChargingStationMaxProfile,
         create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")));
 
-    auto sut = handler.validate_profile(profile, STATION_WIDE_ID);
+    auto sut = handler.conform_and_validate_profile(profile, STATION_WIDE_ID);
 
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::Valid));
 }
@@ -1030,7 +1030,7 @@ TEST_F(
     auto profile = create_charging_profile(
         DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxDefaultProfile,
         create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")));
-    auto sut = handler.validate_profile(profile, STATION_WIDE_ID);
+    auto sut = handler.conform_and_validate_profile(profile, STATION_WIDE_ID);
 
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::ExistingChargingStationExternalConstraints));
 }
@@ -1238,7 +1238,7 @@ TEST_F(SmartChargingHandlerTestFixtureV201, K01_ValidateAndAdd_RejectsInvalidPro
         DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
         create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")));
 
-    auto sut = handler.validate_and_add_profile(profile, DEFAULT_EVSE_ID);
+    auto sut = handler.conform_validate_and_add_profile(profile, DEFAULT_EVSE_ID);
     auto status_info = sut.statusInfo;
     EXPECT_THAT(sut.status, testing::Eq(ChargingProfileStatusEnum::Rejected));
     EXPECT_THAT(status_info->reasonCode.get(), testing::Eq(conversions::profile_validation_result_to_reason_code(
@@ -1261,7 +1261,7 @@ TEST_F(SmartChargingHandlerTestFixtureV201, K01_ValidateAndAdd_AddsValidProfiles
         DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
         create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")), DEFAULT_TX_ID);
 
-    auto sut = handler.validate_and_add_profile(profile, DEFAULT_EVSE_ID);
+    auto sut = handler.conform_validate_and_add_profile(profile, DEFAULT_EVSE_ID);
     EXPECT_THAT(sut.status, testing::Eq(ChargingProfileStatusEnum::Accepted));
     EXPECT_THAT(sut.statusInfo.has_value(), testing::IsFalse());
 
@@ -1279,8 +1279,8 @@ TEST_F(SmartChargingHandlerTestFixtureV201, K09_GetChargingProfiles_EvseId) {
         2, ChargingProfilePurposeEnum::TxDefaultProfile,
         create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")));
 
-    auto sut1 = handler.validate_and_add_profile(profile1, STATION_WIDE_ID);
-    auto sut2 = handler.validate_and_add_profile(profile2, DEFAULT_EVSE_ID);
+    auto sut1 = handler.conform_validate_and_add_profile(profile1, STATION_WIDE_ID);
+    auto sut2 = handler.conform_validate_and_add_profile(profile2, DEFAULT_EVSE_ID);
 
     auto profiles = handler.get_profiles();
     EXPECT_THAT(profiles, testing::SizeIs(2));
@@ -1310,8 +1310,8 @@ TEST_F(SmartChargingHandlerTestFixtureV201, K09_GetChargingProfiles_NoEvseId) {
         2, ChargingProfilePurposeEnum::TxDefaultProfile,
         create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")));
 
-    auto sut1 = handler.validate_and_add_profile(profile1, STATION_WIDE_ID);
-    auto sut2 = handler.validate_and_add_profile(profile2, DEFAULT_EVSE_ID);
+    auto sut1 = handler.conform_validate_and_add_profile(profile1, STATION_WIDE_ID);
+    auto sut2 = handler.conform_validate_and_add_profile(profile2, DEFAULT_EVSE_ID);
 
     auto profiles = handler.get_profiles();
     EXPECT_THAT(profiles, testing::SizeIs(2));
@@ -1334,8 +1334,8 @@ TEST_F(SmartChargingHandlerTestFixtureV201, K09_GetChargingProfiles_ProfileId) {
         2, ChargingProfilePurposeEnum::TxDefaultProfile,
         create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")));
 
-    auto sut1 = handler.validate_and_add_profile(profile1, STATION_WIDE_ID);
-    auto sut2 = handler.validate_and_add_profile(profile2, DEFAULT_EVSE_ID);
+    auto sut1 = handler.conform_validate_and_add_profile(profile1, STATION_WIDE_ID);
+    auto sut2 = handler.conform_validate_and_add_profile(profile2, DEFAULT_EVSE_ID);
 
     auto profiles = handler.get_profiles();
     EXPECT_THAT(profiles, testing::SizeIs(2));
@@ -1360,8 +1360,8 @@ TEST_F(SmartChargingHandlerTestFixtureV201, K09_GetChargingProfiles_EvseIdAndSta
         create_charge_schedule(ChargingRateUnitEnum::A, periods,
                                ocpp::DateTime("2024-01-17T17:00:00"))); // contains default stackLevel(1)
 
-    auto sut1 = handler.validate_and_add_profile(profile1, STATION_WIDE_ID);
-    auto sut2 = handler.validate_and_add_profile(profile2, DEFAULT_EVSE_ID);
+    auto sut1 = handler.conform_validate_and_add_profile(profile1, STATION_WIDE_ID);
+    auto sut2 = handler.conform_validate_and_add_profile(profile2, DEFAULT_EVSE_ID);
 
     auto profiles = handler.get_profiles();
     EXPECT_THAT(profiles, testing::SizeIs(2));
@@ -1381,7 +1381,7 @@ TEST_F(SmartChargingHandlerTestFixtureV201, K09_GetChargingProfiles_EvseIdAndSou
         DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxDefaultProfile,
         create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")));
 
-    auto sut1 = handler.validate_and_add_profile(profile, DEFAULT_EVSE_ID);
+    auto sut1 = handler.conform_validate_and_add_profile(profile, DEFAULT_EVSE_ID);
 
     auto profiles = handler.get_profiles();
     EXPECT_THAT(profiles, testing::SizeIs(1));
@@ -1410,8 +1410,8 @@ TEST_F(SmartChargingHandlerTestFixtureV201, K09_GetChargingProfiles_EvseIdAndPur
         2, ChargingProfilePurposeEnum::TxDefaultProfile,
         create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")));
 
-    auto sut1 = handler.validate_and_add_profile(profile1, STATION_WIDE_ID);
-    auto sut2 = handler.validate_and_add_profile(profile2, DEFAULT_EVSE_ID);
+    auto sut1 = handler.conform_validate_and_add_profile(profile1, STATION_WIDE_ID);
+    auto sut2 = handler.conform_validate_and_add_profile(profile2, DEFAULT_EVSE_ID);
 
     auto profiles = handler.get_profiles();
     EXPECT_THAT(profiles, testing::SizeIs(2));
@@ -1438,7 +1438,7 @@ TEST_F(SmartChargingHandlerTestFixtureV201, K10_ClearChargingProfile_ClearsId) {
     auto profile = create_charging_profile(
         DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::ChargingStationMaxProfile,
         create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")));
-    handler.validate_and_add_profile(profile, STATION_WIDE_ID);
+    handler.conform_validate_and_add_profile(profile, STATION_WIDE_ID);
 
     auto profiles = handler.get_profiles();
     EXPECT_THAT(profiles, testing::Contains(profile));
@@ -1486,7 +1486,7 @@ TEST_F(SmartChargingHandlerTestFixtureV201, K10_ClearChargingProfile_UnknownId) 
     auto profile = create_charging_profile(
         DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::ChargingStationMaxProfile,
         create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")));
-    handler.validate_and_add_profile(profile, STATION_WIDE_ID);
+    handler.conform_validate_and_add_profile(profile, STATION_WIDE_ID);
 
     auto profiles = handler.get_profiles();
     EXPECT_THAT(profiles, testing::Contains(profile));
@@ -1571,7 +1571,7 @@ TEST_F(SmartChargingHandlerTestFixtureV201, K02FR05_SmartChargingTransactionEnds
                                                                   ocpp::DateTime("2024-01-17T17:00:00")),
                                            transaction_id);
 
-    auto response = handler.validate_and_add_profile(profile, DEFAULT_EVSE_ID);
+    auto response = handler.conform_validate_and_add_profile(profile, DEFAULT_EVSE_ID);
     ASSERT_THAT(response.status, testing::Eq(ChargingProfileStatusEnum::Accepted));
 
     handler.delete_transaction_tx_profiles(transaction_id);
@@ -1592,7 +1592,7 @@ TEST_F(SmartChargingHandlerTestFixtureV201,
                                                                   ocpp::DateTime("2024-01-17T17:00:00")),
                                            other_transaction_id);
 
-    auto response = handler.validate_and_add_profile(profile, DEFAULT_EVSE_ID);
+    auto response = handler.conform_validate_and_add_profile(profile, DEFAULT_EVSE_ID);
     ASSERT_THAT(response.status, testing::Eq(ChargingProfileStatusEnum::Accepted));
 
     handler.delete_transaction_tx_profiles(transaction_id);
@@ -1606,8 +1606,8 @@ TEST_F(SmartChargingHandlerTestFixtureV201, K05FR02_RequestStartTransactionReque
                                                                   create_charging_schedule_periods({0, 1, 2}),
                                                                   ocpp::DateTime("2024-01-17T17:00:00")));
 
-    auto sut =
-        handler.validate_profile(profile, DEFAULT_EVSE_ID, AddChargingProfileSource::RequestStartTransactionRequest);
+    auto sut = handler.conform_and_validate_profile(profile, DEFAULT_EVSE_ID,
+                                                    AddChargingProfileSource::RequestStartTransactionRequest);
     ASSERT_THAT(sut, testing::Eq(ProfileValidationResultEnum::RequestStartTransactionNonTxProfile));
 }
 

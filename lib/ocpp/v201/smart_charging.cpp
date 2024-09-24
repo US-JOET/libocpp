@@ -233,12 +233,13 @@ void SmartChargingHandler::delete_transaction_tx_profiles(const std::string& tra
     }
 }
 
-SetChargingProfileResponse SmartChargingHandler::validate_and_add_profile(ChargingProfile& profile, int32_t evse_id,
-                                                                          AddChargingProfileSource source_of_request) {
+SetChargingProfileResponse
+SmartChargingHandler::conform_validate_and_add_profile(ChargingProfile& profile, int32_t evse_id,
+                                                       AddChargingProfileSource source_of_request) {
     SetChargingProfileResponse response;
     response.status = ChargingProfileStatusEnum::Rejected;
 
-    auto result = this->validate_profile(profile, evse_id, source_of_request);
+    auto result = this->conform_and_validate_profile(profile, evse_id, source_of_request);
     if (result == ProfileValidationResultEnum::Valid) {
         response = this->add_profile(profile, evse_id);
     } else {
@@ -250,8 +251,9 @@ SetChargingProfileResponse SmartChargingHandler::validate_and_add_profile(Chargi
     return response;
 }
 
-ProfileValidationResultEnum SmartChargingHandler::validate_profile(ChargingProfile& profile, int32_t evse_id,
-                                                                   AddChargingProfileSource source_of_request) {
+ProfileValidationResultEnum
+SmartChargingHandler::conform_and_validate_profile(ChargingProfile& profile, int32_t evse_id,
+                                                   AddChargingProfileSource source_of_request) {
 
     auto result = ProfileValidationResultEnum::Valid;
 
@@ -333,7 +335,7 @@ ProfileValidationResultEnum SmartChargingHandler::validate_charging_station_max_
     return ProfileValidationResultEnum::Valid;
 }
 
-ProfileValidationResultEnum SmartChargingHandler::validate_tx_default_profile(ChargingProfile& profile,
+ProfileValidationResultEnum SmartChargingHandler::validate_tx_default_profile(const ChargingProfile& profile,
                                                                               int32_t evse_id) const {
     auto profiles = evse_id == 0 ? get_evse_specific_tx_default_profiles() : get_station_wide_tx_default_profiles();
 
@@ -469,10 +471,7 @@ SmartChargingHandler::validate_profile_schedules(ChargingProfile& profile,
                     return ProfileValidationResultEnum::ChargingSchedulePeriodUnsupportedNumberPhases;
                 }
 
-                // K01.FR.49
-                if (!charging_schedule_period.numberPhases.has_value()) {
-                    charging_schedule_period.numberPhases.emplace(DEFAULT_AND_MAX_NUMBER_PHASES);
-                }
+                conform_schedule_number_phases(profile.id, charging_schedule_period);
             }
         }
 
@@ -598,7 +597,7 @@ std::vector<ChargingProfile> SmartChargingHandler::get_valid_profiles_for_evse(i
     if (charging_profiles.count(evse_id) > 0) {
         auto& evse_profiles = this->charging_profiles.at(evse_id);
         for (auto profile : evse_profiles) {
-            if (this->validate_profile(profile, evse_id) == ProfileValidationResultEnum::Valid) {
+            if (this->conform_and_validate_profile(profile, evse_id) == ProfileValidationResultEnum::Valid) {
                 valid_profiles.push_back(profile);
             }
         }
@@ -675,9 +674,35 @@ bool SmartChargingHandler::is_overlapping_validity_period(const ChargingProfile&
     return std::any_of(charging_profiles.begin(), charging_profiles.end(), conflicts_with);
 }
 
+/// \brief sets attributes of the given \p charging_schedule_period according to the specification.
+/// 2.11. ChargingSchedulePeriodType if absent numberPhases set to 3
+void SmartChargingHandler::conform_schedule_number_phases(int32_t profileId,
+                                                          ChargingSchedulePeriod& charging_schedule_period) const {
+    // K01.FR.49
+    if (!charging_schedule_period.numberPhases.has_value()) {
+        EVLOG_debug << "Conforming profile: " << profileId << " added number phase as "
+                    << DEFAULT_AND_MAX_NUMBER_PHASES;
+        charging_schedule_period.numberPhases.emplace(DEFAULT_AND_MAX_NUMBER_PHASES);
+    }
+}
+
+///
+/// \brief sets attributes of the given \p profile according to the specification.
+/// 2.10. ChargingProfileType validFrom if absent set to current date
+/// 2.10. ChargingProfileType validTo if absent set to max date
+///
 void SmartChargingHandler::conform_validity_periods(ChargingProfile& profile) const {
-    profile.validFrom = profile.validFrom.value_or(ocpp::DateTime());
-    profile.validTo = profile.validTo.value_or(ocpp::DateTime(date::utc_clock::time_point::max()));
+    if (!profile.validFrom.has_value()) {
+        auto validFrom = ocpp::DateTime();
+        EVLOG_debug << "Conforming profile: " << profile.id << " added validFrom as " << validFrom;
+        profile.validFrom = validFrom;
+    }
+
+    if (!profile.validTo.has_value()) {
+        auto validTo = ocpp::DateTime(date::utc_clock::time_point::max());
+        EVLOG_debug << "Conforming profile: " << profile.id << " added validTo as " << validTo;
+        profile.validTo = validTo;
+    }
 }
 
 ProfileValidationResultEnum
