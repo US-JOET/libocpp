@@ -327,7 +327,7 @@ private:
     std::unique_ptr<ConnectivityManager> connectivity_manager;
 
     // utility
-    std::shared_ptr<MessageQueue<v201::MessageType>> message_queue;
+    std::shared_ptr<MessageQueueInterface<v201::MessageType, MessageQueue<v201::MessageType>>> message_queue;
     std::shared_ptr<DatabaseHandler> database_handler;
 
     std::map<int32_t, AvailabilityChange> scheduled_change_availability_requests;
@@ -806,10 +806,12 @@ public:
     /// \param message_log_path Path to where logfiles are written to
     /// \param evse_security Pointer to evse_security that manages security related operations
     /// \param callbacks Callbacks that will be registered for ChargePoint
-    ChargePoint(const std::map<int32_t, int32_t>& evse_connector_structure, std::shared_ptr<DeviceModel> device_model,
-                std::shared_ptr<DatabaseHandler> database_handler,
-                std::shared_ptr<MessageQueue<v201::MessageType>> message_queue, const std::string& message_log_path,
-                const std::shared_ptr<EvseSecurity> evse_security, const Callbacks& callbacks);
+    ChargePoint(
+        const std::map<int32_t, int32_t>& evse_connector_structure, std::shared_ptr<DeviceModel> device_model,
+        std::shared_ptr<DatabaseHandler> database_handler,
+        std::shared_ptr<MessageQueueInterface<v201::MessageType, MessageQueue<v201::MessageType>>> message_queue,
+        const std::string& message_log_path, const std::shared_ptr<EvseSecurity> evse_security,
+        const Callbacks& callbacks);
 
     ~ChargePoint();
 

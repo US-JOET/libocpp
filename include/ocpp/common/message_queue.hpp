@@ -164,18 +164,24 @@ bool allowed_to_send_message(const ControlMessage<M>& message, const DateTime& t
     return true;
 }
 
-template <typename M, class T> 
-class MessageQueueInterface {
-    public:
-    virtual ~MessageQueueInterface() {}
+template <typename M, class Derived> class MessageQueueInterface {
+public:
+    virtual ~MessageQueueInterface() {
+    }
     virtual void start() = 0;
     virtual void reset_next_message_to_send() = 0;
     virtual void get_persisted_messages_from_db(bool ignore_security_event_notifications = false) = 0;
-    // virtual template <class T> void push(Call<T> call, const bool stall_until_accepted = false) = 0;
+    template <class T> void push(Call<T> call, const bool stall_until_accepted = false) {
+        static_cast<Derived*>(this)->push(call, stall_until_accepted);
+    }
     virtual void push(const json& message, const bool stall_until_accepted = false) = 0;
-    // virtual template <class T> void push(CallResult<T> call_result) = 0;
+    template <class T> void push(CallResult<T> call_result) {
+        static_cast<Derived*>(this)->push(call_result);
+    }
     virtual void push(CallError call_error) = 0;
-    // virtual template <class T> std::future<EnhancedMessage<M>> push_async(Call<T> call) = 0;
+    template <class T> std::future<EnhancedMessage<M>> push_async(Call<T> call) {
+        static_cast<Derived*>(this)->push_async(call);
+    }
 
     virtual EnhancedMessage<M> receive(std::string_view message) = 0;
     virtual void reset_in_flight() = 0;
@@ -194,12 +200,11 @@ class MessageQueueInterface {
     virtual MessageId createMessageId() = 0;
     virtual void add_stopped_transaction_id(std::string stop_transaction_message_id, int32_t transaction_id) = 0;
     virtual void add_meter_value_message_id(const std::string& start_transaction_message_id,
-                                    const std::string& meter_value_message_id) = 0;
+                                            const std::string& meter_value_message_id) = 0;
     virtual void notify_start_transaction_handled(const std::string& start_transaction_message_id,
-                                          const int32_t transaction_id) = 0;
+                                                  const int32_t transaction_id) = 0;
     virtual M string_to_messagetype(const std::string& s) = 0;
     virtual std::string messagetype_to_string(M m) = 0;
-
 };
 
 /// \brief contains a message queue that makes sure that OCPPs synchronicity requirements are met
@@ -1024,7 +1029,6 @@ public:
     bool contains_stop_transaction_message(const int32_t transaction_id) {
         return false;
     }
-
 
     /// \brief Set transaction_message_attempts to given \p transaction_message_attempts
     void update_transaction_message_attempts(const int transaction_message_attempts) {
