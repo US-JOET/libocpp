@@ -164,8 +164,46 @@ bool allowed_to_send_message(const ControlMessage<M>& message, const DateTime& t
     return true;
 }
 
+template <typename M, class T> 
+class MessageQueueInterface {
+    public:
+    virtual ~MessageQueueInterface() {}
+    virtual void start() = 0;
+    virtual void reset_next_message_to_send() = 0;
+    virtual void get_persisted_messages_from_db(bool ignore_security_event_notifications = false) = 0;
+    // virtual template <class T> void push(Call<T> call, const bool stall_until_accepted = false) = 0;
+    virtual void push(const json& message, const bool stall_until_accepted = false) = 0;
+    // virtual template <class T> void push(CallResult<T> call_result) = 0;
+    virtual void push(CallError call_error) = 0;
+    // virtual template <class T> std::future<EnhancedMessage<M>> push_async(Call<T> call) = 0;
+
+    virtual EnhancedMessage<M> receive(std::string_view message) = 0;
+    virtual void reset_in_flight() = 0;
+    virtual void handle_call_result(EnhancedMessage<M>& enhanced_message) = 0;
+    virtual void handle_timeout_or_callerror(const std::optional<EnhancedMessage<M>>& enhanced_message_opt) = 0;
+    virtual void stop() = 0;
+    virtual void pause() = 0;
+    virtual void resume(std::chrono::seconds delay_on_reconnect) = 0;
+    virtual void set_registration_status_accepted() = 0;
+    virtual bool is_transaction_message_queue_empty() = 0;
+    virtual bool contains_transaction_messages(const CiString<36> transaction_id) = 0;
+    virtual bool contains_stop_transaction_message(const int32_t transaction_id) = 0;
+    virtual void update_transaction_message_attempts(const int transaction_message_attempts) = 0;
+    virtual void update_transaction_message_retry_interval(const int transaction_message_retry_interval) = 0;
+    virtual void update_message_timeout(const int timeout) = 0;
+    virtual MessageId createMessageId() = 0;
+    virtual void add_stopped_transaction_id(std::string stop_transaction_message_id, int32_t transaction_id) = 0;
+    virtual void add_meter_value_message_id(const std::string& start_transaction_message_id,
+                                    const std::string& meter_value_message_id) = 0;
+    virtual void notify_start_transaction_handled(const std::string& start_transaction_message_id,
+                                          const int32_t transaction_id) = 0;
+    virtual M string_to_messagetype(const std::string& s) = 0;
+    virtual std::string messagetype_to_string(M m) = 0;
+
+};
+
 /// \brief contains a message queue that makes sure that OCPPs synchronicity requirements are met
-template <typename M> class MessageQueue {
+template <typename M> class MessageQueue : public MessageQueueInterface<M, MessageQueue<M>> {
 private:
     MessageQueueConfig<M> config;
     std::shared_ptr<ocpp::common::DatabaseHandlerCommon> database_handler;
@@ -980,30 +1018,13 @@ public:
     }
 
     bool contains_transaction_messages(const CiString<36> transaction_id) {
-        std::lock_guard<std::recursive_mutex> lk(this->message_mutex);
-        for (const auto control_message : this->transaction_message_queue) {
-            if (control_message->messageType == v201::MessageType::TransactionEvent) {
-                v201::TransactionEventRequest req = control_message->message.at(CALL_PAYLOAD);
-                if (req.transactionInfo.transactionId == transaction_id) {
-                    return true;
-                }
-            }
-        }
         return false;
     }
 
     bool contains_stop_transaction_message(const int32_t transaction_id) {
-        std::lock_guard<std::recursive_mutex> lk(this->message_mutex);
-        for (const auto control_message : this->transaction_message_queue) {
-            if (control_message->messageType == v16::MessageType::StopTransaction) {
-                v16::StopTransactionRequest req = control_message->message.at(CALL_PAYLOAD);
-                if (req.transactionId == transaction_id) {
-                    return true;
-                }
-            }
-        }
         return false;
     }
+
 
     /// \brief Set transaction_message_attempts to given \p transaction_message_attempts
     void update_transaction_message_attempts(const int transaction_message_attempts) {
