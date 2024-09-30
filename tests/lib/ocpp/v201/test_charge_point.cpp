@@ -131,21 +131,41 @@ public:
         return std::make_shared<DatabaseHandler>(std::move(database_connection), MIGRATION_FILES_LOCATION_V201);
     }
 
-    std::shared_ptr<MessageQueue<v201::MessageType>>
-    create_message_queue(std::shared_ptr<DatabaseHandler>& database_handler) {
-        const auto DEFAULT_MESSAGE_QUEUE_SIZE_THRESHOLD = 2E5;
-        return std::make_shared<ocpp::MessageQueue<v201::MessageType>>(
-            [this](json message) -> bool { return false; },
-            MessageQueueConfig<v201::MessageType>{
-                this->device_model->get_value<int>(ControllerComponentVariables::MessageAttempts),
-                this->device_model->get_value<int>(ControllerComponentVariables::MessageAttemptInterval),
-                this->device_model->get_optional_value<int>(ControllerComponentVariables::MessageQueueSizeThreshold)
-                    .value_or(DEFAULT_MESSAGE_QUEUE_SIZE_THRESHOLD),
-                this->device_model->get_optional_value<bool>(ControllerComponentVariables::QueueAllMessages)
-                    .value_or(false),
-                {},
-                this->device_model->get_value<int>(ControllerComponentVariables::MessageTimeout)},
-            database_handler);
+    class MessageQueueMock : public MessageQueueInterface<v201::MessageType, MessageQueue<v201::MessageType>> {
+    public:
+        MOCK_METHOD(void, start, ());
+        MOCK_METHOD(void, reset_next_message_to_send, ());
+        MOCK_METHOD(void, get_persisted_messages_from_db, (bool ignore_security_event_notifications));
+        MOCK_METHOD(void, push, (const json& message, const bool stall_until_accepted));
+        MOCK_METHOD(void, push, (CallError call_error));
+        MOCK_METHOD(EnhancedMessage<v201::MessageType>, receive, (std::string_view message));
+        MOCK_METHOD(void, reset_in_flight, ());
+        MOCK_METHOD(void, handle_call_result, (EnhancedMessage<v201::MessageType> & enhanced_message));
+        MOCK_METHOD(void, handle_timeout_or_callerror,
+                    (const std::optional<EnhancedMessage<v201::MessageType>>& enhanced_message_opt));
+        MOCK_METHOD(void, stop, ());
+        MOCK_METHOD(void, pause, ());
+        MOCK_METHOD(void, resume, (std::chrono::seconds delay_on_reconnect));
+        MOCK_METHOD(void, set_registration_status_accepted, ());
+        MOCK_METHOD(bool, is_transaction_message_queue_empty, ());
+        MOCK_METHOD(bool, contains_transaction_messages, (const CiString<36> transaction_id));
+        MOCK_METHOD(bool, contains_stop_transaction_message, (const int32_t transaction_id));
+        MOCK_METHOD(void, update_transaction_message_attempts, (const int transaction_message_attempts));
+        MOCK_METHOD(void, update_transaction_message_retry_interval, (const int transaction_message_retry_interval));
+        MOCK_METHOD(void, update_message_timeout, (const int timeout));
+        MOCK_METHOD(MessageId, createMessageId, ());
+        MOCK_METHOD(void, add_stopped_transaction_id,
+                    (std::string stop_transaction_message_id, int32_t transaction_id));
+        MOCK_METHOD(void, add_meter_value_message_id,
+                    (const std::string& start_transaction_message_id, const std::string& meter_value_message_id));
+        MOCK_METHOD(void, notify_start_transaction_handled,
+                    (const std::string& start_transaction_message_id, const int32_t transaction_id));
+        MOCK_METHOD(v201::MessageType, string_to_messagetype, (const std::string& s));
+        MOCK_METHOD(std::string, messagetype_to_string, (v201::MessageType m));
+    };
+
+    std::shared_ptr<MessageQueueMock> create_message_queue(std::shared_ptr<DatabaseHandler>& database_handler) {
+        return std::make_shared<MessageQueueMock>();
     }
 
     void configure_callbacks_with_mocks() {
@@ -578,11 +598,12 @@ public:
     using ChargePoint::handle_message;
     using ChargePoint::smart_charging_handler;
 
-    TestChargePoint(const std::map<int32_t, int32_t>& evse_connector_structure,
-                    std::shared_ptr<DeviceModel> device_model, std::shared_ptr<DatabaseHandler> database_handler,
-                    std::shared_ptr<MessageQueue<v201::MessageType>> message_queue, const std::string& message_log_path,
-                    const std::shared_ptr<EvseSecurity> evse_security, const Callbacks& callbacks,
-                    std::shared_ptr<SmartChargingHandlerInterface> smart_charging_handler) :
+    TestChargePoint(
+        const std::map<int32_t, int32_t>& evse_connector_structure, std::shared_ptr<DeviceModel> device_model,
+        std::shared_ptr<DatabaseHandler> database_handler,
+        std::shared_ptr<MessageQueueInterface<v201::MessageType, MessageQueue<v201::MessageType>>> message_queue,
+        const std::string& message_log_path, const std::shared_ptr<EvseSecurity> evse_security,
+        const Callbacks& callbacks, std::shared_ptr<SmartChargingHandlerInterface> smart_charging_handler) :
         ChargePoint(evse_connector_structure, device_model, database_handler, message_queue, message_log_path,
                     evse_security, callbacks) {
         this->smart_charging_handler = smart_charging_handler;
