@@ -171,8 +171,11 @@ public:
     virtual void start() = 0;
     virtual void reset_next_message_to_send() = 0;
     virtual void get_persisted_messages_from_db(bool ignore_security_event_notifications = false) = 0;
+
+    /// \brief pushes a new \p call message onto the message queue
     template <class T> void push(Call<T> call, const bool stall_until_accepted = false) {
-        static_cast<Derived*>(this)->push(call, stall_until_accepted);
+        json call_json = call;
+        this->push(call_json, stall_until_accepted);
     }
     virtual void push(const json& message, const bool stall_until_accepted = false) = 0;
     template <class T> void push(CallResult<T> call_result) {
@@ -670,16 +673,7 @@ public:
         }
     }
 
-    /// \brief pushes a new \p call message onto the message queue
-    template <class T> void push(Call<T> call, const bool stall_until_accepted = false) {
-        if (!running) {
-            return;
-        }
-        json call_json = call;
-        push(call_json, stall_until_accepted);
-    }
-
-    void push(const json& message, const bool stall_until_accepted = false) {
+    void push(const json& message, const bool stall_until_accepted = false) override {
         if (!running) {
             return;
         }
