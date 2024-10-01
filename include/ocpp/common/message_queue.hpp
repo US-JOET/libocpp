@@ -164,7 +164,7 @@ bool allowed_to_send_message(const ControlMessage<M>& message, const DateTime& t
     return true;
 }
 
-template <typename M, class Derived> class MessageQueueInterface {
+template <typename M, typename Derived> class MessageQueueInterface {
 public:
     virtual ~MessageQueueInterface() {
     }
@@ -180,7 +180,7 @@ public:
     }
     virtual void push(CallError call_error) = 0;
     template <class T> std::future<EnhancedMessage<M>> push_async(Call<T> call) {
-        static_cast<Derived*>(this)->push_async(call);
+        return static_cast<Derived*>(this)->push_async(call);
     }
 
     virtual EnhancedMessage<M> receive(std::string_view message) = 0;
