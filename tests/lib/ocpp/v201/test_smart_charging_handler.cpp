@@ -9,6 +9,7 @@
 #include "ocpp/v201/device_model_storage_sqlite.hpp"
 #include "ocpp/v201/init_device_model_db.hpp"
 #include "ocpp/v201/ocpp_types.hpp"
+#include "gtest/gtest.h"
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <filesystem>
@@ -30,6 +31,7 @@
 
 #include "comparators.hpp"
 #include <sstream>
+#include <stdexcept>
 #include <vector>
 
 #include "smart_charging_test_utils.hpp"
@@ -1621,8 +1623,9 @@ TEST_F(SmartChargingHandlerTestFixtureV201,
 
     float new_limit = 100.0;
     double deltaChanged = 0.2;
+    auto source = ChargingLimitSourceEnum::Other;
 
-    auto resp = handler.handle_external_limits_changed(new_limit, deltaChanged);
+    auto resp = handler.handle_external_limits_changed(new_limit, deltaChanged, source);
 
     ASSERT_THAT(resp.has_value(), testing::IsFalse());
 }
@@ -1635,8 +1638,9 @@ TEST_F(SmartChargingHandlerTestFixtureV201,
 
     float new_limit = 100.0;
     double deltaChanged = 0.2;
+    auto source = ChargingLimitSourceEnum::Other;
 
-    auto resp = handler.handle_external_limits_changed(new_limit, deltaChanged);
+    auto resp = handler.handle_external_limits_changed(new_limit, deltaChanged, source);
 
     ASSERT_THAT(resp.has_value(), testing::IsFalse());
 }
@@ -1649,8 +1653,9 @@ TEST_F(SmartChargingHandlerTestFixtureV201,
 
     float new_limit = 100.0;
     double deltaChanged = 0.2;
+    auto source = ChargingLimitSourceEnum::Other;
 
-    auto resp = handler.handle_external_limits_changed(new_limit, deltaChanged);
+    auto resp = handler.handle_external_limits_changed(new_limit, deltaChanged, source);
 
     ASSERT_THAT(resp.has_value(), testing::IsTrue());
 }
@@ -1667,6 +1672,7 @@ TEST_F(
 
     float new_limit = 100.0;
     double deltaChanged = 0.2;
+    auto source = ChargingLimitSourceEnum::Other;
 
     auto charging_schedule = ChargingSchedule{.id = 0,
                                               .chargingRateUnit = ChargingRateUnitEnum::A,
@@ -1675,7 +1681,7 @@ TEST_F(
                                                   .limit = new_limit,
                                               }}};
 
-    auto resp = handler.handle_external_limits_changed(new_limit, deltaChanged);
+    auto resp = handler.handle_external_limits_changed(new_limit, deltaChanged, source);
 
     ASSERT_THAT(resp.has_value(), testing::IsTrue());
     ASSERT_THAT(resp->chargingSchedule.has_value(), testing::IsTrue());
@@ -1693,6 +1699,7 @@ TEST_F(
                             AttributeEnum::Actual, "true", "test");
 
     double deltaChanged = 0.2;
+    auto source = ChargingLimitSourceEnum::Other;
 
     auto charging_schedule = ChargingSchedule{.id = 0,
                                               .chargingRateUnit = ChargingRateUnitEnum::W,
@@ -1701,7 +1708,7 @@ TEST_F(
                                                   .limit = 20,
                                               }}};
 
-    auto resp = handler.handle_external_limits_changed(charging_schedule, deltaChanged);
+    auto resp = handler.handle_external_limits_changed(charging_schedule, deltaChanged, source);
 
     ASSERT_THAT(resp.has_value(), testing::IsTrue());
     ASSERT_THAT(resp->chargingSchedule.has_value(), testing::IsTrue());
@@ -1717,8 +1724,9 @@ TEST_F(
 
     float new_limit = 100.0;
     double deltaChanged = 0.2;
+    auto source = ChargingLimitSourceEnum::Other;
 
-    auto resp = handler.handle_external_limits_changed(new_limit, deltaChanged);
+    auto resp = handler.handle_external_limits_changed(new_limit, deltaChanged, source);
 
     ASSERT_THAT(resp.has_value(), testing::IsTrue());
     ASSERT_THAT(resp->chargingSchedule.has_value(), testing::IsFalse());
@@ -1736,11 +1744,39 @@ TEST_F(
 
     float new_limit = 100.0;
     double deltaChanged = 0.2;
+    auto source = ChargingLimitSourceEnum::Other;
 
-    auto resp = handler.handle_external_limits_changed(new_limit, deltaChanged);
+    auto resp = handler.handle_external_limits_changed(new_limit, deltaChanged, source);
 
     ASSERT_THAT(resp.has_value(), testing::IsTrue());
     ASSERT_THAT(resp->chargingSchedule.has_value(), testing::IsFalse());
+}
+
+TEST_F(SmartChargingHandlerTestFixtureV201, K12FR04_HandleExternalLimitsChanged_NotificationIncludesSource) {
+    const auto& limit_change_cv = ControllerComponentVariables::LimitChangeSignificance;
+    device_model->set_value(limit_change_cv.component, limit_change_cv.variable.value(), AttributeEnum::Actual, "0.1",
+                            "test");
+
+    float new_limit = 100.0;
+    double deltaChanged = 0.2;
+    auto source = ChargingLimitSourceEnum::SO;
+
+    auto resp = handler.handle_external_limits_changed(new_limit, deltaChanged, source);
+
+    ASSERT_THAT(resp.has_value(), testing::IsTrue());
+    ASSERT_THAT(resp->chargingLimit.chargingLimitSource, testing::Eq(source));
+}
+
+TEST_F(SmartChargingHandlerTestFixtureV201, K12FR04_HandleExternalLimitsChanged_ThrowsIfSourceIsCSO) {
+    const auto& limit_change_cv = ControllerComponentVariables::LimitChangeSignificance;
+    device_model->set_value(limit_change_cv.component, limit_change_cv.variable.value(), AttributeEnum::Actual, "0.1",
+                            "test");
+
+    float new_limit = 100.0;
+    double deltaChanged = 0.2;
+    auto source = ChargingLimitSourceEnum::CSO;
+
+    EXPECT_THROW(handler.handle_external_limits_changed(new_limit, deltaChanged, source), std::invalid_argument);
 }
 
 } // namespace ocpp::v201
