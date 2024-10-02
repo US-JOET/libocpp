@@ -133,7 +133,7 @@ public:
     }
 
     std::shared_ptr<MessageQueueMock> create_message_queue(std::shared_ptr<DatabaseHandler>& database_handler) {
-        return std::make_shared<MessageQueueMock>();
+        return std::make_shared<testing::NiceMock<MessageQueueMock>>();
     }
 
     void configure_callbacks_with_mocks() {
@@ -566,12 +566,11 @@ public:
     using ChargePoint::handle_message;
     using ChargePoint::smart_charging_handler;
 
-    TestChargePoint(
-        const std::map<int32_t, int32_t>& evse_connector_structure, std::shared_ptr<DeviceModel> device_model,
-        std::shared_ptr<DatabaseHandler> database_handler,
-        std::shared_ptr<MessageQueueInterface<v201::MessageType, MessageQueue<v201::MessageType>>> message_queue,
-        const std::string& message_log_path, const std::shared_ptr<EvseSecurity> evse_security,
-        const Callbacks& callbacks, std::shared_ptr<SmartChargingHandlerInterface> smart_charging_handler) :
+    TestChargePoint(const std::map<int32_t, int32_t>& evse_connector_structure,
+                    std::shared_ptr<DeviceModel> device_model, std::shared_ptr<DatabaseHandler> database_handler,
+                    std::shared_ptr<MessageQueueInterface<v201::MessageType>> message_queue,
+                    const std::string& message_log_path, const std::shared_ptr<EvseSecurity> evse_security,
+                    const Callbacks& callbacks, std::shared_ptr<SmartChargingHandlerInterface> smart_charging_handler) :
         ChargePoint(evse_connector_structure, device_model, database_handler, message_queue, message_log_path,
                     evse_security, callbacks) {
         this->smart_charging_handler = smart_charging_handler;
@@ -626,13 +625,15 @@ public:
 
     std::unique_ptr<TestChargePoint> create_charge_point() {
         auto database_handler = create_database_handler();
+        message_queue = create_message_queue(database_handler);
         configure_callbacks_with_mocks();
         auto charge_point = std::make_unique<TestChargePoint>(
-            create_evse_connector_structure(), device_model, database_handler, create_message_queue(database_handler),
-            TEMP_OUTPUT_PATH, std::make_shared<EvseSecurityMock>(), callbacks, smart_charging_handler);
+            create_evse_connector_structure(), device_model, database_handler, message_queue, TEMP_OUTPUT_PATH,
+            std::make_shared<EvseSecurityMock>(), callbacks, smart_charging_handler);
         return charge_point;
     }
 
+    std::shared_ptr<MessageQueueMock> message_queue;
     boost::uuids::random_generator uuid_generator;
     std::shared_ptr<SmartChargingHandlerMock> smart_charging_handler;
     std::unique_ptr<TestChargePoint> charge_point;
