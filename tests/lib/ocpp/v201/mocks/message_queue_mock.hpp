@@ -4,13 +4,16 @@
 
 namespace ocpp {
 
-class MessageQueueMock : public MessageQueueInterface<v201::MessageType, MessageQueue<v201::MessageType>> {
+class MessageQueueMock : public MessageQueueInterface<v201::MessageType> {
 public:
     MOCK_METHOD(void, start, ());
     MOCK_METHOD(void, reset_next_message_to_send, ());
     MOCK_METHOD(void, get_persisted_messages_from_db, (bool ignore_security_event_notifications));
     MOCK_METHOD(void, push, (const json& message, const bool stall_until_accepted));
+    MOCK_METHOD(void, push_call_result, (const json& call_result_json, const MessageId& unique_id));
     MOCK_METHOD(void, push, (CallError call_error));
+    MOCK_METHOD(std::future<EnhancedMessage<v201::MessageType>>, push_async_internal,
+                (std::shared_ptr<ControlMessage<v201::MessageType>> message));
     MOCK_METHOD(EnhancedMessage<v201::MessageType>, receive, (std::string_view message));
     MOCK_METHOD(void, reset_in_flight, ());
     MOCK_METHOD(void, handle_call_result, (EnhancedMessage<v201::MessageType> & enhanced_message));

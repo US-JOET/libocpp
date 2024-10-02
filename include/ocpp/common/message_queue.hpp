@@ -164,7 +164,7 @@ bool allowed_to_send_message(const ControlMessage<M>& message, const DateTime& t
     return true;
 }
 
-template <typename M, typename Derived> class MessageQueueInterface {
+template <typename M> class MessageQueueInterface {
 public:
     virtual ~MessageQueueInterface() {
     }
@@ -179,13 +179,16 @@ public:
     }
     virtual void push(const json& message, const bool stall_until_accepted = false) = 0;
     template <class T> void push(CallResult<T> call_result) {
-        static_cast<Derived*>(this)->push(call_result);
+        json call_result_json = call_result;
+        this->push_call_result(call_result_json, call_result.uniqueId);
     }
+    virtual void push_call_result(const json& call_result_json, const MessageId& unique_id) = 0;
     virtual void push(CallError call_error) = 0;
     template <class T> std::future<EnhancedMessage<M>> push_async(Call<T> call) {
-        return static_cast<Derived*>(this)->push_async(call);
+        auto message = std::make_shared<ControlMessage<M>>(call);
+        return push_async_internal(message);
     }
-
+    virtual std::future<EnhancedMessage<M>> push_async_internal(std::shared_ptr<ControlMessage<M>> message) = 0;
     virtual EnhancedMessage<M> receive(std::string_view message) = 0;
     virtual void reset_in_flight() = 0;
     virtual void handle_call_result(EnhancedMessage<M>& enhanced_message) = 0;
@@ -211,7 +214,7 @@ public:
 };
 
 /// \brief contains a message queue that makes sure that OCPPs synchronicity requirements are met
-template <typename M> class MessageQueue : public MessageQueueInterface<M, MessageQueue<M>> {
+template <typename M> class MessageQueue : public MessageQueueInterface<M> {
 private:
     MessageQueueConfig<M> config;
     std::shared_ptr<ocpp::common::DatabaseHandlerCommon> database_handler;
@@ -698,16 +701,16 @@ public:
     }
 
     /// \brief Sends a new \p call_result message over the websocket
-    template <class T> void push(CallResult<T> call_result) {
+    void push_call_result(const json& call_result_json, const MessageId& unique_id) override {
         if (!running) {
             return;
         }
 
-        this->send_callback(call_result);
+        this->send_callback(call_result_json);
         {
             std::lock_guard<std::recursive_mutex> lk(this->next_message_mutex);
             if (next_message_to_send.has_value()) {
-                if (next_message_to_send.value() == call_result.uniqueId) {
+                if (next_message_to_send.value() == unique_id) {
                     next_message_to_send.reset();
                 }
             }
@@ -737,9 +740,7 @@ public:
 
     /// \brief pushes a new \p call message onto the message queue
     /// \returns a future from which the CallResult can be extracted
-    template <class T> std::future<EnhancedMessage<M>> push_async(Call<T> call) {
-        auto message = std::make_shared<ControlMessage<M>>(call);
-
+    std::future<EnhancedMessage<M>> push_async_internal(std::shared_ptr<ControlMessage<M>> message) override {
         if (!running) {
             auto enhanced_message = EnhancedMessage<M>();
             enhanced_message.offline = true;
