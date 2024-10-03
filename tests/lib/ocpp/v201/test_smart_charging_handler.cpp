@@ -1889,6 +1889,7 @@ TEST_F(
 
     ASSERT_THAT(cleared_charging_limit_request.chargingLimitSource, testing::Eq(source));
     ASSERT_THAT(transaction_event_request.has_value(), testing::IsTrue());
+    ASSERT_THAT(transaction_event_request.value().eventType, TransactionEventEnum::Updated);
     ASSERT_THAT(transaction_event_request.value().triggerReason, TriggerReasonEnum::ChargingRateChanged);
 }
 
