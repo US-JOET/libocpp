@@ -1840,10 +1840,9 @@ TEST_F(SmartChargingHandlerTestFixtureV201,
     double deltaChanged = 0.2;
     auto source = ChargingLimitSourceEnum::Other;
 
-    auto resp = handler.handle_external_limits_cleared(new_limit, deltaChanged, source);
+    auto resp = handler.handle_external_limit_cleared(deltaChanged, source);
 
-    auto cleared_charging_limit_request = resp.first;
-    auto transaction_event_request = resp.second;
+    auto [cleared_charging_limit_request, transaction_event_request] = resp;
 
     ASSERT_THAT(cleared_charging_limit_request.chargingLimitSource, testing::Eq(source));
     ASSERT_THAT(transaction_event_request.has_value(), testing::IsFalse());
@@ -1862,10 +1861,9 @@ TEST_F(SmartChargingHandlerTestFixtureV201,
     double deltaChanged = 0.2;
     auto source = ChargingLimitSourceEnum::Other;
 
-    auto resp = handler.handle_cleared_charging_limit(new_limit, deltaChanged, source);
+    auto resp = handler.handle_external_limit_cleared(deltaChanged, source);
 
-    auto cleared_charging_limit_request = resp.first;
-    auto transaction_event_request = resp.second;
+    auto [cleared_charging_limit_request, transaction_event_request] = resp;
 
     ASSERT_THAT(cleared_charging_limit_request.chargingLimitSource, testing::Eq(source));
     ASSERT_THAT(transaction_event_request.has_value(), testing::IsFalse());
@@ -1885,10 +1883,9 @@ TEST_F(
     double deltaChanged = 0.2;
     auto source = ChargingLimitSourceEnum::Other;
 
-    auto resp = handler.handle_cleared_charging_limit(new_limit, deltaChanged, source);
+    auto resp = handler.handle_external_limit_cleared(deltaChanged, source);
 
-    auto cleared_charging_limit_request = resp.first;
-    auto transaction_event_request = resp.second;
+    auto [cleared_charging_limit_request, transaction_event_request] = resp;
 
     ASSERT_THAT(cleared_charging_limit_request.chargingLimitSource, testing::Eq(source));
     ASSERT_THAT(transaction_event_request.has_value(), testing::IsTrue());
