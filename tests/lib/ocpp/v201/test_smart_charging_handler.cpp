@@ -1842,10 +1842,10 @@ TEST_F(SmartChargingHandlerTestFixtureV201,
 
     auto resp = handler.handle_external_limit_cleared(deltaChanged, source);
 
-    auto [cleared_charging_limit_request, transaction_event_request] = resp;
+    auto [cleared_charging_limit_request, transaction_event_requests] = resp;
 
     ASSERT_THAT(cleared_charging_limit_request.chargingLimitSource, testing::Eq(source));
-    ASSERT_THAT(transaction_event_request.has_value(), testing::IsFalse());
+    ASSERT_THAT(transaction_event_requests.size(), testing::Eq(0));
 }
 
 TEST_F(SmartChargingHandlerTestFixtureV201,
@@ -1863,10 +1863,10 @@ TEST_F(SmartChargingHandlerTestFixtureV201,
 
     auto resp = handler.handle_external_limit_cleared(deltaChanged, source);
 
-    auto [cleared_charging_limit_request, transaction_event_request] = resp;
+    auto [cleared_charging_limit_request, transaction_event_requests] = resp;
 
     ASSERT_THAT(cleared_charging_limit_request.chargingLimitSource, testing::Eq(source));
-    ASSERT_THAT(transaction_event_request.has_value(), testing::IsFalse());
+    ASSERT_THAT(transaction_event_requests.size(), testing::Eq(0));
 }
 
 TEST_F(
@@ -1885,12 +1885,13 @@ TEST_F(
 
     auto resp = handler.handle_external_limit_cleared(deltaChanged, source);
 
-    auto [cleared_charging_limit_request, transaction_event_request] = resp;
+    auto [cleared_charging_limit_request, transaction_event_requests] = resp;
 
     ASSERT_THAT(cleared_charging_limit_request.chargingLimitSource, testing::Eq(source));
-    ASSERT_THAT(transaction_event_request.has_value(), testing::IsTrue());
-    ASSERT_THAT(transaction_event_request.value().eventType, TransactionEventEnum::Updated);
-    ASSERT_THAT(transaction_event_request.value().triggerReason, TriggerReasonEnum::ChargingRateChanged);
+
+    ASSERT_THAT(transaction_event_requests.size(), testing::Eq(1));
+    ASSERT_THAT(transaction_event_requests.at(0).eventType, TransactionEventEnum::Updated);
+    ASSERT_THAT(transaction_event_requests.at(0).triggerReason, TriggerReasonEnum::ChargingRateChanged);
 }
 
 } // namespace ocpp::v201
