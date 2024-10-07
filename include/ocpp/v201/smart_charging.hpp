@@ -127,7 +127,8 @@ public:
                                    std::optional<int32_t> evse_id) const = 0;
 
     virtual std::pair<ClearedChargingLimitRequest, std::vector<TransactionEventRequest>>
-    handle_external_limit_cleared(double percentage_delta, ChargingLimitSourceEnum source) const = 0;
+    handle_external_limit_cleared(std::optional<int32_t> evse_id, double percentage_delta,
+                                  ChargingLimitSourceEnum source) const = 0;
 };
 
 /// \brief This class handles and maintains incoming ChargingProfiles and contains the logic
@@ -201,7 +202,7 @@ public:
                                                    std::optional<ChargingRateUnitEnum> charging_rate_unit) override;
 
     ///
-    /// \brief Determines whether or not we should notify the CSMS of a change to our limits
+    /// \brief Determines whether or not we should notify the CSMS of a cleared external limit
     /// based on \p percentage_delta and builds the notification.
     ///
     std::optional<NotifyChargingLimitRequest>
@@ -210,7 +211,8 @@ public:
                                    std::optional<int32_t> evse_id) const override;
 
     virtual std::pair<ClearedChargingLimitRequest, std::vector<TransactionEventRequest>>
-    handle_external_limit_cleared(double percentage_delta, ChargingLimitSourceEnum source) const override;
+    handle_external_limit_cleared(std::optional<int32_t> evse_id, double percentage_delta,
+                                  ChargingLimitSourceEnum source) const override;
 
 protected:
     ///
