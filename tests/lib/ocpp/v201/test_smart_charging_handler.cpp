@@ -9,6 +9,7 @@
 #include "ocpp/v201/device_model_storage_sqlite.hpp"
 #include "ocpp/v201/init_device_model_db.hpp"
 #include "ocpp/v201/ocpp_types.hpp"
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -1628,7 +1629,7 @@ TEST_F(SmartChargingHandlerTestFixtureV201,
     double deltaChanged = 0.2;
     auto source = ChargingLimitSourceEnum::Other;
 
-    auto resp = handler.handle_external_limits_changed(new_limit, deltaChanged, source);
+    auto resp = handler.handle_external_limits_changed(DEFAULT_EVSE_ID, new_limit, deltaChanged, source);
 
     ASSERT_THAT(resp.has_value(), testing::IsFalse());
 }
@@ -1646,7 +1647,7 @@ TEST_F(SmartChargingHandlerTestFixtureV201,
     double deltaChanged = 0.2;
     auto source = ChargingLimitSourceEnum::Other;
 
-    auto resp = handler.handle_external_limits_changed(new_limit, deltaChanged, source);
+    auto resp = handler.handle_external_limits_changed(DEFAULT_EVSE_ID, new_limit, deltaChanged, source);
 
     ASSERT_THAT(resp.has_value(), testing::IsFalse());
 }
@@ -1664,7 +1665,7 @@ TEST_F(SmartChargingHandlerTestFixtureV201,
     double deltaChanged = 0.2;
     auto source = ChargingLimitSourceEnum::Other;
 
-    auto resp = handler.handle_external_limits_changed(new_limit, deltaChanged, source);
+    auto resp = handler.handle_external_limits_changed(DEFAULT_EVSE_ID, new_limit, deltaChanged, source);
 
     ASSERT_THAT(resp.has_value(), testing::IsTrue());
 }
@@ -1693,7 +1694,7 @@ TEST_F(
                                                   .limit = new_limit.limit,
                                               }}};
 
-    auto resp = handler.handle_external_limits_changed(new_limit, deltaChanged, source);
+    auto resp = handler.handle_external_limits_changed(DEFAULT_EVSE_ID, new_limit, deltaChanged, source);
 
     ASSERT_THAT(resp.has_value(), testing::IsTrue());
     ASSERT_THAT(resp->chargingSchedule.has_value(), testing::IsTrue());
@@ -1720,7 +1721,7 @@ TEST_F(
                                                   .limit = 20,
                                               }}};
 
-    auto resp = handler.handle_external_limits_changed(charging_schedule, deltaChanged, source);
+    auto resp = handler.handle_external_limits_changed(DEFAULT_EVSE_ID, charging_schedule, deltaChanged, source);
 
     ASSERT_THAT(resp.has_value(), testing::IsTrue());
     ASSERT_THAT(resp->chargingSchedule.has_value(), testing::IsTrue());
@@ -1741,7 +1742,7 @@ TEST_F(
     double deltaChanged = 0.2;
     auto source = ChargingLimitSourceEnum::Other;
 
-    auto resp = handler.handle_external_limits_changed(new_limit, deltaChanged, source);
+    auto resp = handler.handle_external_limits_changed(DEFAULT_EVSE_ID, new_limit, deltaChanged, source);
 
     ASSERT_THAT(resp.has_value(), testing::IsTrue());
     ASSERT_THAT(resp->chargingSchedule.has_value(), testing::IsFalse());
@@ -1764,7 +1765,7 @@ TEST_F(
     double deltaChanged = 0.2;
     auto source = ChargingLimitSourceEnum::Other;
 
-    auto resp = handler.handle_external_limits_changed(new_limit, deltaChanged, source);
+    auto resp = handler.handle_external_limits_changed(DEFAULT_EVSE_ID, new_limit, deltaChanged, source);
 
     ASSERT_THAT(resp.has_value(), testing::IsTrue());
     ASSERT_THAT(resp->chargingSchedule.has_value(), testing::IsFalse());
@@ -1782,7 +1783,7 @@ TEST_F(SmartChargingHandlerTestFixtureV201, K12FR04_HandleExternalLimitsChanged_
     double deltaChanged = 0.2;
     auto source = ChargingLimitSourceEnum::SO;
 
-    auto resp = handler.handle_external_limits_changed(new_limit, deltaChanged, source);
+    auto resp = handler.handle_external_limits_changed(DEFAULT_EVSE_ID, new_limit, deltaChanged, source);
 
     ASSERT_THAT(resp.has_value(), testing::IsTrue());
     ASSERT_THAT(resp->chargingLimit.chargingLimitSource, testing::Eq(source));
@@ -1800,7 +1801,30 @@ TEST_F(SmartChargingHandlerTestFixtureV201, K12FR04_HandleExternalLimitsChanged_
     double deltaChanged = 0.2;
     auto source = ChargingLimitSourceEnum::CSO;
 
-    EXPECT_THROW(handler.handle_external_limits_changed(new_limit, deltaChanged, source), std::invalid_argument);
+    EXPECT_THROW(handler.handle_external_limits_changed(DEFAULT_EVSE_ID, new_limit, deltaChanged, source),
+                 std::invalid_argument);
+}
+
+TEST_F(SmartChargingHandlerTestFixtureV201, K12_HandleExternalLimitsChanged_RequestHasGivenEvseId) {
+    const auto& limit_change_cv = ControllerComponentVariables::LimitChangeSignificance;
+    device_model->set_value(limit_change_cv.component, limit_change_cv.variable.value(), AttributeEnum::Actual, "0.1",
+                            "test");
+
+    auto evse_id = 12;
+
+    ConstantChargingLimit new_limit = {
+        .limit = 100.0,
+        .charging_rate_unit = ChargingRateUnitEnum::A,
+    };
+    double deltaChanged = 0.2;
+    auto source = ChargingLimitSourceEnum::SO;
+
+    auto resp = handler.handle_external_limits_changed(evse_id, new_limit, deltaChanged, source);
+
+    ASSERT_THAT(resp.has_value(), testing::IsTrue());
+    ASSERT_THAT(resp->chargingLimit.chargingLimitSource, testing::Eq(source));
+    ASSERT_THAT(resp->evseId.has_value(), testing::IsTrue());
+    ASSERT_THAT(resp->evseId.value(), testing::Eq(evse_id));
 }
 
 } // namespace ocpp::v201
